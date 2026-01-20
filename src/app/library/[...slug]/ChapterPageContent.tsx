@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -106,11 +106,8 @@ function VocabularyListItem({
   )
 }
 
-export default function ChapterPage() {
-  const params = useParams()
+export default function ChapterPageContent({ bookId, chapterId }: { bookId: string; chapterId: string }) {
   const router = useRouter()
-  const bookId = params.bookId as string
-  const chapterId = params.chapterId as string
 
   const { book } = useBook(bookId)
   const { chapter, isLoading: chapterLoading } = useChapter(chapterId)

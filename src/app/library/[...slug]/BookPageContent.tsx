@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -45,10 +45,8 @@ function ChapterCard({ chapter, bookId }: { chapter: Chapter; bookId: string }) 
   )
 }
 
-export default function BookPage() {
-  const params = useParams()
+export default function BookPageContent({ bookId }: { bookId: string }) {
   const router = useRouter()
-  const bookId = params.bookId as string
 
   const { book, isLoading: bookLoading } = useBook(bookId)
   const { chapters, isLoading: chaptersLoading } = useChapters(bookId)
