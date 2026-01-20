@@ -59,6 +59,7 @@ export default function PracticeSessionPage() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [showStreakMessage, setShowStreakMessage] = useState<string | null>(null)
+  const [screenReaderAnnouncement, setScreenReaderAnnouncement] = useState<string>('')
 
   // Redirect if no active session
   useEffect(() => {
@@ -126,6 +127,12 @@ export default function PracticeSessionPage() {
       // Show feedback message
       const message = isCorrect ? getCorrectMessage() : getIncorrectMessage()
       setFeedbackMessage(message)
+      // Announce to screen readers
+      setScreenReaderAnnouncement(
+        isCorrect
+          ? `Richtig! ${message}. Frage ${progress.answered + 1} von ${progress.total}.`
+          : `Falsch. Die richtige Antwort war: ${currentItem.vocabulary.targetText}. ${message}`
+      )
       setTimeout(() => setFeedbackMessage(null), 1500)
 
       // Check for streak milestone
@@ -337,6 +344,16 @@ export default function PracticeSessionPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Screen reader live region */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {screenReaderAnnouncement}
+      </div>
     </div>
   )
 }

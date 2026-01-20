@@ -22,8 +22,22 @@ export function FlashCard({
     <motion.div
       className="perspective-1000 cursor-pointer"
       onClick={onFlip}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onFlip()
+        }
+      }}
       style={{ perspective: '1000px' }}
       whileTap={{ scale: 0.98 }}
+      role="button"
+      tabIndex={0}
+      aria-label={
+        isFlipped
+          ? `Antwort: ${answer}${notes ? `. Hinweis: ${notes}` : ''}. Drücke Enter um zur Frage zurückzukehren.`
+          : `Frage: ${question}. Drücke Enter zum Umdrehen.`
+      }
+      aria-pressed={isFlipped}
     >
       <motion.div
         className="relative w-full h-64 preserve-3d"
