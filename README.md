@@ -1,21 +1,22 @@
-# Vokabeltrainer
+# Vocabulary Trainer
 
-Eine offline-fähige PWA zum Lernen von Vokabeln für Schüler an deutschen Gymnasien.
+An offline-capable PWA for learning vocabulary, designed for students at German secondary schools.
 
 ## Features
 
-- **Bibliothek-Organisation**: Verwalte Bücher, Kapitel und Abschnitte
-- **Vokabeln hinzufügen**: Manuell oder per Foto-Scan (in Entwicklung)
-- **Spaced Repetition**: SM-2 Algorithmus für optimales Lernen
-- **Übungsmodi**: Karteikarten, Multiple Choice, Eingabe
-- **Offline-fähig**: Alle Daten werden lokal im Browser gespeichert
-- **Kind-freundlich**: Große Touch-Ziele, ermutigende Nachrichten
+- **Library Organization**: Manage books, chapters, and sections
+- **Add Vocabulary**: Manually or via photo scan (in development)
+- **Spaced Repetition**: SM-2 algorithm for optimal learning
+- **Practice Modes**: Flashcards, Multiple Choice, Typed Input
+- **Parent Quiz Mode**: Parents can verbally quiz their children
+- **Offline-capable**: All data is stored locally in the browser
+- **Kid-friendly**: Large touch targets, encouraging messages
 
-## Unterstützte Sprachen
+## Supported Languages
 
-- Französisch
-- Spanisch
-- Latein
+- French
+- Spanish
+- Latin
 
 ## Tech Stack
 
@@ -24,56 +25,56 @@ Eine offline-fähige PWA zum Lernen von Vokabeln für Schüler an deutschen Gymn
 - Tailwind CSS
 - Dexie.js (IndexedDB)
 - Zustand (State Management)
-- Framer Motion (Animationen)
+- Framer Motion (Animations)
 
 ## Installation
 
 ```bash
-# Dependencies installieren
+# Install dependencies
 npm install
 
-# Entwicklungsserver starten
+# Start development server
 npm run dev
 
-# Produktions-Build erstellen
+# Create production build
 npm run build
 
-# Produktions-Build starten
+# Start production build
 npm start
 ```
 
-## Projektstruktur
+## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router Seiten
-│   ├── page.tsx           # Startseite
-│   ├── library/           # Bibliothek-Verwaltung
-│   ├── add/               # Vokabeln hinzufügen
-│   ├── practice/          # Übungsmodus
-│   ├── progress/          # Fortschritts-Dashboard
-│   └── settings/          # Einstellungen
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # Home page
+│   ├── library/           # Library management
+│   ├── add/               # Add vocabulary
+│   ├── practice/          # Practice mode
+│   ├── progress/          # Progress dashboard
+│   └── settings/          # Settings
 ├── components/
-│   ├── ui/                # Basis-Komponenten
-│   ├── layout/            # Layout-Komponenten
-│   ├── practice/          # Übungs-Komponenten
-│   └── progress/          # Fortschritts-Komponenten
+│   ├── ui/                # Base components
+│   ├── layout/            # Layout components
+│   ├── practice/          # Practice components
+│   └── progress/          # Progress components
 ├── lib/
-│   ├── db/                # Dexie Datenbank
-│   ├── learning/          # SM-2 Algorithmus
-│   └── utils/             # Hilfsfunktionen
-└── stores/                # Zustand Stores
+│   ├── db/                # Dexie database
+│   ├── learning/          # SM-2 algorithm
+│   └── utils/             # Utility functions
+└── stores/                # Zustand stores
 ```
 
-## Verwendung
+## Usage
 
-1. **Bibliothek einrichten**: Erstelle ein Buch (z.B. "Découvertes 2")
-2. **Kapitel hinzufügen**: Füge Kapitel hinzu (z.B. "Unité 1")
-3. **Abschnitte erstellen**: Erstelle Abschnitte für Vokabelgruppen
-4. **Vokabeln eingeben**: Füge deutsche Wörter und Übersetzungen hinzu
-5. **Üben**: Wähle Abschnitte aus und starte eine Übung
-6. **Fortschritt verfolgen**: Sieh deinen Lernfortschritt im Dashboard
+1. **Set up library**: Create a book (e.g., "Découvertes 2")
+2. **Add chapters**: Add chapters (e.g., "Unité 1")
+3. **Create sections**: Create sections for vocabulary groups
+4. **Enter vocabulary**: Add German words and translations
+5. **Practice**: Select sections and start a practice session
+6. **Track progress**: View your learning progress in the dashboard
 
-## Lizenz
+## License
 
-Privates Projekt
+Private project
