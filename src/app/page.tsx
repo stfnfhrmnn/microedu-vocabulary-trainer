@@ -1,0 +1,219 @@
+'use client'
+
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { PageContainer } from '@/components/layout/PageContainer'
+import { Card, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { useDueWordsCount, useVocabularyStats } from '@/lib/db/hooks/useDueWords'
+import { useVocabularyCount } from '@/lib/db/hooks/useVocabulary'
+
+export default function HomePage() {
+  const dueCount = useDueWordsCount()
+  const totalCount = useVocabularyCount()
+  const { stats } = useVocabularyStats()
+
+  return (
+    <PageContainer>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Vokabeltrainer</h1>
+          <p className="text-gray-500 mt-1">Willkommen zurück!</p>
+        </div>
+        <Link
+          href="/settings"
+          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <svg
+            className="w-6 h-6 text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+        </Link>
+      </div>
+
+      {/* Due Words Card - Main CTA */}
+      <Link href="/practice">
+        <motion.div
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        >
+          <Card className="bg-primary-500 border-primary-500 mb-6">
+            <CardContent>
+              <div className="text-white">
+                <p className="text-primary-100 text-sm font-medium mb-1">
+                  Heute zu wiederholen
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold">{dueCount}</span>
+                  <span className="text-primary-200 text-lg">Vokabeln</span>
+                </div>
+                {dueCount > 0 && (
+                  <p className="text-primary-100 text-sm mt-3">
+                    Tippe um zu üben →
+                  </p>
+                )}
+                {dueCount === 0 && totalCount > 0 && (
+                  <p className="text-primary-100 text-sm mt-3">
+                    Super! Alles wiederholt
+                  </p>
+                )}
+                {totalCount === 0 && (
+                  <p className="text-primary-100 text-sm mt-3">
+                    Füge deine ersten Vokabeln hinzu
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </Link>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <Link href="/add">
+          <Card interactive className="h-full">
+            <CardContent className="flex flex-col items-center justify-center py-6">
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-3">
+                <svg
+                  className="w-6 h-6 text-primary-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </div>
+              <span className="font-semibold text-gray-900">Vokabeln</span>
+              <span className="text-sm text-gray-500">hinzufügen</span>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/library">
+          <Card interactive className="h-full">
+            <CardContent className="flex flex-col items-center justify-center py-6">
+              <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-3">
+                <svg
+                  className="w-6 h-6 text-primary-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
+                </svg>
+              </div>
+              <span className="font-semibold text-gray-900">Bibliothek</span>
+              <span className="text-sm text-gray-500">verwalten</span>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Stats Overview */}
+      {stats && totalCount > 0 && (
+        <Card>
+          <CardContent>
+            <h3 className="font-semibold text-gray-900 mb-4">Dein Fortschritt</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{stats.new}</div>
+                <div className="text-xs text-gray-500">Neu</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-warning-500">{stats.learning}</div>
+                <div className="text-xs text-gray-500">Lernend</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-success-500">{stats.mastered}</div>
+                <div className="text-xs text-gray-500">Gelernt</div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mt-4">
+              <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                {stats.mastered > 0 && (
+                  <div
+                    className="bg-success-500 transition-all duration-500"
+                    style={{ width: `${(stats.mastered / stats.total) * 100}%` }}
+                  />
+                )}
+                {stats.learning > 0 && (
+                  <div
+                    className="bg-warning-400 transition-all duration-500"
+                    style={{ width: `${(stats.learning / stats.total) * 100}%` }}
+                  />
+                )}
+                {stats.new > 0 && (
+                  <div
+                    className="bg-gray-300 transition-all duration-500"
+                    style={{ width: `${(stats.new / stats.total) * 100}%` }}
+                  />
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                {stats.total} Vokabeln insgesamt
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {totalCount === 0 && (
+        <Card>
+          <CardContent className="text-center py-8">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-2">Noch keine Vokabeln</h3>
+            <p className="text-gray-500 text-sm mb-4">
+              Erstelle zuerst ein Buch und füge dann deine Vokabeln hinzu.
+            </p>
+            <Link href="/library">
+              <Button variant="primary">Bibliothek öffnen</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+    </PageContainer>
+  )
+}

@@ -1,0 +1,398 @@
+import Dexie, { type Table } from 'dexie'
+import { generateId } from '@/lib/utils/id'
+import type {
+  Book,
+  Chapter,
+  Section,
+  VocabularyItem,
+  LearningProgress,
+  ReviewSession,
+  ReviewAttempt,
+  UserSettings,
+  CachedImage,
+  CreateBook,
+  CreateChapter,
+  CreateSection,
+  CreateVocabularyItem,
+} from './schema'
+
+// ============================================================================
+// Database Class
+// ============================================================================
+
+export class VocabularyDatabase extends Dexie {
+  books!: Table<Book, string>
+  chapters!: Table<Chapter, string>
+  sections!: Table<Section, string>
+  vocabularyItems!: Table<VocabularyItem, string>
+  learningProgress!: Table<LearningProgress, string>
+  reviewSessions!: Table<ReviewSession, string>
+  reviewAttempts!: Table<ReviewAttempt, string>
+  userSettings!: Table<UserSettings, string>
+  cachedImages!: Table<CachedImage, string>
+
+  constructor() {
+    super('VocabularyTrainer')
+
+    this.version(1).stores({
+      books: 'id, name, language, createdAt',
+      chapters: 'id, bookId, name, order, createdAt',
+      sections: 'id, chapterId, bookId, name, order, coveredInClass, createdAt',
+      vocabularyItems: 'id, sectionId, chapterId, bookId, sourceText, targetText, createdAt',
+      learningProgress: 'id, vocabularyId, nextReviewDate, interval',
+      reviewSessions: 'id, exerciseType, startedAt, completedAt',
+      reviewAttempts: 'id, sessionId, vocabularyId, createdAt',
+      userSettings: 'id',
+      cachedImages: 'id, vocabularyId, createdAt',
+    })
+
+    // Add timestamp hooks
+    this.books.hook('creating', (primKey, obj) => {
+      obj.createdAt = new Date()
+      obj.updatedAt = new Date()
+    })
+    this.books.hook('updating', (modifications) => {
+      return { ...modifications, updatedAt: new Date() }
+    })
+
+    this.chapters.hook('creating', (primKey, obj) => {
+      obj.createdAt = new Date()
+      obj.updatedAt = new Date()
+    })
+    this.chapters.hook('updating', (modifications) => {
+      return { ...modifications, updatedAt: new Date() }
+    })
+
+    this.sections.hook('creating', (primKey, obj) => {
+      obj.createdAt = new Date()
+      obj.updatedAt = new Date()
+    })
+    this.sections.hook('updating', (modifications) => {
+      return { ...modifications, updatedAt: new Date() }
+    })
+
+    this.vocabularyItems.hook('creating', (primKey, obj) => {
+      obj.createdAt = new Date()
+      obj.updatedAt = new Date()
+    })
+    this.vocabularyItems.hook('updating', (modifications) => {
+      return { ...modifications, updatedAt: new Date() }
+    })
+
+    this.learningProgress.hook('creating', (primKey, obj) => {
+      obj.createdAt = new Date()
+      obj.updatedAt = new Date()
+    })
+    this.learningProgress.hook('updating', (modifications) => {
+      return { ...modifications, updatedAt: new Date() }
+    })
+
+    this.userSettings.hook('creating', (primKey, obj) => {
+      obj.createdAt = new Date()
+      obj.updatedAt = new Date()
+    })
+    this.userSettings.hook('updating', (modifications) => {
+      return { ...modifications, updatedAt: new Date() }
+    })
+  }
+}
+
+// Singleton instance
+export const db = new VocabularyDatabase()
+
+// ============================================================================
+// Book Operations
+// ============================================================================
+
+export async function createBook(data: CreateBook): Promise<Book> {
+  const book: Book = {
+    id: generateId(),
+    ...data,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+  await db.books.add(book)
+  return book
+}
+
+export async function updateBook(id: string, data: Partial<CreateBook>): Promise<void> {
+  await db.books.update(id, data)
+}
+
+export async function deleteBook(id: string): Promise<void> {
+  await db.transaction('rw', [db.books, db.chapters, db.sections, db.vocabularyItems, db.learningProgress], async () => {
+    // Get all vocabulary items for this book
+    const vocabIds = await db.vocabularyItems
+      .where('bookId')
+      .equals(id)
+      .primaryKeys()
+
+    // Delete learning progress for these vocabulary items
+    await db.learningProgress
+      .where('vocabularyId')
+      .anyOf(vocabIds)
+      .delete()
+
+    // Delete vocabulary items
+    await db.vocabularyItems.where('bookId').equals(id).delete()
+
+    // Delete sections
+    await db.sections.where('bookId').equals(id).delete()
+
+    // Delete chapters
+    await db.chapters.where('bookId').equals(id).delete()
+
+    // Delete book
+    await db.books.delete(id)
+  })
+}
+
+// ============================================================================
+// Chapter Operations
+// ============================================================================
+
+export async function createChapter(data: CreateChapter): Promise<Chapter> {
+  const chapter: Chapter = {
+    id: generateId(),
+    ...data,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+  await db.chapters.add(chapter)
+  return chapter
+}
+
+export async function updateChapter(id: string, data: Partial<CreateChapter>): Promise<void> {
+  await db.chapters.update(id, data)
+}
+
+export async function deleteChapter(id: string): Promise<void> {
+  await db.transaction('rw', [db.chapters, db.sections, db.vocabularyItems, db.learningProgress], async () => {
+    const vocabIds = await db.vocabularyItems
+      .where('chapterId')
+      .equals(id)
+      .primaryKeys()
+
+    await db.learningProgress
+      .where('vocabularyId')
+      .anyOf(vocabIds)
+      .delete()
+
+    await db.vocabularyItems.where('chapterId').equals(id).delete()
+    await db.sections.where('chapterId').equals(id).delete()
+    await db.chapters.delete(id)
+  })
+}
+
+// ============================================================================
+// Section Operations
+// ============================================================================
+
+export async function createSection(data: CreateSection): Promise<Section> {
+  const section: Section = {
+    id: generateId(),
+    ...data,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+  await db.sections.add(section)
+  return section
+}
+
+export async function updateSection(id: string, data: Partial<CreateSection>): Promise<void> {
+  await db.sections.update(id, data)
+}
+
+export async function deleteSection(id: string): Promise<void> {
+  await db.transaction('rw', [db.sections, db.vocabularyItems, db.learningProgress], async () => {
+    const vocabIds = await db.vocabularyItems
+      .where('sectionId')
+      .equals(id)
+      .primaryKeys()
+
+    await db.learningProgress
+      .where('vocabularyId')
+      .anyOf(vocabIds)
+      .delete()
+
+    await db.vocabularyItems.where('sectionId').equals(id).delete()
+    await db.sections.delete(id)
+  })
+}
+
+export async function toggleSectionCovered(id: string, covered: boolean): Promise<void> {
+  await db.sections.update(id, { coveredInClass: covered })
+}
+
+// ============================================================================
+// Vocabulary Operations
+// ============================================================================
+
+export async function createVocabularyItem(data: CreateVocabularyItem): Promise<VocabularyItem> {
+  const item: VocabularyItem = {
+    id: generateId(),
+    ...data,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+  await db.vocabularyItems.add(item)
+  return item
+}
+
+export async function updateVocabularyItem(id: string, data: Partial<CreateVocabularyItem>): Promise<void> {
+  await db.vocabularyItems.update(id, data)
+}
+
+export async function deleteVocabularyItem(id: string): Promise<void> {
+  await db.transaction('rw', [db.vocabularyItems, db.learningProgress], async () => {
+    await db.learningProgress.where('vocabularyId').equals(id).delete()
+    await db.vocabularyItems.delete(id)
+  })
+}
+
+export async function createVocabularyItems(items: CreateVocabularyItem[]): Promise<VocabularyItem[]> {
+  const vocabItems: VocabularyItem[] = items.map((data) => ({
+    id: generateId(),
+    ...data,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }))
+  await db.vocabularyItems.bulkAdd(vocabItems)
+  return vocabItems
+}
+
+// ============================================================================
+// Learning Progress Operations
+// ============================================================================
+
+export async function getOrCreateProgress(vocabularyId: string): Promise<LearningProgress> {
+  const existing = await db.learningProgress.where('vocabularyId').equals(vocabularyId).first()
+  if (existing) return existing
+
+  const progress: LearningProgress = {
+    id: generateId(),
+    vocabularyId,
+    easeFactor: 2.5,
+    interval: 0,
+    repetitions: 0,
+    nextReviewDate: new Date(),
+    totalReviews: 0,
+    correctReviews: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+  await db.learningProgress.add(progress)
+  return progress
+}
+
+export async function updateProgress(id: string, data: Partial<LearningProgress>): Promise<void> {
+  await db.learningProgress.update(id, data)
+}
+
+// ============================================================================
+// Review Session Operations
+// ============================================================================
+
+export async function createReviewSession(data: Omit<ReviewSession, 'id'>): Promise<ReviewSession> {
+  const session: ReviewSession = {
+    id: generateId(),
+    ...data,
+  }
+  await db.reviewSessions.add(session)
+  return session
+}
+
+export async function completeReviewSession(id: string, correctCount: number): Promise<void> {
+  await db.reviewSessions.update(id, {
+    completedAt: new Date(),
+    correctCount,
+  })
+}
+
+export async function createReviewAttempt(data: Omit<ReviewAttempt, 'id' | 'createdAt'>): Promise<ReviewAttempt> {
+  const attempt: ReviewAttempt = {
+    id: generateId(),
+    ...data,
+    createdAt: new Date(),
+  }
+  await db.reviewAttempts.add(attempt)
+  return attempt
+}
+
+// ============================================================================
+// User Settings Operations
+// ============================================================================
+
+const DEFAULT_SETTINGS: UserSettings = {
+  id: 'settings',
+  defaultDirection: 'sourceToTarget',
+  defaultExerciseType: 'flashcard',
+  typingStrictness: 'normal',
+  ocrProvider: 'tesseract',
+  soundEnabled: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+}
+
+export async function getSettings(): Promise<UserSettings> {
+  const settings = await db.userSettings.get('settings')
+  if (settings) return settings
+
+  await db.userSettings.add(DEFAULT_SETTINGS)
+  return DEFAULT_SETTINGS
+}
+
+export async function updateSettings(data: Partial<UserSettings>): Promise<void> {
+  const existing = await db.userSettings.get('settings')
+  if (existing) {
+    await db.userSettings.update('settings', data)
+  } else {
+    await db.userSettings.add({ ...DEFAULT_SETTINGS, ...data })
+  }
+}
+
+// ============================================================================
+// Statistics Queries
+// ============================================================================
+
+export async function getVocabularyStats() {
+  const allVocab = await db.vocabularyItems.count()
+  const allProgress = await db.learningProgress.toArray()
+
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
+
+  const progressMap = new Map(allProgress.map((p) => [p.vocabularyId, p]))
+  const vocabIds = await db.vocabularyItems.toCollection().primaryKeys()
+
+  let newCount = 0
+  let learningCount = 0
+  let masteredCount = 0
+  let dueCount = 0
+
+  for (const vocabId of vocabIds) {
+    const progress = progressMap.get(vocabId)
+    if (!progress || progress.totalReviews === 0) {
+      newCount++
+      dueCount++ // New words are always "due"
+    } else if (progress.interval >= 21) {
+      masteredCount++
+      if (progress.nextReviewDate <= today) {
+        dueCount++
+      }
+    } else {
+      learningCount++
+      if (progress.nextReviewDate <= today) {
+        dueCount++
+      }
+    }
+  }
+
+  return {
+    total: allVocab,
+    new: newCount,
+    learning: learningCount,
+    mastered: masteredCount,
+    dueToday: dueCount,
+  }
+}
