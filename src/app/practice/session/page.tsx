@@ -23,6 +23,7 @@ import { getOrCreateProgress, updateProgress, createReviewSession, createReviewA
 import { getCorrectMessage, getIncorrectMessage, getStreakMessage } from '@/lib/utils/messages'
 import { useSound } from '@/hooks/useSound'
 import { useHaptics } from '@/hooks/useHaptics'
+import { useGamification } from '@/stores/gamification'
 import type { QualityRating } from '@/lib/db/schema'
 
 export default function PracticeSessionPage() {
@@ -30,6 +31,7 @@ export default function PracticeSessionPage() {
   const settings = useSettings()
   const { play } = useSound()
   const { trigger } = useHaptics()
+  const { recordCorrectAnswer } = useGamification()
 
   const exerciseType = usePracticeSession((state) => state.exerciseType)
   const direction = usePracticeSession((state) => state.direction)
@@ -105,6 +107,8 @@ export default function PracticeSessionPage() {
       if (isCorrect) {
         play('correct')
         trigger('success')
+        // Award XP for correct answer
+        recordCorrectAnswer(exerciseType)
       } else {
         play('incorrect')
         trigger('error')
@@ -172,6 +176,7 @@ export default function PracticeSessionPage() {
       nextItem,
       play,
       trigger,
+      recordCorrectAnswer,
     ]
   )
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
@@ -11,6 +11,8 @@ import { usePracticeSession, useSessionProgress } from '@/stores/practice-sessio
 import { getCompletionMessage, getScoreEmoji } from '@/lib/utils/messages'
 import { useSound } from '@/hooks/useSound'
 import { useHaptics } from '@/hooks/useHaptics'
+import { useGamification } from '@/stores/gamification'
+import { useOnboarding } from '@/stores/onboarding'
 
 export default function PracticeSummaryPage() {
   const router = useRouter()
@@ -22,11 +24,28 @@ export default function PracticeSummaryPage() {
 
   const { play } = useSound()
   const { trigger } = useHaptics()
+  const { recordSessionComplete, totalXP: currentXP } = useGamification()
+  const { dailyGoal } = useOnboarding()
 
   const correctCount = items.filter((i) => i.correct).length
   const incorrectItems = items.filter((i) => !i.correct)
   const percentage = progress.total > 0 ? (correctCount / progress.total) * 100 : 0
   const isPerfect = percentage === 100
+
+  // Track XP bonuses from session completion
+  const [sessionBonuses, setSessionBonuses] = useState<{ xpGained: number; bonuses: string[] } | null>(null)
+  const hasRecordedSession = useRef(false)
+
+  // Record session completion for gamification bonuses (only once)
+  useEffect(() => {
+    if (items.length > 0 && !hasRecordedSession.current) {
+      hasRecordedSession.current = true
+      const result = recordSessionComplete(correctCount, progress.total, dailyGoal)
+      if (result.xpGained > 0) {
+        setSessionBonuses(result)
+      }
+    }
+  }, [items.length, correctCount, progress.total, dailyGoal, recordSessionComplete])
 
   // Tiered celebration effects based on score
   useEffect(() => {
@@ -245,6 +264,31 @@ export default function PracticeSummaryPage() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* XP Bonuses */}
+        {sessionBonuses && sessionBonuses.xpGained > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="w-full mb-6"
+          >
+            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 border-purple-500">
+              <CardContent>
+                <div className="text-white text-center">
+                  <div className="text-3xl font-bold mb-1">
+                    +{sessionBonuses.xpGained} XP
+                  </div>
+                  <div className="text-purple-200 text-sm space-y-1">
+                    {sessionBonuses.bonuses.map((bonus, i) => (
+                      <p key={i}>{bonus}</p>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Incorrect items */}
         {incorrectItems.length > 0 && (

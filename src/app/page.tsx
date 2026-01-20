@@ -9,9 +9,11 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { UserMenuButton, UserMenu } from '@/components/user'
+import { StreakDisplay, DailyGoalCard, LevelBadge } from '@/components/gamification'
 import { useDueWordsCount, useVocabularyStats } from '@/lib/db/hooks/useDueWords'
 import { useVocabularyCount } from '@/lib/db/hooks/useVocabulary'
 import { useOnboarding } from '@/stores/onboarding'
+import { useGamification, useTodayProgress } from '@/stores/gamification'
 
 export default function HomePage() {
   const router = useRouter()
@@ -20,7 +22,9 @@ export default function HomePage() {
   const { stats } = useVocabularyStats()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const { hasCompletedOnboarding } = useOnboarding()
+  const { hasCompletedOnboarding, dailyGoal } = useOnboarding()
+  const { currentStreak, totalXP, level } = useGamification()
+  const todayProgress = useTodayProgress(dailyGoal)
 
   useEffect(() => {
     setMounted(true)
@@ -52,6 +56,26 @@ export default function HomePage() {
         isOpen={isUserMenuOpen}
         onClose={() => setIsUserMenuOpen(false)}
       />
+
+      {/* Daily Goal & Streak Cards */}
+      {totalCount > 0 && (
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <Card>
+            <CardContent className="py-4">
+              <DailyGoalCard
+                current={todayProgress.wordsReviewed}
+                goal={dailyGoal}
+              />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="py-4 flex flex-col items-center justify-center">
+              <StreakDisplay streak={currentStreak} size="md" />
+              <LevelBadge level={level} totalXP={totalXP} size="sm" className="mt-2" />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Due Words Card - Main CTA */}
       <Link href="/practice">
