@@ -8,11 +8,14 @@ import type {
   QualityRating,
 } from '@/lib/db/schema'
 
+export type QuizMode = 'self' | 'parent'
+
 interface PracticeSessionState {
   // Session configuration
   exerciseType: ExerciseType
   direction: PracticeDirection
   sectionIds: string[]
+  quizMode: QuizMode
 
   // Session state
   items: PracticeItem[]
@@ -26,11 +29,13 @@ interface PracticeSessionState {
   maxStreak: number
 
   // Actions
+  setQuizMode: (mode: QuizMode) => void
   startSession: (config: {
     exerciseType: ExerciseType
     direction: PracticeDirection
     sectionIds: string[]
     items: { vocabulary: VocabularyItem; progress?: LearningProgress }[]
+    quizMode?: QuizMode
   }) => void
 
   recordAnswer: (
@@ -64,6 +69,7 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
   exerciseType: 'flashcard',
   direction: 'sourceToTarget',
   sectionIds: [],
+  quizMode: 'self',
   items: [],
   currentIndex: 0,
   isSessionActive: false,
@@ -71,6 +77,8 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
   startTime: null,
   currentStreak: 0,
   maxStreak: 0,
+
+  setQuizMode: (mode) => set({ quizMode: mode }),
 
   startSession: (config) => {
     // Shuffle items for variety
@@ -89,6 +97,7 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
       exerciseType: config.exerciseType,
       direction: config.direction,
       sectionIds: config.sectionIds,
+      quizMode: config.quizMode ?? 'self',
       items: shuffledItems,
       currentIndex: 0,
       isSessionActive: true,
@@ -143,6 +152,7 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
       exerciseType: 'flashcard',
       direction: 'sourceToTarget',
       sectionIds: [],
+      quizMode: 'self',
       items: [],
       currentIndex: 0,
       isSessionActive: false,

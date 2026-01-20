@@ -14,6 +14,7 @@ export default function PracticeSummaryPage() {
   const router = useRouter()
   const items = usePracticeSession((state) => state.items)
   const maxStreak = usePracticeSession((state) => state.maxStreak)
+  const quizMode = usePracticeSession((state) => state.quizMode)
   const reset = usePracticeSession((state) => state.reset)
   const progress = usePracticeSession(useSessionProgress)
 
@@ -53,16 +54,18 @@ export default function PracticeSummaryPage() {
     }
   }, [percentage])
 
+  const practiceBasePath = quizMode === 'parent' ? '/practice/parent-quiz' : '/practice'
+
   // Redirect if no session data
   useEffect(() => {
     if (items.length === 0) {
-      router.replace('/practice')
+      router.replace(practiceBasePath)
     }
-  }, [items.length, router])
+  }, [items.length, router, practiceBasePath])
 
   const handlePracticeAgain = () => {
     reset()
-    router.push('/practice')
+    router.push(practiceBasePath)
   }
 
   const handleGoHome = () => {
