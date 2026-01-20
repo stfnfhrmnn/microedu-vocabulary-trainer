@@ -1,6 +1,6 @@
 # Vocabulary Trainer
 
-An offline-capable PWA for learning vocabulary, designed for students at German secondary schools.
+An offline-capable PWA for learning foreign language vocabulary.
 
 ## Features
 
@@ -71,7 +71,7 @@ src/
 1. **Set up library**: Create a book (e.g., "Découvertes 2")
 2. **Add chapters**: Add chapters (e.g., "Unité 1")
 3. **Create sections**: Create sections for vocabulary groups
-4. **Enter vocabulary**: Add German words and translations
+4. **Enter vocabulary**: Add words and their translations
 5. **Practice**: Select sections and start a practice session
 6. **Track progress**: View your learning progress in the dashboard
 
