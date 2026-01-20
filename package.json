@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "postbuild": "cp public/404.html out/404.html 2>/dev/null || true",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",

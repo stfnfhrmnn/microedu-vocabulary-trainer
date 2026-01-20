@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+      // GitHub Pages SPA redirect hack
+      // Store the attempted path and redirect to the app root
+      const basePath = '/microedu-vocabulary-trainer';
+      const path = window.location.pathname;
+
+      // Remove basePath from the path if present
+      const relativePath = path.startsWith(basePath)
+        ? path.slice(basePath.length)
+        : path;
+
+      // Store the path for the app to pick up
+      sessionStorage.setItem('spa-redirect-path', relativePath);
+
+      // Redirect to the app root
+      window.location.replace(basePath + '/');
+    </script>
+  </head>
+  <body>
+    <p>Redirecting...</p>
+  </body>
+</html>

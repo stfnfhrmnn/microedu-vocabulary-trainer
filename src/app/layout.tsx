@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { OfflineBanner } from '@/components/feedback/OfflineBanner'
+import { SpaRedirectHandler } from '@/components/SpaRedirectHandler'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -45,6 +46,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="antialiased">
+        <SpaRedirectHandler />
         <OfflineBanner />
         {children}
         <BottomNav />
