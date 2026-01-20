@@ -4,6 +4,7 @@ import '@/styles/globals.css'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { OfflineBanner } from '@/components/feedback/OfflineBanner'
 import { SpaRedirectHandler } from '@/components/SpaRedirectHandler'
+import { GlobalProviders } from '@/components/providers/GlobalProviders'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -48,7 +49,9 @@ export default function RootLayout({
       <body className="antialiased">
         <SpaRedirectHandler />
         <OfflineBanner />
-        {children}
+        <GlobalProviders>
+          {children}
+        </GlobalProviders>
         <BottomNav />
       </body>
     </html>

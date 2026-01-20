@@ -13,6 +13,7 @@ import { useSound } from '@/hooks/useSound'
 import { useHaptics } from '@/hooks/useHaptics'
 import { useGamification } from '@/stores/gamification'
 import { useOnboarding } from '@/stores/onboarding'
+import { useAchievements } from '@/stores/achievements'
 
 export default function PracticeSummaryPage() {
   const router = useRouter()
@@ -24,8 +25,9 @@ export default function PracticeSummaryPage() {
 
   const { play } = useSound()
   const { trigger } = useHaptics()
-  const { recordSessionComplete, totalXP: currentXP } = useGamification()
+  const { recordSessionComplete, totalXP: currentXP, currentStreak, longestStreak } = useGamification()
   const { dailyGoal } = useOnboarding()
+  const { recordSession, recordWordsLearned, checkAndUnlockAchievements } = useAchievements()
 
   const correctCount = items.filter((i) => i.correct).length
   const incorrectItems = items.filter((i) => !i.correct)
@@ -44,8 +46,28 @@ export default function PracticeSummaryPage() {
       if (result.xpGained > 0) {
         setSessionBonuses(result)
       }
+
+      // Record session for achievements
+      const isParentQuiz = quizMode === 'parent'
+      recordSession(correctCount, progress.total, isParentQuiz)
+      recordWordsLearned(progress.total)
+
+      // Check and unlock achievements
+      checkAndUnlockAchievements(currentStreak, longestStreak, isParentQuiz)
     }
-  }, [items.length, correctCount, progress.total, dailyGoal, recordSessionComplete])
+  }, [
+    items.length,
+    correctCount,
+    progress.total,
+    dailyGoal,
+    quizMode,
+    currentStreak,
+    longestStreak,
+    recordSessionComplete,
+    recordSession,
+    recordWordsLearned,
+    checkAndUnlockAchievements,
+  ])
 
   // Tiered celebration effects based on score
   useEffect(() => {

@@ -24,6 +24,7 @@ import { getCorrectMessage, getIncorrectMessage, getStreakMessage } from '@/lib/
 import { useSound } from '@/hooks/useSound'
 import { useHaptics } from '@/hooks/useHaptics'
 import { useGamification } from '@/stores/gamification'
+import { useAchievements } from '@/stores/achievements'
 import type { QualityRating } from '@/lib/db/schema'
 
 export default function PracticeSessionPage() {
@@ -32,6 +33,10 @@ export default function PracticeSessionPage() {
   const { play } = useSound()
   const { trigger } = useHaptics()
   const { recordCorrectAnswer } = useGamification()
+  const {
+    recordCorrectAnswer: recordCorrectForAchievement,
+    recordIncorrectAnswer: recordIncorrectForAchievement,
+  } = useAchievements()
 
   const exerciseType = usePracticeSession((state) => state.exerciseType)
   const direction = usePracticeSession((state) => state.direction)
@@ -109,9 +114,13 @@ export default function PracticeSessionPage() {
         trigger('success')
         // Award XP for correct answer
         recordCorrectAnswer(exerciseType)
+        // Track for achievements
+        recordCorrectForAchievement()
       } else {
         play('incorrect')
         trigger('error')
+        // Track for achievements (resets streak)
+        recordIncorrectForAchievement()
       }
 
       // Show feedback message
@@ -177,6 +186,8 @@ export default function PracticeSessionPage() {
       play,
       trigger,
       recordCorrectAnswer,
+      recordCorrectForAchievement,
+      recordIncorrectForAchievement,
     ]
   )
 
