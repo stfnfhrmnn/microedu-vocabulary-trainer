@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 import { useAllSections } from '@/lib/db/hooks/useBooks'
 import { createVocabularyItem } from '@/lib/db/db'
+import { getLangCode, SOURCE_LANG_CODE } from '@/lib/utils/language-codes'
 
 function AddVocabularyForm() {
   const searchParams = useSearchParams()
@@ -160,6 +161,8 @@ function AddVocabularyForm() {
                 value={sourceText}
                 onChange={(e) => setSourceText(e.target.value)}
                 autoFocus
+                spellCheck
+                lang={SOURCE_LANG_CODE}
               />
 
               <Input
@@ -183,6 +186,8 @@ function AddVocabularyForm() {
                 }
                 value={targetText}
                 onChange={(e) => setTargetText(e.target.value)}
+                spellCheck
+                lang={getLangCode(selectedSection?.book?.language)}
               />
 
               <Textarea

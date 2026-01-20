@@ -1,13 +1,14 @@
 import type { OCRProvider, OCRProviderType, VocabularyCandidate, ExtractionHints, OCRResult } from './types'
 import { getTesseractProvider } from './providers/tesseract'
 import { getGeminiProvider } from './providers/gemini'
+import { getGoogleVisionProvider } from './providers/google-vision'
 
 /**
  * OCR Service - manages providers and provides unified API for vocabulary extraction
  */
 class OCRService {
   private preferredProvider: OCRProviderType = 'tesseract'
-  private geminiApiKey: string | null = null
+  private googleApiKey: string | null = null
 
   /**
    * Set the preferred OCR provider
@@ -17,11 +18,19 @@ class OCRService {
   }
 
   /**
-   * Set Gemini API key for cloud-based OCR
+   * Set Google API key for cloud-based OCR (Vision API and Gemini)
+   */
+  setGoogleApiKey(apiKey: string): void {
+    this.googleApiKey = apiKey
+    getGoogleVisionProvider(apiKey)
+    getGeminiProvider(apiKey)
+  }
+
+  /**
+   * @deprecated Use setGoogleApiKey instead
    */
   setGeminiApiKey(apiKey: string): void {
-    this.geminiApiKey = apiKey
-    getGeminiProvider(apiKey)
+    this.setGoogleApiKey(apiKey)
   }
 
   /**
@@ -29,8 +38,10 @@ class OCRService {
    */
   private getProvider(type: OCRProviderType): OCRProvider {
     switch (type) {
+      case 'google-vision':
+        return getGoogleVisionProvider(this.googleApiKey || undefined)
       case 'gemini':
-        return getGeminiProvider(this.geminiApiKey || undefined)
+        return getGeminiProvider(this.googleApiKey || undefined)
       case 'tesseract':
       default:
         return getTesseractProvider()

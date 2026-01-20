@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { ocrService } from '@/lib/ocr/ocr-service'
+import { useSettings } from '@/stores/settings'
 import type { VocabularyCandidate, ExtractionHints, OCRProviderType } from '@/lib/ocr/types'
 
 interface UseOCRResult {
@@ -25,10 +26,16 @@ export function useOCR(): UseOCRResult {
   const [error, setError] = useState<string | null>(null)
   const [activeProvider, setActiveProvider] = useState<OCRProviderType | null>(null)
 
-  // Get active provider on mount
+  const { ocrProvider, googleApiKey } = useSettings()
+
+  // Sync settings with OCR service
   useEffect(() => {
+    ocrService.setPreferredProvider(ocrProvider)
+    if (googleApiKey) {
+      ocrService.setGoogleApiKey(googleApiKey)
+    }
     ocrService.getActiveProviderType().then(setActiveProvider)
-  }, [])
+  }, [ocrProvider, googleApiKey])
 
   const processImage = useCallback(async (image: Blob, hints?: ExtractionHints) => {
     setIsProcessing(true)

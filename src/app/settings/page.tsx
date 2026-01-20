@@ -31,7 +31,7 @@ const strictnessOptions = [
 
 const ocrOptions = [
   { value: 'tesseract', label: 'Tesseract (Offline)' },
-  { value: 'gemini', label: 'Google Gemini (Online)' },
+  { value: 'google-vision', label: 'Google Vision (Online)' },
 ]
 
 export default function SettingsPage() {
@@ -134,18 +134,18 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   settings.setOcrProvider(e.target.value as typeof settings.ocrProvider)
                 }
-                helperText="Tesseract funktioniert offline, Gemini benötigt Internet"
+                helperText="Tesseract funktioniert offline, Google Vision benötigt Internet"
               />
 
-              {settings.ocrProvider === 'gemini' && (
+              {settings.ocrProvider === 'google-vision' && (
                 <div>
                   <div className="flex items-end gap-2">
                     <div className="flex-1">
                       <Input
-                        label="Gemini API-Schlüssel"
+                        label="Google Cloud API-Schlüssel"
                         type={showApiKey ? 'text' : 'password'}
-                        value={settings.geminiApiKey || ''}
-                        onChange={(e) => settings.setGeminiApiKey(e.target.value || null)}
+                        value={settings.googleApiKey || ''}
+                        onChange={(e) => settings.setGoogleApiKey(e.target.value || null)}
                         placeholder="API-Schlüssel eingeben..."
                       />
                     </div>
@@ -158,15 +158,16 @@ export default function SettingsPage() {
                     </Button>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Hole dir einen API-Schlüssel von{' '}
+                    Erstelle einen API-Schlüssel in der{' '}
                     <a
-                      href="https://makersuite.google.com/app/apikey"
+                      href="https://console.cloud.google.com/apis/credentials"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary-600 hover:underline"
                     >
-                      Google AI Studio
+                      Google Cloud Console
                     </a>
+                    {' '}mit aktivierter Vision API.
                   </p>
                 </div>
               )}

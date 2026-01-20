@@ -5,12 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select, type SelectOption } from '@/components/ui/Select'
+import { getLangCode, SOURCE_LANG_CODE } from '@/lib/utils/language-codes'
 import type { VocabularyCandidate } from '@/lib/ocr/types'
+import type { Language } from '@/lib/db/schema'
 
 interface OCRReviewProps {
   candidates: VocabularyCandidate[]
   sections: SelectOption[]
   selectedSectionId: string
+  targetLanguage?: Language
   onSectionChange: (sectionId: string) => void
   onUpdateCandidate: (index: number, updates: Partial<VocabularyCandidate>) => void
   onRemoveCandidate: (index: number) => void
@@ -24,6 +27,7 @@ export function OCRReview({
   candidates,
   sections,
   selectedSectionId,
+  targetLanguage,
   onSectionChange,
   onUpdateCandidate,
   onRemoveCandidate,
@@ -33,6 +37,7 @@ export function OCRReview({
   isSaving,
 }: OCRReviewProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const targetLangCode = getLangCode(targetLanguage)
 
   const handleSourceChange = (index: number, value: string) => {
     onUpdateCandidate(index, { sourceText: value })
@@ -115,6 +120,8 @@ export function OCRReview({
                   size="sm"
                   onFocus={() => setEditingIndex(index)}
                   onBlur={() => setEditingIndex(null)}
+                  spellCheck
+                  lang={SOURCE_LANG_CODE}
                 />
               </div>
 
@@ -127,6 +134,8 @@ export function OCRReview({
                   size="sm"
                   onFocus={() => setEditingIndex(index)}
                   onBlur={() => setEditingIndex(null)}
+                  spellCheck
+                  lang={targetLangCode}
                 />
               </div>
 

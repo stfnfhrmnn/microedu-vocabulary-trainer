@@ -7,6 +7,7 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { CameraCapture } from '@/components/ocr/CameraCapture'
 import { OCRReview } from '@/components/ocr/OCRReview'
+import { OCRProgress, ProviderBadge } from '@/components/ocr/OCRProgress'
 import { Button } from '@/components/ui/Button'
 import { useOCR } from '@/hooks/useOCR'
 import { useAllSections } from '@/lib/db/hooks/useBooks'
@@ -239,21 +240,14 @@ export default function ScanPage() {
                 </div>
               )}
 
-              {/* Processing indicator */}
-              <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-4" />
-
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Erkenne Vokabeln...
-              </h3>
-
-              <p className="text-gray-500 text-sm text-center">
-                {activeProvider === 'tesseract'
-                  ? 'Verwende Tesseract OCR (offline)'
-                  : 'Verwende Gemini Vision (online)'}
-              </p>
+              {/* Progress indicator */}
+              <OCRProgress
+                stage="processing"
+                provider={activeProvider || 'tesseract'}
+              />
 
               {isProcessing && (
-                <p className="text-gray-400 text-xs mt-2">
+                <p className="text-gray-400 text-xs mt-4">
                   Dies kann einen Moment dauern...
                 </p>
               )}
@@ -270,7 +264,14 @@ export default function ScanPage() {
             exit={{ opacity: 0 }}
             className="flex flex-col h-[100dvh]"
           >
-            <Header title="Überprüfen" />
+            <Header
+              title="Überprüfen"
+              action={
+                activeProvider && (
+                  <ProviderBadge provider={activeProvider} />
+                )
+              }
+            />
 
             {/* Error banner */}
             {error && (
@@ -284,6 +285,7 @@ export default function ScanPage() {
                 candidates={candidates}
                 sections={sectionOptions}
                 selectedSectionId={selectedSectionId}
+                targetLanguage={selectedSection?.book?.language}
                 onSectionChange={setSelectedSectionId}
                 onUpdateCandidate={updateCandidate}
                 onRemoveCandidate={removeCandidate}

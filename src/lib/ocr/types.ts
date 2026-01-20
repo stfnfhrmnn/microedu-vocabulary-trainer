@@ -40,4 +40,4 @@ export interface OCRProvider {
   terminate?(): Promise<void>
 }
 
-export type OCRProviderType = 'tesseract' | 'gemini'
+export type OCRProviderType = 'tesseract' | 'gemini' | 'google-vision'
