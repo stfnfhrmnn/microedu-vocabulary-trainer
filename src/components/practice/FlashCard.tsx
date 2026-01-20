@@ -19,15 +19,21 @@ export function FlashCard({
   notes,
 }: FlashCardProps) {
   return (
-    <div
+    <motion.div
       className="perspective-1000 cursor-pointer"
       onClick={onFlip}
       style={{ perspective: '1000px' }}
+      whileTap={{ scale: 0.98 }}
     >
       <motion.div
         className="relative w-full h-64 preserve-3d"
         initial={false}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        animate={{
+          rotateY: isFlipped ? 180 : 0,
+          boxShadow: isFlipped
+            ? '0 20px 40px rgba(59, 130, 246, 0.2), 0 0 60px rgba(59, 130, 246, 0.1)'
+            : '0 10px 30px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05)',
+        }}
         transition={{
           type: 'spring',
           stiffness: 300,
@@ -35,31 +41,48 @@ export function FlashCard({
         }}
         style={{
           transformStyle: 'preserve-3d',
+          borderRadius: '24px',
         }}
       >
         {/* Front of card */}
-        <div
+        <motion.div
           className={cn(
             'absolute inset-0 w-full h-full backface-hidden',
-            'bg-white rounded-3xl shadow-lg border border-gray-100',
+            'bg-white rounded-3xl border border-gray-100',
             'flex flex-col items-center justify-center p-6'
           )}
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-4">
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs text-gray-400 uppercase tracking-wider mb-4"
+          >
             Frage
-          </p>
+          </motion.p>
           <p className="text-vocab-lg text-gray-900 text-center break-words">
             {question}
           </p>
-          <p className="text-sm text-gray-400 mt-6">Tippe zum Umdrehen</p>
-        </div>
+          <motion.p
+            animate={{
+              opacity: [0.4, 0.7, 0.4],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+            className="text-sm text-gray-400 mt-6"
+          >
+            Tippe zum Umdrehen
+          </motion.p>
+        </motion.div>
 
         {/* Back of card */}
-        <div
+        <motion.div
           className={cn(
             'absolute inset-0 w-full h-full backface-hidden',
-            'bg-primary-50 rounded-3xl shadow-lg border border-primary-100',
+            'bg-gradient-to-br from-primary-50 to-primary-100 rounded-3xl border border-primary-200',
             'flex flex-col items-center justify-center p-6'
           )}
           style={{
@@ -70,14 +93,14 @@ export function FlashCard({
           <p className="text-xs text-primary-400 uppercase tracking-wider mb-4">
             Antwort
           </p>
-          <p className="text-vocab-lg text-primary-700 text-center break-words">
+          <p className="text-vocab-lg text-primary-700 text-center break-words font-medium">
             {answer}
           </p>
           {notes && (
             <p className="text-sm text-primary-500 mt-4 text-center">{notes}</p>
           )}
-        </div>
+        </motion.div>
       </motion.div>
-    </div>
+    </motion.div>
   )
 }

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -10,12 +11,30 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { UserMenuButton, UserMenu } from '@/components/user'
 import { useDueWordsCount, useVocabularyStats } from '@/lib/db/hooks/useDueWords'
 import { useVocabularyCount } from '@/lib/db/hooks/useVocabulary'
+import { useOnboarding } from '@/stores/onboarding'
 
 export default function HomePage() {
+  const router = useRouter()
   const dueCount = useDueWordsCount()
   const totalCount = useVocabularyCount()
   const { stats } = useVocabularyStats()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const { hasCompletedOnboarding } = useOnboarding()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (mounted && !hasCompletedOnboarding) {
+      router.replace('/onboarding')
+    }
+  }, [mounted, hasCompletedOnboarding, router])
+
+  if (!mounted || !hasCompletedOnboarding) {
+    return null
+  }
 
   return (
     <PageContainer>

@@ -5,16 +5,20 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
 import { ProgressRing } from '@/components/progress/ProgressRing'
+import { WeeklyChart } from '@/components/progress/WeeklyChart'
 import { useVocabularyStats } from '@/lib/db/hooks/useDueWords'
-import { useReviewSessions, useTodayReviewCount } from '@/lib/db/hooks/useProgress'
+import { useReviewSessions, useTodayReviewCount, useWeeklyActivity } from '@/lib/db/hooks/useProgress'
 import { useBooks } from '@/lib/db/hooks/useBooks'
+import { useOnboarding } from '@/stores/onboarding'
 import { formatDate } from '@/lib/utils/date'
 
 export default function ProgressPage() {
   const { stats, isLoading: statsLoading } = useVocabularyStats()
   const { sessions } = useReviewSessions(5)
   const todayCount = useTodayReviewCount()
+  const weeklyActivity = useWeeklyActivity()
   const { books } = useBooks()
+  const { dailyGoal } = useOnboarding()
 
   const isLoading = statsLoading
 
@@ -153,6 +157,20 @@ export default function ProgressPage() {
                     <div className="text-sm text-gray-500">Vokabeln</div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Weekly Activity Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <Card>
+              <CardContent>
+                <h3 className="font-semibold text-gray-900 mb-4">Diese Woche</h3>
+                <WeeklyChart data={weeklyActivity} dailyGoal={dailyGoal} />
               </CardContent>
             </Card>
           </motion.div>

@@ -55,3 +55,33 @@ export function useTodayReviewCount() {
 
   return count ?? 0
 }
+
+export function useWeeklyActivity() {
+  const data = useLiveQuery(async () => {
+    const today = new Date()
+    const weekAgo = new Date(today)
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    weekAgo.setHours(0, 0, 0, 0)
+
+    const sessions = await db.reviewSessions
+      .where('startedAt')
+      .above(weekAgo)
+      .toArray()
+
+    // Group by date
+    const byDate: Record<string, number> = {}
+
+    sessions.forEach((session) => {
+      const date = new Date(session.startedAt).toISOString().split('T')[0]
+      byDate[date] = (byDate[date] || 0) + session.totalItems
+    })
+
+    // Convert to array format
+    return Object.entries(byDate).map(([date, count]) => ({
+      date,
+      count,
+    }))
+  }, [])
+
+  return data ?? []
+}
