@@ -16,6 +16,7 @@ interface SettingsState {
 
   // App settings
   soundEnabled: boolean
+  hapticEnabled: boolean
 
   // Actions
   setDefaultDirection: (direction: PracticeDirection) => void
@@ -24,6 +25,7 @@ interface SettingsState {
   setOcrProvider: (provider: OCRProviderType) => void
   setGoogleApiKey: (key: string | null) => void
   setSoundEnabled: (enabled: boolean) => void
+  setHapticEnabled: (enabled: boolean) => void
 }
 
 export const useSettings = create<SettingsState>()(
@@ -36,6 +38,7 @@ export const useSettings = create<SettingsState>()(
       ocrProvider: 'tesseract',
       googleApiKey: null,
       soundEnabled: true,
+      hapticEnabled: true,
 
       // Actions
       setDefaultDirection: (direction) => set({ defaultDirection: direction }),
@@ -44,6 +47,7 @@ export const useSettings = create<SettingsState>()(
       setOcrProvider: (provider) => set({ ocrProvider: provider }),
       setGoogleApiKey: (key) => set({ googleApiKey: key }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
+      setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
     }),
     {
       name: 'vocabulary-trainer-settings',

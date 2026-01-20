@@ -21,11 +21,15 @@ import { useSettings } from '@/stores/settings'
 import { calculateNextReview, mapUserRating, getDefaultProgress } from '@/lib/learning/sm2'
 import { getOrCreateProgress, updateProgress, createReviewSession, createReviewAttempt, completeReviewSession } from '@/lib/db/db'
 import { getCorrectMessage, getIncorrectMessage, getStreakMessage } from '@/lib/utils/messages'
+import { useSound } from '@/hooks/useSound'
+import { useHaptics } from '@/hooks/useHaptics'
 import type { QualityRating } from '@/lib/db/schema'
 
 export default function PracticeSessionPage() {
   const router = useRouter()
   const settings = useSettings()
+  const { play } = useSound()
+  const { trigger } = useHaptics()
 
   const exerciseType = usePracticeSession((state) => state.exerciseType)
   const direction = usePracticeSession((state) => state.direction)
@@ -97,6 +101,15 @@ export default function PracticeSessionPage() {
       // Update session state
       recordAnswer(isCorrect, qualityRating, userAnswer)
 
+      // Play sound and haptic feedback
+      if (isCorrect) {
+        play('correct')
+        trigger('success')
+      } else {
+        play('incorrect')
+        trigger('error')
+      }
+
       // Show feedback message
       const message = isCorrect ? getCorrectMessage() : getIncorrectMessage()
       setFeedbackMessage(message)
@@ -107,6 +120,8 @@ export default function PracticeSessionPage() {
         const newStreak = currentStreak + 1
         const streakMsg = getStreakMessage(newStreak)
         if (streakMsg) {
+          play('streak')
+          trigger('heavy')
           setShowStreakMessage(streakMsg)
           setTimeout(() => setShowStreakMessage(null), 2000)
         }
@@ -155,6 +170,8 @@ export default function PracticeSessionPage() {
       currentStreak,
       recordAnswer,
       nextItem,
+      play,
+      trigger,
     ]
   )
 
@@ -170,6 +187,12 @@ export default function PracticeSessionPage() {
   const handleTypedAnswer = (userAnswer: string, isCorrect: boolean) => {
     const rating = isCorrect ? 'knew_it' : 'didnt_know'
     handleAnswer(rating, userAnswer)
+  }
+
+  const handleFlip = () => {
+    play('flip')
+    trigger('light')
+    flipCard()
   }
 
   const handleQuit = () => {
@@ -229,7 +252,7 @@ export default function PracticeSessionPage() {
               question={question}
               answer={answer}
               isFlipped={isCardFlipped}
-              onFlip={flipCard}
+              onFlip={handleFlip}
               notes={currentItem.vocabulary.notes}
             />
 

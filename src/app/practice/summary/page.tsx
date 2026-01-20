@@ -9,6 +9,8 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { usePracticeSession, useSessionProgress } from '@/stores/practice-session'
 import { getCompletionMessage, getScoreEmoji } from '@/lib/utils/messages'
+import { useSound } from '@/hooks/useSound'
+import { useHaptics } from '@/hooks/useHaptics'
 
 export default function PracticeSummaryPage() {
   const router = useRouter()
@@ -18,16 +20,86 @@ export default function PracticeSummaryPage() {
   const reset = usePracticeSession((state) => state.reset)
   const progress = usePracticeSession(useSessionProgress)
 
+  const { play } = useSound()
+  const { trigger } = useHaptics()
+
   const correctCount = items.filter((i) => i.correct).length
   const incorrectItems = items.filter((i) => !i.correct)
   const percentage = progress.total > 0 ? (correctCount / progress.total) * 100 : 0
+  const isPerfect = percentage === 100
 
-  // Trigger confetti for good performance
+  // Tiered celebration effects based on score
   useEffect(() => {
+    // Play success sound and haptic
+    if (percentage >= 70) {
+      play('success')
+      trigger('success')
+    }
+
+    // Perfect score (100%) - Gold explosion with star burst
+    if (isPerfect) {
+      // Initial big burst
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#fbbf24', '#f59e0b', '#d97706', '#ffffff'],
+      })
+
+      // Star burst effect
+      setTimeout(() => {
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }
+        const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min
+
+        const interval = setInterval(() => {
+          confetti({
+            ...defaults,
+            particleCount: 30,
+            origin: { x: randomInRange(0.2, 0.8), y: randomInRange(0.2, 0.6) },
+            colors: ['#fbbf24', '#ffffff'],
+          })
+        }, 250)
+
+        setTimeout(() => clearInterval(interval), 2000)
+      }, 500)
+
+      return
+    }
+
+    // Excellent score (90-99%) - Silver confetti with sparkles
+    if (percentage >= 90) {
+      const duration = 2500
+      const end = Date.now() + duration
+      const colors = ['#94a3b8', '#cbd5e1', '#e2e8f0', '#ffffff']
+
+      const frame = () => {
+        confetti({
+          particleCount: 4,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors,
+        })
+        confetti({
+          particleCount: 4,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors,
+        })
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame)
+        }
+      }
+      frame()
+      return
+    }
+
+    // Good score (80-89%) - Bronze confetti
     if (percentage >= 80) {
       const duration = 2000
       const end = Date.now() + duration
-
       const colors = ['#22c55e', '#3b82f6', '#f59e0b']
 
       const frame = () => {
@@ -51,8 +123,19 @@ export default function PracticeSummaryPage() {
         }
       }
       frame()
+      return
     }
-  }, [percentage])
+
+    // Okay score (70-79%) - Subtle particle burst
+    if (percentage >= 70) {
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.7 },
+        colors: ['#60a5fa', '#34d399'],
+      })
+    }
+  }, [percentage, isPerfect, play, trigger])
 
   const practiceBasePath = quizMode === 'parent' ? '/practice/parent-quiz' : '/practice'
 
@@ -80,6 +163,20 @@ export default function PracticeSummaryPage() {
   return (
     <PageContainer>
       <div className="flex flex-col items-center pt-8">
+        {/* Perfect Banner */}
+        {isPerfect && (
+          <motion.div
+            initial={{ scale: 0, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.2 }}
+            className="mb-4"
+          >
+            <div className="bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400 text-white font-bold text-2xl px-8 py-2 rounded-full shadow-lg">
+              PERFEKT!
+            </div>
+          </motion.div>
+        )}
+
         {/* Score */}
         <motion.div
           initial={{ scale: 0 }}
@@ -88,12 +185,22 @@ export default function PracticeSummaryPage() {
           className="text-center mb-8"
         >
           <div className="text-6xl mb-4">{getScoreEmoji(correctCount, progress.total)}</div>
-          <div className="text-5xl font-bold text-gray-900 mb-2">
+          <motion.div
+            className="text-5xl font-bold text-gray-900 mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             {correctCount}/{progress.total}
-          </div>
-          <div className="text-lg text-gray-500">
+          </motion.div>
+          <motion.div
+            className={`text-lg ${isPerfect ? 'text-yellow-600 font-semibold' : 'text-gray-500'}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
             {Math.round(percentage)}% richtig
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Message */}

@@ -180,12 +180,21 @@ export default function SettingsPage() {
           <CardContent>
             <h3 className="font-semibold text-gray-900 mb-4">App-Einstellungen</h3>
 
-            <Toggle
-              checked={settings.soundEnabled}
-              onChange={settings.setSoundEnabled}
-              label="Töne"
-              description="Akustisches Feedback bei richtig/falsch"
-            />
+            <div className="space-y-4">
+              <Toggle
+                checked={settings.soundEnabled}
+                onChange={settings.setSoundEnabled}
+                label="Töne"
+                description="Akustisches Feedback bei richtig/falsch"
+              />
+
+              <Toggle
+                checked={settings.hapticEnabled}
+                onChange={settings.setHapticEnabled}
+                label="Vibration"
+                description="Haptisches Feedback auf unterstützten Geräten"
+              />
+            </div>
           </CardContent>
         </Card>
 

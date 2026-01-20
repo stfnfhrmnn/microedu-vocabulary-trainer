@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { UserMenuButton, UserMenu } from '@/components/user'
 import { useDueWordsCount, useVocabularyStats } from '@/lib/db/hooks/useDueWords'
 import { useVocabularyCount } from '@/lib/db/hooks/useVocabulary'
@@ -224,32 +225,17 @@ export default function HomePage() {
 
       {/* Empty State */}
       {totalCount === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-8 h-8 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Noch keine Vokabeln</h3>
-            <p className="text-gray-500 text-sm mb-4">
-              Erstelle zuerst ein Buch und füge dann deine Vokabeln hinzu.
-            </p>
-            <Link href="/library">
-              <Button variant="primary">Bibliothek öffnen</Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon="📚"
+          title="Bereit zum Lernen?"
+          description="In nur 3 Schritten bist du startklar!"
+          steps={[
+            { icon: '1️⃣', text: 'Erstelle ein Buch für dein Schulbuch' },
+            { icon: '2️⃣', text: 'Füge Kapitel und Abschnitte hinzu' },
+            { icon: '3️⃣', text: 'Tippe oder scanne deine Vokabeln' },
+          ]}
+          action={{ label: "Los geht's!", href: '/library' }}
+        />
       )}
     </PageContainer>
   )
