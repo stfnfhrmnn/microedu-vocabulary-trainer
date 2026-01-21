@@ -7,12 +7,15 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AvatarPicker } from './AvatarPicker'
+import { ShareButton } from '@/components/profile/ShareButton'
+import { SyncStatus } from '@/components/profile/SyncStatus'
 import {
   useUserSession,
   useCurrentProfile,
   type AvatarEmoji,
   type UserProfile,
 } from '@/stores/user-session'
+import { useSyncStatus } from '@/stores/sync'
 import { formatUserIdShort } from '@/lib/utils/user-id'
 import { cn } from '@/lib/utils/cn'
 
@@ -25,6 +28,7 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
   const profile = useCurrentProfile()
   const { profiles, updateProfile, switchProfile, createProfile, deleteProfile } =
     useUserSession()
+  const { isRegistered } = useSyncStatus()
 
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(profile.name)
@@ -162,9 +166,12 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
         {/* User Code */}
         {!showAvatarPicker && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Code
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Code
+              </label>
+              <SyncStatus showLabel />
+            </div>
             <div className="flex gap-2">
               <div className="flex-1 px-3 py-2 bg-gray-50 rounded-lg font-mono text-gray-700">
                 {profile.id}
@@ -206,6 +213,11 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
                 )}
               </Button>
             </div>
+            {isRegistered && (
+              <div className="mt-2">
+                <ShareButton userCode={profile.id} className="w-full" />
+              </div>
+            )}
           </div>
         )}
 

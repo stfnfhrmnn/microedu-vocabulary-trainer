@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import { generateId } from '@/lib/utils/id'
+import { queueChange, type ChangeTable } from '@/lib/sync/sync-queue'
 import type {
   Book,
   Chapter,
@@ -15,6 +16,21 @@ import type {
   CreateSection,
   CreateVocabularyItem,
 } from './schema'
+
+// Helper to safely queue changes (won't fail if sync module not available)
+async function safeQueueChange(
+  table: ChangeTable,
+  operation: 'create' | 'update' | 'delete',
+  localId: string,
+  data: Record<string, unknown> | null
+): Promise<void> {
+  try {
+    await queueChange(table, operation, localId, data)
+  } catch (error) {
+    // Silently fail - sync is optional
+    console.warn('Failed to queue sync change:', error)
+  }
+}
 
 // ============================================================================
 // Database Class
@@ -112,14 +128,24 @@ export async function createBook(data: CreateBook): Promise<Book> {
     updatedAt: new Date(),
   }
   await db.books.add(book)
+  await safeQueueChange('books', 'create', book.id, book as unknown as Record<string, unknown>)
   return book
 }
 
 export async function updateBook(id: string, data: Partial<CreateBook>): Promise<void> {
   await db.books.update(id, data)
+  const updated = await db.books.get(id)
+  if (updated) {
+    await safeQueueChange('books', 'update', id, updated as unknown as Record<string, unknown>)
+  }
 }
 
 export async function deleteBook(id: string): Promise<void> {
+  // Collect IDs before deletion for sync
+  const chapters = await db.chapters.where('bookId').equals(id).toArray()
+  const sections = await db.sections.where('bookId').equals(id).toArray()
+  const vocabItems = await db.vocabularyItems.where('bookId').equals(id).toArray()
+
   await db.transaction('rw', [db.books, db.chapters, db.sections, db.vocabularyItems, db.learningProgress], async () => {
     // Get all vocabulary items for this book
     const vocabIds = await db.vocabularyItems
@@ -145,6 +171,19 @@ export async function deleteBook(id: string): Promise<void> {
     // Delete book
     await db.books.delete(id)
   })
+
+  // Queue delete changes for sync
+  for (const vocab of vocabItems) {
+    await safeQueueChange('vocabularyItems', 'delete', vocab.id, null)
+    await safeQueueChange('learningProgress', 'delete', vocab.id, null)
+  }
+  for (const section of sections) {
+    await safeQueueChange('sections', 'delete', section.id, null)
+  }
+  for (const chapter of chapters) {
+    await safeQueueChange('chapters', 'delete', chapter.id, null)
+  }
+  await safeQueueChange('books', 'delete', id, null)
 }
 
 // ============================================================================
@@ -159,14 +198,23 @@ export async function createChapter(data: CreateChapter): Promise<Chapter> {
     updatedAt: new Date(),
   }
   await db.chapters.add(chapter)
+  await safeQueueChange('chapters', 'create', chapter.id, chapter as unknown as Record<string, unknown>)
   return chapter
 }
 
 export async function updateChapter(id: string, data: Partial<CreateChapter>): Promise<void> {
   await db.chapters.update(id, data)
+  const updated = await db.chapters.get(id)
+  if (updated) {
+    await safeQueueChange('chapters', 'update', id, updated as unknown as Record<string, unknown>)
+  }
 }
 
 export async function deleteChapter(id: string): Promise<void> {
+  // Collect IDs before deletion for sync
+  const sections = await db.sections.where('chapterId').equals(id).toArray()
+  const vocabItems = await db.vocabularyItems.where('chapterId').equals(id).toArray()
+
   await db.transaction('rw', [db.chapters, db.sections, db.vocabularyItems, db.learningProgress], async () => {
     const vocabIds = await db.vocabularyItems
       .where('chapterId')
@@ -182,6 +230,16 @@ export async function deleteChapter(id: string): Promise<void> {
     await db.sections.where('chapterId').equals(id).delete()
     await db.chapters.delete(id)
   })
+
+  // Queue delete changes for sync
+  for (const vocab of vocabItems) {
+    await safeQueueChange('vocabularyItems', 'delete', vocab.id, null)
+    await safeQueueChange('learningProgress', 'delete', vocab.id, null)
+  }
+  for (const section of sections) {
+    await safeQueueChange('sections', 'delete', section.id, null)
+  }
+  await safeQueueChange('chapters', 'delete', id, null)
 }
 
 // ============================================================================
@@ -196,14 +254,22 @@ export async function createSection(data: CreateSection): Promise<Section> {
     updatedAt: new Date(),
   }
   await db.sections.add(section)
+  await safeQueueChange('sections', 'create', section.id, section as unknown as Record<string, unknown>)
   return section
 }
 
 export async function updateSection(id: string, data: Partial<CreateSection>): Promise<void> {
   await db.sections.update(id, data)
+  const updated = await db.sections.get(id)
+  if (updated) {
+    await safeQueueChange('sections', 'update', id, updated as unknown as Record<string, unknown>)
+  }
 }
 
 export async function deleteSection(id: string): Promise<void> {
+  // Collect IDs before deletion for sync
+  const vocabItems = await db.vocabularyItems.where('sectionId').equals(id).toArray()
+
   await db.transaction('rw', [db.sections, db.vocabularyItems, db.learningProgress], async () => {
     const vocabIds = await db.vocabularyItems
       .where('sectionId')
@@ -218,10 +284,21 @@ export async function deleteSection(id: string): Promise<void> {
     await db.vocabularyItems.where('sectionId').equals(id).delete()
     await db.sections.delete(id)
   })
+
+  // Queue delete changes for sync
+  for (const vocab of vocabItems) {
+    await safeQueueChange('vocabularyItems', 'delete', vocab.id, null)
+    await safeQueueChange('learningProgress', 'delete', vocab.id, null)
+  }
+  await safeQueueChange('sections', 'delete', id, null)
 }
 
 export async function toggleSectionCovered(id: string, covered: boolean): Promise<void> {
   await db.sections.update(id, { coveredInClass: covered })
+  const updated = await db.sections.get(id)
+  if (updated) {
+    await safeQueueChange('sections', 'update', id, updated as unknown as Record<string, unknown>)
+  }
 }
 
 // ============================================================================
@@ -236,11 +313,16 @@ export async function createVocabularyItem(data: CreateVocabularyItem): Promise<
     updatedAt: new Date(),
   }
   await db.vocabularyItems.add(item)
+  await safeQueueChange('vocabularyItems', 'create', item.id, item as unknown as Record<string, unknown>)
   return item
 }
 
 export async function updateVocabularyItem(id: string, data: Partial<CreateVocabularyItem>): Promise<void> {
   await db.vocabularyItems.update(id, data)
+  const updated = await db.vocabularyItems.get(id)
+  if (updated) {
+    await safeQueueChange('vocabularyItems', 'update', id, updated as unknown as Record<string, unknown>)
+  }
 }
 
 export async function deleteVocabularyItem(id: string): Promise<void> {
@@ -248,6 +330,8 @@ export async function deleteVocabularyItem(id: string): Promise<void> {
     await db.learningProgress.where('vocabularyId').equals(id).delete()
     await db.vocabularyItems.delete(id)
   })
+  await safeQueueChange('vocabularyItems', 'delete', id, null)
+  await safeQueueChange('learningProgress', 'delete', id, null)
 }
 
 export async function createVocabularyItems(items: CreateVocabularyItem[]): Promise<VocabularyItem[]> {
@@ -258,6 +342,10 @@ export async function createVocabularyItems(items: CreateVocabularyItem[]): Prom
     updatedAt: new Date(),
   }))
   await db.vocabularyItems.bulkAdd(vocabItems)
+  // Queue sync for each item
+  for (const item of vocabItems) {
+    await safeQueueChange('vocabularyItems', 'create', item.id, item as unknown as Record<string, unknown>)
+  }
   return vocabItems
 }
 
@@ -282,11 +370,16 @@ export async function getOrCreateProgress(vocabularyId: string): Promise<Learnin
     updatedAt: new Date(),
   }
   await db.learningProgress.add(progress)
+  await safeQueueChange('learningProgress', 'create', vocabularyId, progress as unknown as Record<string, unknown>)
   return progress
 }
 
 export async function updateProgress(id: string, data: Partial<LearningProgress>): Promise<void> {
   await db.learningProgress.update(id, data)
+  const updated = await db.learningProgress.get(id)
+  if (updated) {
+    await safeQueueChange('learningProgress', 'update', updated.vocabularyId, updated as unknown as Record<string, unknown>)
+  }
 }
 
 // ============================================================================
