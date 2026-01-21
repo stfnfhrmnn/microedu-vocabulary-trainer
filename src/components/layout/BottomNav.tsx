@@ -99,8 +99,12 @@ const navItems: NavItem[] = [
 export function BottomNav() {
   const pathname = usePathname()
 
-  // Hide navigation during practice sessions
-  if (pathname.startsWith('/practice/session')) {
+  // Hide navigation during practice sessions, onboarding, and login
+  if (
+    pathname.startsWith('/practice/session') ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/login')
+  ) {
     return null
   }
 
