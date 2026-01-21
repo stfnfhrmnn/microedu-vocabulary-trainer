@@ -14,7 +14,7 @@ type MigrationStep = 'prompt' | 'registering' | 'login' | 'logging-in' | 'succes
 
 export function MigrationPrompt() {
   const profile = useCurrentProfile()
-  const { setRegistered: setSyncRegistered } = useSyncStore()
+  const setSyncRegistered = useSyncStore((s) => s.setRegistered)
   const [isOpen, setIsOpen] = useState(false)
   const [step, setStep] = useState<MigrationStep>('prompt')
   const [loginCode, setLoginCode] = useState('')

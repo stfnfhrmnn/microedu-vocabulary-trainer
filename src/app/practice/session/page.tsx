@@ -13,7 +13,8 @@ import { ProgressBar } from '@/components/practice/ProgressBar'
 import {
   usePracticeSession,
   useCurrentItem,
-  useSessionProgress,
+  selectProgressAnswered,
+  selectProgressTotal,
   useIsSessionComplete,
   getQuestionAnswer,
 } from '@/stores/practice-session'
@@ -29,14 +30,12 @@ import type { QualityRating } from '@/lib/db/schema'
 
 export default function PracticeSessionPage() {
   const router = useRouter()
-  const settings = useSettings()
+  const typingStrictness = useSettings((s) => s.typingStrictness)
   const { play } = useSound()
   const { trigger } = useHaptics()
-  const { recordCorrectAnswer } = useGamification()
-  const {
-    recordCorrectAnswer: recordCorrectForAchievement,
-    recordIncorrectAnswer: recordIncorrectForAchievement,
-  } = useAchievements()
+  const recordCorrectAnswer = useGamification((s) => s.recordCorrectAnswer)
+  const recordCorrectForAchievement = useAchievements((s) => s.recordCorrectAnswer)
+  const recordIncorrectForAchievement = useAchievements((s) => s.recordIncorrectAnswer)
 
   const exerciseType = usePracticeSession((state) => state.exerciseType)
   const direction = usePracticeSession((state) => state.direction)
@@ -48,7 +47,8 @@ export default function PracticeSessionPage() {
   const sectionIds = usePracticeSession((state) => state.sectionIds)
 
   const currentItem = usePracticeSession(useCurrentItem)
-  const progress = usePracticeSession(useSessionProgress)
+  const progressAnswered = usePracticeSession(selectProgressAnswered)
+  const progressTotal = usePracticeSession(selectProgressTotal)
   const isComplete = usePracticeSession(useIsSessionComplete)
 
   const recordAnswer = usePracticeSession((state) => state.recordAnswer)
@@ -130,7 +130,7 @@ export default function PracticeSessionPage() {
       // Announce to screen readers
       setScreenReaderAnnouncement(
         isCorrect
-          ? `Richtig! ${message}. Frage ${progress.answered + 1} von ${progress.total}.`
+          ? `Richtig! ${message}. Frage ${progressAnswered + 1} von ${progressTotal}.`
           : `Falsch. Die richtige Antwort war: ${currentItem.vocabulary.targetText}. ${message}`
       )
       setTimeout(() => setFeedbackMessage(null), 1500)
@@ -188,6 +188,8 @@ export default function PracticeSessionPage() {
       exerciseType,
       direction,
       currentStreak,
+      progressAnswered,
+      progressTotal,
       recordAnswer,
       nextItem,
       play,
@@ -251,8 +253,8 @@ export default function PracticeSessionPage() {
           </svg>
         </button>
         <ProgressBar
-          current={progress.answered}
-          total={progress.total}
+          current={progressAnswered}
+          total={progressTotal}
           className="flex-1 mx-4"
         />
         <div className="w-10" /> {/* Spacer */}
@@ -306,7 +308,7 @@ export default function PracticeSessionPage() {
           <TypedAnswer
             question={question}
             correctAnswer={answer}
-            strictness={settings.typingStrictness}
+            strictness={typingStrictness}
             onAnswer={handleTypedAnswer}
           />
         )}

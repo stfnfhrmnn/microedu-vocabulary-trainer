@@ -7,7 +7,7 @@ import confetti from 'canvas-confetti'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { usePracticeSession, useSessionProgress } from '@/stores/practice-session'
+import { usePracticeSession, selectProgressTotal } from '@/stores/practice-session'
 import { getCompletionMessage, getScoreEmoji } from '@/lib/utils/messages'
 import { useSound } from '@/hooks/useSound'
 import { useHaptics } from '@/hooks/useHaptics'
@@ -21,17 +21,21 @@ export default function PracticeSummaryPage() {
   const maxStreak = usePracticeSession((state) => state.maxStreak)
   const quizMode = usePracticeSession((state) => state.quizMode)
   const reset = usePracticeSession((state) => state.reset)
-  const progress = usePracticeSession(useSessionProgress)
+  const progressTotal = usePracticeSession(selectProgressTotal)
 
   const { play } = useSound()
   const { trigger } = useHaptics()
-  const { recordSessionComplete, totalXP: currentXP, currentStreak, longestStreak } = useGamification()
-  const { dailyGoal } = useOnboarding()
-  const { recordSession, recordWordsLearned, checkAndUnlockAchievements } = useAchievements()
+  const recordSessionComplete = useGamification((s) => s.recordSessionComplete)
+  const currentStreak = useGamification((s) => s.currentStreak)
+  const longestStreak = useGamification((s) => s.longestStreak)
+  const dailyGoal = useOnboarding((s) => s.dailyGoal)
+  const recordSession = useAchievements((s) => s.recordSession)
+  const recordWordsLearned = useAchievements((s) => s.recordWordsLearned)
+  const checkAndUnlockAchievements = useAchievements((s) => s.checkAndUnlockAchievements)
 
   const correctCount = items.filter((i) => i.correct).length
   const incorrectItems = items.filter((i) => !i.correct)
-  const percentage = progress.total > 0 ? (correctCount / progress.total) * 100 : 0
+  const percentage = progressTotal > 0 ? (correctCount / progressTotal) * 100 : 0
   const isPerfect = percentage === 100
 
   // Track XP bonuses from session completion
@@ -42,15 +46,15 @@ export default function PracticeSummaryPage() {
   useEffect(() => {
     if (items.length > 0 && !hasRecordedSession.current) {
       hasRecordedSession.current = true
-      const result = recordSessionComplete(correctCount, progress.total, dailyGoal)
+      const result = recordSessionComplete(correctCount, progressTotal, dailyGoal)
       if (result.xpGained > 0) {
         setSessionBonuses(result)
       }
 
       // Record session for achievements
       const isParentQuiz = quizMode === 'parent'
-      recordSession(correctCount, progress.total, isParentQuiz)
-      recordWordsLearned(progress.total)
+      recordSession(correctCount, progressTotal, isParentQuiz)
+      recordWordsLearned(progressTotal)
 
       // Check and unlock achievements
       checkAndUnlockAchievements(currentStreak, longestStreak, isParentQuiz)
@@ -58,7 +62,7 @@ export default function PracticeSummaryPage() {
   }, [
     items.length,
     correctCount,
-    progress.total,
+    progressTotal,
     dailyGoal,
     quizMode,
     currentStreak,
@@ -225,14 +229,14 @@ export default function PracticeSummaryPage() {
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
           className="text-center mb-8"
         >
-          <div className="text-6xl mb-4">{getScoreEmoji(correctCount, progress.total)}</div>
+          <div className="text-6xl mb-4">{getScoreEmoji(correctCount, progressTotal)}</div>
           <motion.div
             className="text-5xl font-bold text-gray-900 mb-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            {correctCount}/{progress.total}
+            {correctCount}/{progressTotal}
           </motion.div>
           <motion.div
             className={`text-lg ${isPerfect ? 'text-yellow-600 font-semibold' : 'text-gray-500'}`}
@@ -251,7 +255,7 @@ export default function PracticeSummaryPage() {
           transition={{ delay: 0.3 }}
           className="text-xl text-gray-700 text-center mb-8 px-4"
         >
-          {getCompletionMessage(correctCount, progress.total)}
+          {getCompletionMessage(correctCount, progressTotal)}
         </motion.p>
 
         {/* Stats */}
@@ -270,7 +274,7 @@ export default function PracticeSummaryPage() {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-error-500">
-                    {progress.total - correctCount}
+                    {progressTotal - correctCount}
                   </div>
                   <div className="text-sm text-gray-500">Falsch</div>
                 </div>

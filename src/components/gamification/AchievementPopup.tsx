@@ -9,7 +9,8 @@ import { useSound } from '@/hooks/useSound'
 import { useHaptics } from '@/hooks/useHaptics'
 
 export function AchievementPopup() {
-  const { pendingUnlocks, clearPendingUnlocks } = useAchievements()
+  const pendingUnlocks = useAchievements((s) => s.pendingUnlocks)
+  const clearPendingUnlocks = useAchievements((s) => s.clearPendingUnlocks)
   const [currentAchievement, setCurrentAchievement] = useState<string | null>(null)
   const { play } = useSound()
   const { trigger } = useHaptics()

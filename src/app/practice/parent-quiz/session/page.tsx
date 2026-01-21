@@ -13,7 +13,8 @@ import { ProgressBar } from '@/components/practice/ProgressBar'
 import {
   usePracticeSession,
   useCurrentItem,
-  useSessionProgress,
+  selectProgressAnswered,
+  selectProgressTotal,
   useIsSessionComplete,
   getQuestionAnswer,
 } from '@/stores/practice-session'
@@ -39,7 +40,8 @@ export default function ParentQuizSessionPage() {
   const quizMode = usePracticeSession((state) => state.quizMode)
 
   const currentItem = usePracticeSession(useCurrentItem)
-  const progress = usePracticeSession(useSessionProgress)
+  const progressAnswered = usePracticeSession(selectProgressAnswered)
+  const progressTotal = usePracticeSession(selectProgressTotal)
   const isComplete = usePracticeSession(useIsSessionComplete)
 
   const recordAnswer = usePracticeSession((state) => state.recordAnswer)
@@ -188,15 +190,15 @@ export default function ParentQuizSessionPage() {
           Beenden
         </button>
         <div className="text-sm text-gray-600 font-medium">
-          {progress.answered + 1} von {progress.total}
+          {progressAnswered + 1} von {progressTotal}
         </div>
         <div className="w-16" /> {/* Spacer for balance */}
       </div>
 
       {/* Progress bar */}
       <ProgressBar
-        current={progress.answered}
-        total={progress.total}
+        current={progressAnswered}
+        total={progressTotal}
         className="mx-4 mt-3"
       />
 

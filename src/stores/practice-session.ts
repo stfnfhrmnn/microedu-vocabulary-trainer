@@ -50,16 +50,22 @@ interface PracticeSessionState {
   reset: () => void
 }
 
-// Selectors
+// Selectors - use individual selectors for stable references
 export const useCurrentItem = (state: PracticeSessionState) =>
   state.items[state.currentIndex]
 
-export const useSessionProgress = (state: PracticeSessionState) => ({
-  current: state.currentIndex + 1,
-  total: state.items.length,
-  answered: state.items.filter((item) => item.answered).length,
-  correct: state.items.filter((item) => item.correct).length,
-})
+// Individual progress selectors (avoid returning new objects)
+export const selectProgressCurrent = (state: PracticeSessionState) =>
+  state.currentIndex + 1
+
+export const selectProgressTotal = (state: PracticeSessionState) =>
+  state.items.length
+
+export const selectProgressAnswered = (state: PracticeSessionState) =>
+  state.items.filter((item) => item.answered).length
+
+export const selectProgressCorrect = (state: PracticeSessionState) =>
+  state.items.filter((item) => item.correct).length
 
 export const useIsSessionComplete = (state: PracticeSessionState) =>
   state.items.length > 0 && state.items.every((item) => item.answered)
