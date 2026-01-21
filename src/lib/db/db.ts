@@ -1,6 +1,5 @@
 import Dexie, { type Table } from 'dexie'
 import { generateId } from '@/lib/utils/id'
-import { queueChange, type ChangeTable } from '@/lib/sync/sync-queue'
 import type {
   Book,
   Chapter,
@@ -17,7 +16,9 @@ import type {
   CreateVocabularyItem,
 } from './schema'
 
-// Helper to safely queue changes (won't fail if sync module not available)
+type ChangeTable = 'books' | 'chapters' | 'sections' | 'vocabularyItems' | 'learningProgress'
+
+// Helper to safely queue changes (lazy loads sync module)
 async function safeQueueChange(
   table: ChangeTable,
   operation: 'create' | 'update' | 'delete',
@@ -25,6 +26,8 @@ async function safeQueueChange(
   data: Record<string, unknown> | null
 ): Promise<void> {
   try {
+    // Lazy import to avoid loading sync module until needed
+    const { queueChange } = await import('@/lib/sync/sync-queue')
     await queueChange(table, operation, localId, data)
   } catch (error) {
     // Silently fail - sync is optional
