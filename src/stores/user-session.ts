@@ -116,7 +116,9 @@ const DEFAULT_PROFILE: UserProfile = {
 
 // Hook to get current profile with auto-creation (client-side only)
 export function useCurrentProfile(): UserProfile {
-  const { currentUserId, profiles, createProfile, getCurrentProfile } = useUserSession()
+  const currentUserId = useUserSession((s) => s.currentUserId)
+  const profiles = useUserSession((s) => s.profiles)
+  const createProfile = useUserSession((s) => s.createProfile)
   const [isClient, setIsClient] = useState(false)
 
   // Detect client-side rendering
@@ -124,21 +126,18 @@ export function useCurrentProfile(): UserProfile {
     setIsClient(true)
   }, [])
 
-  // Return default profile during SSR
-  if (!isClient) {
+  // Auto-create profile if none exists (client-side only, in useEffect)
+  useEffect(() => {
+    if (isClient && (!currentUserId || profiles.length === 0)) {
+      createProfile()
+    }
+  }, [isClient, currentUserId, profiles.length, createProfile])
+
+  // Return default profile during SSR or while creating
+  if (!isClient || !currentUserId || profiles.length === 0) {
     return DEFAULT_PROFILE
   }
 
-  // Auto-create profile if none exists (client-side only)
-  if (!currentUserId || profiles.length === 0) {
-    return createProfile()
-  }
-
-  const profile = getCurrentProfile()
-  if (!profile) {
-    // Current user not found, create new one
-    return createProfile()
-  }
-
-  return profile
+  const profile = profiles.find((p) => p.id === currentUserId)
+  return profile ?? DEFAULT_PROFILE
 }
