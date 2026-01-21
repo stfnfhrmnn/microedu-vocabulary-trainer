@@ -14,16 +14,16 @@ import { getPendingChangeCount, getSyncMeta } from './sync-queue'
 const SYNC_INTERVAL = 30000 // 30 seconds
 
 export function useSync() {
-  const {
-    state,
-    setSyncState,
-    setLastSyncTime,
-    setPendingChanges,
-    setError,
-    isRegistered,
-  } = useSyncStore()
+  // Use individual selectors for stable references
+  const state = useSyncStore((s) => s.state)
+  const isRegistered = useSyncStore((s) => s.isRegistered)
+  const setSyncState = useSyncStore((s) => s.setSyncState)
+  const setLastSyncTime = useSyncStore((s) => s.setLastSyncTime)
+  const setPendingChanges = useSyncStore((s) => s.setPendingChanges)
+  const setError = useSyncStore((s) => s.setError)
 
   const syncInProgressRef = useRef(false)
+  const initRef = useRef(false)
 
   // Perform sync
   const performSync = useCallback(async () => {
@@ -60,8 +60,11 @@ export function useSync() {
     setPendingChanges(count)
   }, [setPendingChanges])
 
-  // Initialize sync on mount
+  // Initialize sync on mount (only once)
   useEffect(() => {
+    if (initRef.current) return
+    initRef.current = true
+
     async function init() {
       // Restore token from storage
       const token = getAuthToken()
@@ -84,7 +87,7 @@ export function useSync() {
     }
 
     init()
-  }, [performSync, updatePendingCount])
+  }, []) // Empty deps - run only once
 
   // Set up sync interval
   useEffect(() => {
@@ -101,39 +104,51 @@ export function useSync() {
   // Handle online/offline events
   useEffect(() => {
     function handleOnline() {
-      setSyncState('idle')
-      performSync()
+      useSyncStore.getState().setSyncState('idle')
+      // Trigger sync without using callback reference
+      if (!syncInProgressRef.current) {
+        syncInProgressRef.current = true
+        sync().finally(() => {
+          syncInProgressRef.current = false
+        })
+      }
     }
 
     function handleOffline() {
-      setSyncState('offline')
+      useSyncStore.getState().setSyncState('offline')
     }
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
 
     // Set initial state
-    if (!navigator.onLine) {
-      setSyncState('offline')
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      useSyncStore.getState().setSyncState('offline')
     }
 
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [setSyncState, performSync])
+  }, []) // No deps needed - uses getState()
 
   // Handle visibility change (sync when tab becomes visible)
   useEffect(() => {
     function handleVisibilityChange() {
+      const { isRegistered } = useSyncStore.getState()
       if (document.visibilityState === 'visible' && isRegistered) {
-        performSync()
+        if (!syncInProgressRef.current) {
+          syncInProgressRef.current = true
+          sync().finally(() => {
+            syncInProgressRef.current = false
+          })
+        }
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [isRegistered, performSync])
+  }, []) // No deps needed - uses getState()
 
   return {
     state,
