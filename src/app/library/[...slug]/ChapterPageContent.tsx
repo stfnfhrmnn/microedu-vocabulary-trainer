@@ -11,22 +11,25 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Toggle } from '@/components/ui/Toggle'
 import { Modal, useModal } from '@/components/ui/Modal'
+import { EditNameModal } from '@/components/ui/EditNameModal'
 import { useBook, useChapter, useSections } from '@/lib/db/hooks/useBooks'
 import { useVocabulary, useSectionVocabularyCount } from '@/lib/db/hooks/useVocabulary'
-import { createSection, deleteChapter, toggleSectionCovered, deleteSection } from '@/lib/db/db'
+import { createSection, deleteChapter, toggleSectionCovered, deleteSection, updateChapter, updateSection } from '@/lib/db/db'
 import type { Section, VocabularyItem } from '@/lib/db/schema'
 
 function SectionCard({
   section,
   onToggleCovered,
   onDelete,
+  onEdit,
 }: {
   section: Section
   onToggleCovered: (covered: boolean) => void
   onDelete: () => void
+  onEdit: () => void
 }) {
   const vocabCount = useSectionVocabularyCount(section.id)
-  const [showDelete, setShowDelete] = useState(false)
+  const [showActions, setShowActions] = useState(false)
 
   return (
     <Card>
@@ -38,7 +41,7 @@ function SectionCard({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowDelete(!showDelete)}
+              onClick={() => setShowActions(!showActions)}
               className="p-2 text-gray-400 hover:text-gray-600"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,14 +56,17 @@ function SectionCard({
           </div>
         </div>
 
-        {showDelete && (
+        {showActions && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="mt-3 pt-3 border-t border-gray-100"
+            className="mt-3 pt-3 border-t border-gray-100 flex gap-2"
           >
+            <Button variant="secondary" size="sm" fullWidth onClick={onEdit}>
+              Umbenennen
+            </Button>
             <Button variant="danger" size="sm" fullWidth onClick={onDelete}>
-              Abschnitt löschen
+              Löschen
             </Button>
           </motion.div>
         )}
@@ -115,14 +121,33 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
 
   const addModal = useModal()
   const deleteModal = useModal()
+  const editChapterModal = useModal()
+  const editSectionModal = useModal()
 
   const [name, setName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
 
   const { vocabulary, deleteVocabularyItem } = useVocabulary(selectedSectionId || undefined)
 
   const isLoading = chapterLoading || sectionsLoading
+
+  const editingSection = sections.find(s => s.id === editingSectionId)
+
+  const handleEditChapterName = async (newName: string) => {
+    await updateChapter(chapterId, { name: newName })
+  }
+
+  const handleEditSectionName = async (newName: string) => {
+    if (!editingSectionId) return
+    await updateSection(editingSectionId, { name: newName })
+  }
+
+  const handleOpenEditSection = (sectionId: string) => {
+    setEditingSectionId(sectionId)
+    editSectionModal.open()
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -191,6 +216,44 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
         onBack={() => router.push(`/library/${bookId}`)}
         action={
           <div className="flex gap-2">
+            <Link href={`/add/scan?bookId=${bookId}&chapterId=${chapterId}`}>
+              <Button variant="ghost" size="icon" title="Vokabeln scannen">
+                <svg
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </Button>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={editChapterModal.open}>
+              <svg
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                />
+              </svg>
+            </Button>
             <Button variant="ghost" size="icon" onClick={deleteModal.open}>
               <svg
                 className="w-5 h-5 text-gray-500"
@@ -269,6 +332,7 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
                   section={section}
                   onToggleCovered={(covered) => handleToggleCovered(section.id, covered)}
                   onDelete={() => handleDeleteSection(section.id)}
+                  onEdit={() => handleOpenEditSection(section.id)}
                 />
               </motion.div>
             ))}
@@ -407,6 +471,31 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
           </div>
         </div>
       </Modal>
+
+      {/* Edit Chapter Name Modal */}
+      <EditNameModal
+        isOpen={editChapterModal.isOpen}
+        onClose={editChapterModal.close}
+        currentName={chapter?.name || ''}
+        onSave={handleEditChapterName}
+        title="Kapitel umbenennen"
+        label="Name"
+        placeholder="z.B. Unité 1"
+      />
+
+      {/* Edit Section Name Modal */}
+      <EditNameModal
+        isOpen={editSectionModal.isOpen}
+        onClose={() => {
+          editSectionModal.close()
+          setEditingSectionId(null)
+        }}
+        currentName={editingSection?.name || ''}
+        onSave={handleEditSectionName}
+        title="Abschnitt umbenennen"
+        label="Name"
+        placeholder="z.B. Vokabeln S. 42"
+      />
     </PageContainer>
   )
 }

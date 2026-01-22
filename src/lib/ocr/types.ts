@@ -41,3 +41,34 @@ export interface OCRProvider {
 }
 
 export type OCRProviderType = 'tesseract' | 'gemini' | 'google-vision'
+
+// ============================================================================
+// Multi-Chapter Detection Types
+// ============================================================================
+
+export interface ChapterMarker {
+  detectedName: string
+  startIndex: number           // Index in the text/blocks where chapter starts
+  endIndex?: number            // Index where chapter ends (next chapter or end)
+  confidence: number
+}
+
+export interface ParsedChapter {
+  detectedName: string
+  candidates: VocabularyCandidate[]
+  matchedChapterId?: string    // If matches an existing chapter
+  isNewChapter: boolean
+}
+
+export interface MultiChapterOCRResult {
+  chapters: ParsedChapter[]
+  unassignedVocabulary: VocabularyCandidate[]  // Vocab not assigned to any chapter
+}
+
+// Extended candidate with duplicate info
+export interface VocabularyCandidateWithMeta extends VocabularyCandidate {
+  isDuplicate?: boolean
+  duplicateOf?: string         // existing vocab ID
+  duplicateSimilarity?: number // 0-1
+  chapterAssignment?: string   // chapter ID or 'new:ChapterName' or 'book-level'
+}

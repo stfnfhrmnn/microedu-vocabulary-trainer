@@ -35,7 +35,7 @@ export default function ParentQuizSetupPage() {
 
   const wordCount = useMemo(() => {
     if (selectedSectionIds.length === 0) return 0
-    return dueWords.filter((w) => selectedSectionIds.includes(w.sectionId)).length
+    return dueWords.filter((w) => w.sectionId && selectedSectionIds.includes(w.sectionId)).length
   }, [dueWords, selectedSectionIds])
 
   const toggleSection = (sectionId: string) => {
@@ -58,7 +58,7 @@ export default function ParentQuizSetupPage() {
     if (wordCount === 0) return
 
     const wordsToStudy = dueWords.filter((w) =>
-      selectedSectionIds.includes(w.sectionId)
+      w.sectionId && selectedSectionIds.includes(w.sectionId)
     )
 
     startSession({

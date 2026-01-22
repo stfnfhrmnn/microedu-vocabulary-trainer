@@ -14,6 +14,7 @@ import type {
   CreateChapter,
   CreateSection,
   CreateVocabularyItem,
+  LanguageHint,
 } from './schema'
 
 type ChangeTable = 'books' | 'chapters' | 'sections' | 'vocabularyItems' | 'learningProgress'
@@ -54,6 +55,20 @@ export class VocabularyDatabase extends Dexie {
     super('VocabularyTrainer')
 
     this.version(1).stores({
+      books: 'id, name, language, createdAt',
+      chapters: 'id, bookId, name, order, createdAt',
+      sections: 'id, chapterId, bookId, name, order, coveredInClass, createdAt',
+      vocabularyItems: 'id, sectionId, chapterId, bookId, sourceText, targetText, createdAt',
+      learningProgress: 'id, vocabularyId, nextReviewDate, interval',
+      reviewSessions: 'id, exerciseType, startedAt, completedAt',
+      reviewAttempts: 'id, sessionId, vocabularyId, createdAt',
+      userSettings: 'id',
+      cachedImages: 'id, vocabularyId, createdAt',
+    })
+
+    // Version 2: Support for book-level vocabulary (nullable sectionId/chapterId)
+    // and multi-language hints
+    this.version(2).stores({
       books: 'id, name, language, createdAt',
       chapters: 'id, bookId, name, order, createdAt',
       sections: 'id, chapterId, bookId, name, order, coveredInClass, createdAt',
@@ -311,7 +326,13 @@ export async function toggleSectionCovered(id: string, covered: boolean): Promis
 export async function createVocabularyItem(data: CreateVocabularyItem): Promise<VocabularyItem> {
   const item: VocabularyItem = {
     id: generateId(),
-    ...data,
+    sourceText: data.sourceText,
+    targetText: data.targetText,
+    sectionId: data.sectionId ?? null,
+    chapterId: data.chapterId ?? null,
+    bookId: data.bookId,
+    notes: data.notes,
+    hints: data.hints,
     createdAt: new Date(),
     updatedAt: new Date(),
   }
@@ -340,7 +361,13 @@ export async function deleteVocabularyItem(id: string): Promise<void> {
 export async function createVocabularyItems(items: CreateVocabularyItem[]): Promise<VocabularyItem[]> {
   const vocabItems: VocabularyItem[] = items.map((data) => ({
     id: generateId(),
-    ...data,
+    sourceText: data.sourceText,
+    targetText: data.targetText,
+    sectionId: data.sectionId ?? null,
+    chapterId: data.chapterId ?? null,
+    bookId: data.bookId,
+    notes: data.notes,
+    hints: data.hints,
     createdAt: new Date(),
     updatedAt: new Date(),
   }))
@@ -491,4 +518,65 @@ export async function getVocabularyStats() {
     mastered: masteredCount,
     dueToday: dueCount,
   }
+}
+
+// ============================================================================
+// Book-Level Vocabulary Operations
+// ============================================================================
+
+export async function getBookLevelVocabulary(bookId: string): Promise<VocabularyItem[]> {
+  // Get vocabulary items where sectionId and chapterId are null (book-level)
+  const allBookVocab = await db.vocabularyItems.where('bookId').equals(bookId).toArray()
+  return allBookVocab.filter(item => item.sectionId === null && item.chapterId === null)
+}
+
+export async function createBookLevelVocabularyItem(data: {
+  bookId: string
+  sourceText: string
+  targetText: string
+  notes?: string
+  hints?: LanguageHint[]
+}): Promise<VocabularyItem> {
+  const item: VocabularyItem = {
+    id: generateId(),
+    sectionId: null,
+    chapterId: null,
+    bookId: data.bookId,
+    sourceText: data.sourceText,
+    targetText: data.targetText,
+    notes: data.notes,
+    hints: data.hints,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+  await db.vocabularyItems.add(item)
+  await safeQueueChange('vocabularyItems', 'create', item.id, item as unknown as Record<string, unknown>)
+  return item
+}
+
+export async function createBookLevelVocabularyItems(items: Array<{
+  bookId: string
+  sourceText: string
+  targetText: string
+  notes?: string
+  hints?: LanguageHint[]
+}>): Promise<VocabularyItem[]> {
+  const vocabItems: VocabularyItem[] = items.map((data) => ({
+    id: generateId(),
+    sectionId: null,
+    chapterId: null,
+    bookId: data.bookId,
+    sourceText: data.sourceText,
+    targetText: data.targetText,
+    notes: data.notes,
+    hints: data.hints,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }))
+  await db.vocabularyItems.bulkAdd(vocabItems)
+  // Queue sync for each item
+  for (const item of vocabItems) {
+    await safeQueueChange('vocabularyItems', 'create', item.id, item as unknown as Record<string, unknown>)
+  }
+  return vocabItems
 }

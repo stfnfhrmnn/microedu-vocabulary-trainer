@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Modal, useModal } from '@/components/ui/Modal'
+import { CreateFromImageModal } from '@/components/library/CreateFromImageModal'
 import { useBooks } from '@/lib/db/hooks/useBooks'
 import { useVocabularyByBook } from '@/lib/db/hooks/useVocabulary'
 import type { Language, Book, CreateBook } from '@/lib/db/schema'
@@ -71,11 +72,20 @@ function BookCard({ book }: { book: Book }) {
 export default function LibraryPage() {
   const { books, isLoading, createBook } = useBooks()
   const modal = useModal()
+  const imageModal = useModal()
 
   const [name, setName] = useState('')
   const [language, setLanguage] = useState<Language>('french')
   const [coverColor, setCoverColor] = useState('#3b82f6')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleCreateBookFromImage = async (bookName: string, bookLanguage: Language, bookCoverColor: string) => {
+    await createBook({
+      name: bookName,
+      language: bookLanguage,
+      coverColor: bookCoverColor,
+    })
+  }
 
   const resetForm = () => {
     setName('')
@@ -106,9 +116,32 @@ export default function LibraryPage() {
       <Header
         title="Bibliothek"
         action={
-          <Button variant="primary" size="sm" onClick={modal.open}>
-            + Buch
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon" onClick={imageModal.open} title="Buch aus Bild erstellen">
+              <svg
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </Button>
+            <Button variant="primary" size="sm" onClick={modal.open}>
+              + Buch
+            </Button>
+          </div>
         }
       />
 
@@ -235,6 +268,14 @@ export default function LibraryPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Create Book from Image Modal */}
+      <CreateFromImageModal
+        isOpen={imageModal.isOpen}
+        onClose={imageModal.close}
+        type="book"
+        onCreateBook={handleCreateBookFromImage}
+      />
     </PageContainer>
   )
 }

@@ -10,9 +10,11 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal, useModal } from '@/components/ui/Modal'
+import { EditNameModal } from '@/components/ui/EditNameModal'
+import { CreateFromImageModal } from '@/components/library/CreateFromImageModal'
 import { useBook, useChapters } from '@/lib/db/hooks/useBooks'
 import { useVocabularyByChapter } from '@/lib/db/hooks/useVocabulary'
-import { createChapter, deleteBook } from '@/lib/db/db'
+import { createChapter, deleteBook, updateBook } from '@/lib/db/db'
 import type { Chapter } from '@/lib/db/schema'
 
 function ChapterCard({ chapter, bookId }: { chapter: Chapter; bookId: string }) {
@@ -52,11 +54,25 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
   const { chapters, isLoading: chaptersLoading } = useChapters(bookId)
   const addModal = useModal()
   const deleteModal = useModal()
+  const editNameModal = useModal()
+  const imageModal = useModal()
 
   const [name, setName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isLoading = bookLoading || chaptersLoading
+
+  const handleEditBookName = async (newName: string) => {
+    await updateBook(bookId, { name: newName })
+  }
+
+  const handleCreateChapterFromImage = async (chapterName: string) => {
+    await createChapter({
+      name: chapterName,
+      bookId,
+      order: chapters.length,
+    })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,6 +127,44 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
         showBack
         action={
           <div className="flex gap-2">
+            <Link href={`/add/scan?bookId=${bookId}`}>
+              <Button variant="ghost" size="icon" title="Vokabeln scannen">
+                <svg
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </Button>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={editNameModal.open}>
+              <svg
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                />
+              </svg>
+            </Button>
             <Button variant="ghost" size="icon" onClick={deleteModal.open}>
               <svg
                 className="w-5 h-5 text-gray-500"
@@ -123,6 +177,21 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={imageModal.open} title="Kapitel aus Bild erstellen">
+              <svg
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
             </Button>
@@ -252,6 +321,27 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
           </div>
         </div>
       </Modal>
+
+      {/* Edit Book Name Modal */}
+      <EditNameModal
+        isOpen={editNameModal.isOpen}
+        onClose={editNameModal.close}
+        currentName={book?.name || ''}
+        onSave={handleEditBookName}
+        title="Buch umbenennen"
+        label="Name"
+        placeholder="z.B. Découvertes 2"
+      />
+
+      {/* Create Chapter from Image Modal */}
+      <CreateFromImageModal
+        isOpen={imageModal.isOpen}
+        onClose={imageModal.close}
+        type="chapter"
+        onCreateChapter={handleCreateChapterFromImage}
+        bookId={bookId}
+        bookLanguage={book?.language}
+      />
     </PageContainer>
   )
 }

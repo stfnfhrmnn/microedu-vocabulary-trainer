@@ -105,3 +105,20 @@ export function useSectionVocabularyCount(sectionId: string | undefined) {
   )
   return count ?? 0
 }
+
+export function useBookLevelVocabulary(bookId: string | undefined) {
+  const vocabulary = useLiveQuery(
+    async () => {
+      if (!bookId) return []
+      const allBookVocab = await db.vocabularyItems.where('bookId').equals(bookId).toArray()
+      // Filter for book-level vocab (null sectionId and chapterId)
+      return allBookVocab.filter(item => item.sectionId === null && item.chapterId === null)
+    },
+    [bookId]
+  )
+
+  return {
+    vocabulary: vocabulary ?? [],
+    isLoading: bookId ? vocabulary === undefined : false,
+  }
+}

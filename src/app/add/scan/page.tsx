@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback, useMemo, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { CameraCapture } from '@/components/ocr/CameraCapture'
-import { OCRReview } from '@/components/ocr/OCRReview'
+import { LegacyOCRReview as OCRReview } from '@/components/ocr/OCRReview'
 import { OCRProgress, ProviderBadge } from '@/components/ocr/OCRProgress'
 import { Button } from '@/components/ui/Button'
 import { useOCR } from '@/hooks/useOCR'
@@ -16,8 +16,30 @@ import type { VocabularyCandidate, ExtractionHints } from '@/lib/ocr/types'
 
 type ScanStep = 'capture' | 'processing' | 'review' | 'success'
 
+// Wrapper component with Suspense for useSearchParams
 export default function ScanPage() {
+  return (
+    <Suspense fallback={
+      <PageContainer>
+        <Header title="Vokabeln scannen" showBack />
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-600 border-t-transparent" />
+        </div>
+      </PageContainer>
+    }>
+      <ScanPageContent />
+    </Suspense>
+  )
+}
+
+function ScanPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Read query params for pre-selection
+  const preselectedBookId = searchParams.get('bookId')
+  const preselectedChapterId = searchParams.get('chapterId')
+
   const [step, setStep] = useState<ScanStep>('capture')
   const [selectedSectionId, setSelectedSectionId] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -25,6 +47,29 @@ export default function ScanPage() {
   const [capturedImage, setCapturedImage] = useState<Blob | null>(null)
 
   const { sections, isLoading: sectionsLoading } = useAllSections()
+
+  // Pre-select section based on query params
+  useEffect(() => {
+    if (!sectionsLoading && sections.length > 0 && !selectedSectionId) {
+      // If we have a chapterId, find a section in that chapter
+      if (preselectedChapterId) {
+        const sectionInChapter = sections.find(s => s.chapterId === preselectedChapterId)
+        if (sectionInChapter) {
+          setSelectedSectionId(sectionInChapter.id)
+          return
+        }
+      }
+
+      // If we have a bookId, find a section in that book
+      if (preselectedBookId) {
+        const sectionInBook = sections.find(s => s.bookId === preselectedBookId)
+        if (sectionInBook) {
+          setSelectedSectionId(sectionInBook.id)
+          return
+        }
+      }
+    }
+  }, [sections, sectionsLoading, preselectedBookId, preselectedChapterId, selectedSectionId])
   const {
     isProcessing,
     candidates,
@@ -38,12 +83,29 @@ export default function ScanPage() {
   } = useOCR()
 
   // Convert sections to select options with book/chapter context
+  // Filter by preselected book/chapter if available
   const sectionOptions = useMemo(() => {
-    return sections.map((s) => ({
+    let filteredSections = sections
+
+    // Filter by preselected book
+    if (preselectedBookId) {
+      filteredSections = filteredSections.filter(s => s.bookId === preselectedBookId)
+    }
+
+    // Further filter by preselected chapter
+    if (preselectedChapterId) {
+      filteredSections = filteredSections.filter(s => s.chapterId === preselectedChapterId)
+    }
+
+    return filteredSections.map((s) => ({
       value: s.id,
-      label: `${s.book?.name || 'Unbekannt'} / ${s.chapter?.name || 'Unbekannt'} / ${s.name}`,
+      label: preselectedChapterId
+        ? s.name  // Just section name if chapter is already selected
+        : preselectedBookId
+          ? `${s.chapter?.name || 'Unbekannt'} / ${s.name}`  // Chapter/section if book is selected
+          : `${s.book?.name || 'Unbekannt'} / ${s.chapter?.name || 'Unbekannt'} / ${s.name}`,  // Full path
     }))
-  }, [sections])
+  }, [sections, preselectedBookId, preselectedChapterId])
 
   // Find selected section for hints
   const selectedSection = sections.find((s) => s.id === selectedSectionId)

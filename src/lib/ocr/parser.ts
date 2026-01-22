@@ -3,7 +3,14 @@
  * Supports multiple common formats for vocabulary lists
  */
 
-import type { TextBlock, ExtractionHints, VocabularyCandidate } from './types'
+import type {
+  TextBlock,
+  ExtractionHints,
+  VocabularyCandidate,
+  ChapterMarker,
+  ParsedChapter,
+  MultiChapterOCRResult,
+} from './types'
 
 export interface ParsedVocabulary {
   sourceText: string
@@ -338,4 +345,240 @@ export function suggestCorrections(text: string): string[] {
   }
 
   return suggestions
+}
+
+// ============================================================================
+// Chapter Detection
+// ============================================================================
+
+/**
+ * Chapter header patterns for detection
+ * Matches common textbook chapter naming conventions
+ */
+const CHAPTER_PATTERNS = [
+  // German patterns
+  /^(Kapitel|Lektion|Einheit|Abschnitt)\s*\d+\s*[:\-.]?\s*(.*)/i,
+  // French patterns
+  /^(Chapitre|Unit[ée]|Le[çc]on)\s*\d+\s*[:\-.]?\s*(.*)/i,
+  // English patterns
+  /^(Chapter|Unit|Lesson|Section)\s*\d+\s*[:\-.]?\s*(.*)/i,
+  // Spanish patterns
+  /^(Cap[ií]tulo|Unidad|Lecci[oó]n)\s*\d+\s*[:\-.]?\s*(.*)/i,
+  // Latin patterns
+  /^(Lectio|Caput)\s*\d+\s*[:\-.]?\s*(.*)/i,
+  // Generic numbered patterns
+  /^\d+\.\s+[A-ZÄÖÜ][a-zäöü]/,  // "3. Wortschatz"
+  /^[IVXLC]+\.\s+[A-ZÄÖÜ]/i,    // "III. Vocabulaire"
+]
+
+/**
+ * Detect if a line looks like a chapter header
+ */
+export function isChapterHeader(line: string): { isHeader: boolean; name: string } {
+  const trimmed = line.trim()
+
+  for (const pattern of CHAPTER_PATTERNS) {
+    const match = trimmed.match(pattern)
+    if (match) {
+      // Extract the chapter name (full match or with subtitle)
+      let name = trimmed
+      if (match[2]) {
+        name = `${match[1]} ${match[2]}`.trim()
+      }
+      return { isHeader: true, name }
+    }
+  }
+
+  return { isHeader: false, name: '' }
+}
+
+/**
+ * Detect chapter boundaries in text
+ * Returns markers indicating where chapters start
+ */
+export function detectChapterBoundaries(lines: string[]): ChapterMarker[] {
+  const markers: ChapterMarker[] = []
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const { isHeader, name } = isChapterHeader(line)
+
+    if (isHeader) {
+      // Close the previous chapter if exists
+      if (markers.length > 0) {
+        markers[markers.length - 1].endIndex = i
+      }
+
+      markers.push({
+        detectedName: name,
+        startIndex: i,
+        confidence: 0.85, // Base confidence for text-based detection
+      })
+    }
+  }
+
+  // Set end index for the last chapter
+  if (markers.length > 0) {
+    markers[markers.length - 1].endIndex = lines.length
+  }
+
+  return markers
+}
+
+/**
+ * Detect chapter headers using bounding boxes (visual detection)
+ * Headers typically:
+ * - Span >70% of page width
+ * - Are larger/bolder text (if size info available)
+ * - Match chapter patterns
+ */
+export function detectChapterHeadersVisual(blocks: TextBlock[]): ChapterMarker[] {
+  if (blocks.length === 0) return []
+
+  // Calculate page dimensions from blocks
+  const blocksWithBbox = blocks.filter(b => b.bbox)
+  if (blocksWithBbox.length < 2) return []
+
+  const pageWidth = Math.max(...blocksWithBbox.map(b => b.bbox!.x1))
+
+  const markers: ChapterMarker[] = []
+
+  for (let i = 0; i < blocksWithBbox.length; i++) {
+    const block = blocksWithBbox[i]
+    const blockWidth = block.bbox!.x1 - block.bbox!.x0
+    const widthRatio = blockWidth / pageWidth
+
+    // Check if block spans most of page width (likely a header)
+    const isWide = widthRatio > 0.5
+
+    const { isHeader, name } = isChapterHeader(block.text)
+
+    if (isHeader && isWide) {
+      // Higher confidence for wide headers
+      const confidence = Math.min(0.95, 0.7 + widthRatio * 0.3)
+
+      if (markers.length > 0) {
+        markers[markers.length - 1].endIndex = i
+      }
+
+      markers.push({
+        detectedName: name,
+        startIndex: i,
+        confidence,
+      })
+    }
+  }
+
+  if (markers.length > 0) {
+    markers[markers.length - 1].endIndex = blocksWithBbox.length
+  }
+
+  return markers
+}
+
+/**
+ * Parse vocabulary with chapter detection
+ * Groups vocabulary candidates by detected chapters
+ */
+export function parseVocabularyWithChapters(
+  text: string,
+  blocks?: TextBlock[],
+  hints?: ExtractionHints
+): MultiChapterOCRResult {
+  const lines = text.split(/\n|\r\n/)
+
+  // Try visual detection first if blocks are available
+  let chapterMarkers: ChapterMarker[] = []
+  if (blocks && blocks.length > 0) {
+    chapterMarkers = detectChapterHeadersVisual(blocks)
+  }
+
+  // Fall back to text-based detection
+  if (chapterMarkers.length === 0) {
+    chapterMarkers = detectChapterBoundaries(lines)
+  }
+
+  // If no chapters detected, return all vocabulary as unassigned
+  if (chapterMarkers.length === 0) {
+    const allVocab = parseVocabularyFromText(text, blocks, hints)
+    return {
+      chapters: [],
+      unassignedVocabulary: allVocab,
+    }
+  }
+
+  // Parse vocabulary for each chapter
+  const chapters: ParsedChapter[] = []
+  const unassignedVocabulary: VocabularyCandidate[] = []
+
+  // Vocabulary before first chapter
+  if (chapterMarkers[0].startIndex > 0) {
+    const preChapterLines = lines.slice(0, chapterMarkers[0].startIndex)
+    const preChapterVocab = parseVocabularyFromText(preChapterLines.join('\n'), undefined, hints)
+    unassignedVocabulary.push(...preChapterVocab)
+  }
+
+  // Parse each chapter
+  for (const marker of chapterMarkers) {
+    const chapterLines = lines.slice(marker.startIndex + 1, marker.endIndex)
+    const chapterText = chapterLines.join('\n')
+    const candidates = parseVocabularyFromText(chapterText, undefined, hints)
+
+    chapters.push({
+      detectedName: marker.detectedName,
+      candidates,
+      isNewChapter: true, // Will be updated when matched against existing chapters
+    })
+  }
+
+  return {
+    chapters,
+    unassignedVocabulary,
+  }
+}
+
+/**
+ * Match detected chapters against existing chapters in a book
+ */
+export function matchChaptersToExisting(
+  detected: ParsedChapter[],
+  existingChapters: Array<{ id: string; name: string }>
+): ParsedChapter[] {
+  return detected.map(chapter => {
+    // Try to find a matching existing chapter
+    const normalizedDetected = chapter.detectedName.toLowerCase().trim()
+
+    const match = existingChapters.find(existing => {
+      const normalizedExisting = existing.name.toLowerCase().trim()
+
+      // Exact match
+      if (normalizedDetected === normalizedExisting) return true
+
+      // Contains match (e.g., "Kapitel 3" matches "Kapitel 3 - Essen")
+      if (normalizedExisting.includes(normalizedDetected)) return true
+      if (normalizedDetected.includes(normalizedExisting)) return true
+
+      // Number match (extract numbers and compare)
+      const detectedNums = normalizedDetected.match(/\d+/g)
+      const existingNums = normalizedExisting.match(/\d+/g)
+
+      if (detectedNums && existingNums) {
+        // If same numbers appear, likely a match
+        const commonNums = detectedNums.filter(n => existingNums.includes(n))
+        if (commonNums.length > 0) return true
+      }
+
+      return false
+    })
+
+    if (match) {
+      return {
+        ...chapter,
+        matchedChapterId: match.id,
+        isNewChapter: false,
+      }
+    }
+
+    return chapter
+  })
 }

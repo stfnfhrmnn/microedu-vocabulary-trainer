@@ -43,14 +43,21 @@ export interface Section {
   updatedAt: Date
 }
 
+// Multi-language hint for vocabulary items
+export interface LanguageHint {
+  language: string              // 'english', 'french', etc.
+  text: string                  // "similar to 'house'"
+}
+
 export interface VocabularyItem {
   id: string
-  sectionId: string
-  chapterId: string
-  bookId: string
-  sourceText: string // German
-  targetText: string // Foreign language
+  sectionId: string | null      // null = book-level vocabulary
+  chapterId: string | null      // null = book-level vocabulary
+  bookId: string                // Always required
+  sourceText: string            // German
+  targetText: string            // Foreign language
   notes?: string
+  hints?: LanguageHint[]        // Multi-language hints
   imageUrl?: string
   createdAt: Date
   updatedAt: Date
@@ -153,13 +160,19 @@ export const SectionSchema = z.object({
   coveredInClass: z.boolean().default(false),
 })
 
+export const LanguageHintSchema = z.object({
+  language: z.string().min(1),
+  text: z.string().min(1).max(500),
+})
+
 export const VocabularyItemSchema = z.object({
   sourceText: z.string().min(1, 'Deutsches Wort ist erforderlich').max(200),
   targetText: z.string().min(1, 'Fremdwort ist erforderlich').max(200),
-  sectionId: z.string().min(1),
-  chapterId: z.string().min(1),
+  sectionId: z.string().min(1).nullable().optional(),  // null = book-level vocab
+  chapterId: z.string().min(1).nullable().optional(),  // null = book-level vocab
   bookId: z.string().min(1),
   notes: z.string().max(500).optional(),
+  hints: z.array(LanguageHintSchema).optional(),
 })
 
 export const UserSettingsSchema = z.object({
