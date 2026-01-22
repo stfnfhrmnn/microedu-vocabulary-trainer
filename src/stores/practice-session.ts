@@ -6,6 +6,7 @@ import type {
   ExerciseType,
   PracticeDirection,
   QualityRating,
+  Language,
 } from '@/lib/db/schema'
 
 export type QuizMode = 'self' | 'parent'
@@ -16,6 +17,7 @@ interface PracticeSessionState {
   direction: PracticeDirection
   sectionIds: string[]
   quizMode: QuizMode
+  targetLanguage: Language | null
 
   // Session state
   items: PracticeItem[]
@@ -36,6 +38,7 @@ interface PracticeSessionState {
     sectionIds: string[]
     items: { vocabulary: VocabularyItem; progress?: LearningProgress }[]
     quizMode?: QuizMode
+    targetLanguage?: Language
   }) => void
 
   recordAnswer: (
@@ -76,6 +79,7 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
   direction: 'sourceToTarget',
   sectionIds: [],
   quizMode: 'self',
+  targetLanguage: null,
   items: [],
   currentIndex: 0,
   isSessionActive: false,
@@ -104,6 +108,7 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
       direction: config.direction,
       sectionIds: config.sectionIds,
       quizMode: config.quizMode ?? 'self',
+      targetLanguage: config.targetLanguage ?? null,
       items: shuffledItems,
       currentIndex: 0,
       isSessionActive: true,
@@ -159,6 +164,7 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
       direction: 'sourceToTarget',
       sectionIds: [],
       quizMode: 'self',
+      targetLanguage: null,
       items: [],
       currentIndex: 0,
       isSessionActive: false,
@@ -176,8 +182,15 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
 export function getQuestionAnswer(
   vocabulary: VocabularyItem,
   direction: PracticeDirection,
-  itemIndex: number
-): { question: string; answer: string; isReversed: boolean } {
+  itemIndex: number,
+  targetLanguage?: Language | null
+): {
+  question: string
+  answer: string
+  isReversed: boolean
+  questionLanguage: Language | 'german'
+  answerLanguage: Language | 'german'
+} {
   // For mixed direction, alternate based on index
   const effectiveDirection =
     direction === 'mixed'
@@ -191,6 +204,8 @@ export function getQuestionAnswer(
       question: vocabulary.targetText,
       answer: vocabulary.sourceText,
       isReversed: true,
+      questionLanguage: targetLanguage || 'german',
+      answerLanguage: 'german',
     }
   }
 
@@ -198,5 +213,7 @@ export function getQuestionAnswer(
     question: vocabulary.sourceText,
     answer: vocabulary.targetText,
     isReversed: false,
+    questionLanguage: 'german',
+    answerLanguage: targetLanguage || 'german',
   }
 }

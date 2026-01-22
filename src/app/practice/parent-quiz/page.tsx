@@ -61,11 +61,16 @@ export default function ParentQuizSetupPage() {
       w.sectionId && selectedSectionIds.includes(w.sectionId)
     )
 
+    // Get target language from the first selected section's book
+    const selectedStat = sections.find((s) => selectedSectionIds.includes(s.section.id))
+    const targetLanguage = selectedStat?.book?.language
+
     startSession({
       exerciseType: 'flashcard',
       direction,
       sectionIds: selectedSectionIds,
       quizMode: 'parent',
+      targetLanguage,
       items: wordsToStudy.map((v) => ({
         vocabulary: v,
         progress: v.progress,

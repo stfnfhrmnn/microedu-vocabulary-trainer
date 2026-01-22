@@ -10,6 +10,10 @@ import type {
   ReviewAttempt,
   UserSettings,
   CachedImage,
+  FamilyGroup,
+  FamilyMember,
+  SharedBook,
+  ProgressShareSettings,
   CreateBook,
   CreateChapter,
   CreateSection,
@@ -50,6 +54,10 @@ export class VocabularyDatabase extends Dexie {
   reviewAttempts!: Table<ReviewAttempt, string>
   userSettings!: Table<UserSettings, string>
   cachedImages!: Table<CachedImage, string>
+  familyGroups!: Table<FamilyGroup, string>
+  familyMembers!: Table<FamilyMember, string>
+  sharedBooks!: Table<SharedBook, string>
+  progressShareSettings!: Table<ProgressShareSettings, string>
 
   constructor() {
     super('VocabularyTrainer')
@@ -78,6 +86,23 @@ export class VocabularyDatabase extends Dexie {
       reviewAttempts: 'id, sessionId, vocabularyId, createdAt',
       userSettings: 'id',
       cachedImages: 'id, vocabularyId, createdAt',
+    })
+
+    // Version 3: Family & class sharing support
+    this.version(3).stores({
+      books: 'id, name, language, createdAt',
+      chapters: 'id, bookId, name, order, createdAt',
+      sections: 'id, chapterId, bookId, name, order, coveredInClass, createdAt',
+      vocabularyItems: 'id, sectionId, chapterId, bookId, sourceText, targetText, createdAt',
+      learningProgress: 'id, vocabularyId, nextReviewDate, interval',
+      reviewSessions: 'id, exerciseType, startedAt, completedAt',
+      reviewAttempts: 'id, sessionId, vocabularyId, createdAt',
+      userSettings: 'id',
+      cachedImages: 'id, vocabularyId, createdAt',
+      familyGroups: 'id, inviteCode, createdBy, createdAt',
+      familyMembers: 'id, familyId, userId, role, joinedAt',
+      sharedBooks: 'id, bookId, sharedBy, groupId, sharedAt',
+      progressShareSettings: 'id, userId, sharedWithId, updatedAt',
     })
 
     // Add timestamp hooks

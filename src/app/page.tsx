@@ -10,6 +10,12 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { UserMenuButton, UserMenu } from '@/components/user'
 import { StreakDisplay, DailyGoalCard, LevelBadge } from '@/components/gamification'
+import {
+  StudyRecommendationsCard,
+  WeakWordsCard,
+  ProgressPredictionCard,
+  OptimalStudyTimeCard,
+} from '@/components/recommendations'
 import { useDueWordsCount, useVocabularyStats } from '@/lib/db/hooks/useDueWords'
 import { useVocabularyCount } from '@/lib/db/hooks/useVocabulary'
 import { useOnboarding } from '@/stores/onboarding'
@@ -218,7 +224,7 @@ export default function HomePage() {
 
       {/* Stats Overview */}
       {stats && totalCount > 0 && (
-        <Card>
+        <Card className="mb-6">
           <CardContent>
             <h3 className="font-semibold text-gray-900 mb-4">Dein Fortschritt</h3>
             <div className="grid grid-cols-3 gap-4">
@@ -264,6 +270,34 @@ export default function HomePage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Smart Recommendations */}
+      {totalCount > 0 && (
+        <div className="space-y-4 mb-6">
+          {/* Optimal study time indicator */}
+          <OptimalStudyTimeCard />
+
+          {/* Personalized recommendations */}
+          <StudyRecommendationsCard
+            onAction={(rec) => {
+              if (rec.action?.vocabularyIds || rec.action?.sectionIds) {
+                router.push('/practice')
+              } else if (rec.action) {
+                router.push('/practice')
+              }
+            }}
+          />
+
+          {/* Progress prediction */}
+          <ProgressPredictionCard />
+
+          {/* Weak words needing attention */}
+          <WeakWordsCard
+            limit={3}
+            onPractice={() => router.push('/practice')}
+          />
+        </div>
       )}
 
       {/* Empty State */}

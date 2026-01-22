@@ -49,6 +49,28 @@ export interface LanguageHint {
   text: string                  // "similar to 'house'"
 }
 
+// Example sentence for vocabulary
+export interface ExampleSentence {
+  text: string                  // The example sentence
+  translation?: string          // Optional translation
+  source?: string              // Where this sentence came from (e.g., "textbook", "user")
+}
+
+// Conjugation entry for verbs
+export interface ConjugationEntry {
+  tense: string                 // 'present', 'past', 'future', 'imperfect', etc.
+  forms: {
+    person: string             // '1s', '2s', '3s', '1p', '2p', '3p' (singular/plural)
+    form: string               // The conjugated form
+  }[]
+}
+
+// Word type classification
+export type WordType = 'noun' | 'verb' | 'adjective' | 'adverb' | 'preposition' | 'conjunction' | 'pronoun' | 'phrase' | 'other'
+
+// Gender for nouns (language-specific)
+export type GrammaticalGender = 'masculine' | 'feminine' | 'neuter' | 'common'
+
 export interface VocabularyItem {
   id: string
   sectionId: string | null      // null = book-level vocabulary
@@ -59,6 +81,15 @@ export interface VocabularyItem {
   notes?: string
   hints?: LanguageHint[]        // Multi-language hints
   imageUrl?: string
+  // Enhanced content fields
+  wordType?: WordType           // Classification of the word
+  gender?: GrammaticalGender    // For nouns
+  plural?: string               // Plural form (for nouns)
+  examples?: ExampleSentence[]  // Example sentences
+  conjugations?: ConjugationEntry[] // Verb conjugations
+  audioUrl?: string             // URL to pronunciation audio
+  pronunciation?: string        // IPA or phonetic spelling
+  etymology?: string            // Word origin/etymology
   createdAt: Date
   updatedAt: Date
 }
@@ -136,6 +167,50 @@ export interface CachedImage {
 }
 
 // ============================================================================
+// Family & Class Sharing
+// ============================================================================
+
+export type UserRole = 'child' | 'parent' | 'teacher'
+
+export interface FamilyGroup {
+  id: string
+  name: string                 // e.g., "Familie Müller"
+  createdBy: string           // User ID of creator
+  inviteCode: string          // Code for joining
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface FamilyMember {
+  id: string
+  familyId: string
+  userId: string              // References user profile ID
+  role: UserRole
+  nickname?: string           // Display name within family
+  joinedAt: Date
+}
+
+export interface SharedBook {
+  id: string
+  bookId: string
+  sharedBy: string            // User ID
+  sharedWith: 'family' | 'class'
+  groupId: string             // Family or class group ID
+  permissions: 'view' | 'copy' | 'edit'
+  sharedAt: Date
+}
+
+export interface ProgressShareSettings {
+  id: string
+  userId: string              // Child user ID
+  sharedWithId: string        // Parent user ID
+  shareProgress: boolean      // Show learning progress
+  shareStreak: boolean        // Show streak data
+  shareWeakWords: boolean     // Show struggling vocabulary
+  updatedAt: Date
+}
+
+// ============================================================================
 // Zod Validation Schemas
 // ============================================================================
 
@@ -165,6 +240,26 @@ export const LanguageHintSchema = z.object({
   text: z.string().min(1).max(500),
 })
 
+export const ExampleSentenceSchema = z.object({
+  text: z.string().min(1).max(500),
+  translation: z.string().max(500).optional(),
+  source: z.string().max(100).optional(),
+})
+
+export const ConjugationFormSchema = z.object({
+  person: z.enum(['1s', '2s', '3s', '1p', '2p', '3p']),
+  form: z.string().min(1).max(100),
+})
+
+export const ConjugationEntrySchema = z.object({
+  tense: z.string().min(1).max(50),
+  forms: z.array(ConjugationFormSchema),
+})
+
+export const WordTypeSchema = z.enum(['noun', 'verb', 'adjective', 'adverb', 'preposition', 'conjunction', 'pronoun', 'phrase', 'other'])
+
+export const GrammaticalGenderSchema = z.enum(['masculine', 'feminine', 'neuter', 'common'])
+
 export const VocabularyItemSchema = z.object({
   sourceText: z.string().min(1, 'Deutsches Wort ist erforderlich').max(200),
   targetText: z.string().min(1, 'Fremdwort ist erforderlich').max(200),
@@ -173,6 +268,15 @@ export const VocabularyItemSchema = z.object({
   bookId: z.string().min(1),
   notes: z.string().max(500).optional(),
   hints: z.array(LanguageHintSchema).optional(),
+  // Enhanced content
+  wordType: WordTypeSchema.optional(),
+  gender: GrammaticalGenderSchema.optional(),
+  plural: z.string().max(200).optional(),
+  examples: z.array(ExampleSentenceSchema).optional(),
+  conjugations: z.array(ConjugationEntrySchema).optional(),
+  audioUrl: z.string().url().optional(),
+  pronunciation: z.string().max(200).optional(),
+  etymology: z.string().max(1000).optional(),
 })
 
 export const UserSettingsSchema = z.object({
@@ -182,6 +286,34 @@ export const UserSettingsSchema = z.object({
   ocrProvider: z.enum(['tesseract', 'gemini']),
   geminiApiKey: z.string().optional(),
   soundEnabled: z.boolean(),
+})
+
+export const UserRoleSchema = z.enum(['child', 'parent', 'teacher'])
+
+export const FamilyGroupSchema = z.object({
+  name: z.string().min(1, 'Name ist erforderlich').max(100),
+})
+
+export const FamilyMemberSchema = z.object({
+  familyId: z.string().min(1),
+  userId: z.string().min(1),
+  role: UserRoleSchema,
+  nickname: z.string().max(50).optional(),
+})
+
+export const SharedBookSchema = z.object({
+  bookId: z.string().min(1),
+  sharedWith: z.enum(['family', 'class']),
+  groupId: z.string().min(1),
+  permissions: z.enum(['view', 'copy', 'edit']),
+})
+
+export const ProgressShareSettingsSchema = z.object({
+  userId: z.string().min(1),
+  sharedWithId: z.string().min(1),
+  shareProgress: z.boolean(),
+  shareStreak: z.boolean(),
+  shareWeakWords: z.boolean(),
 })
 
 // ============================================================================

@@ -84,10 +84,15 @@ export default function PracticePage() {
   const handleStart = () => {
     if (wordCount === 0) return
 
+    // Get target language from the first selected section's book
+    const selectedSection = sections.find((s) => selectedSectionIds.includes(s.id))
+    const targetLanguage = selectedSection?.book?.language
+
     startSession({
       exerciseType,
       direction,
       sectionIds: selectedSectionIds,
+      targetLanguage,
       items: wordsToStudy.map((v) => ({
         vocabulary: v,
         progress: v.progress,

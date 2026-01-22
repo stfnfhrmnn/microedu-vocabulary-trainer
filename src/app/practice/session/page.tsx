@@ -45,6 +45,7 @@ export default function PracticeSessionPage() {
   const isCardFlipped = usePracticeSession((state) => state.isCardFlipped)
   const currentStreak = usePracticeSession((state) => state.currentStreak)
   const sectionIds = usePracticeSession((state) => state.sectionIds)
+  const targetLanguage = usePracticeSession((state) => state.targetLanguage)
 
   const currentItem = usePracticeSession(useCurrentItem)
   const progressAnswered = usePracticeSession(selectProgressAnswered)
@@ -229,10 +230,11 @@ export default function PracticeSessionPage() {
     return null
   }
 
-  const { question, answer, isReversed } = getQuestionAnswer(
+  const { question, answer, isReversed, questionLanguage, answerLanguage } = getQuestionAnswer(
     currentItem.vocabulary,
     direction,
-    currentIndex
+    currentIndex,
+    targetLanguage
   )
 
   // Get all answers for multiple choice distractors
@@ -279,6 +281,8 @@ export default function PracticeSessionPage() {
               isFlipped={isCardFlipped}
               onFlip={handleFlip}
               notes={currentItem.vocabulary.notes}
+              questionLanguage={questionLanguage}
+              answerLanguage={answerLanguage}
             />
 
             <AnimatePresence>
@@ -310,6 +314,8 @@ export default function PracticeSessionPage() {
             correctAnswer={answer}
             strictness={typingStrictness}
             onAnswer={handleTypedAnswer}
+            questionLanguage={questionLanguage}
+            answerLanguage={answerLanguage}
           />
         )}
       </div>

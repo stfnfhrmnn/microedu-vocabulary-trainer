@@ -1,7 +1,9 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { PronunciationButton } from '@/components/vocabulary/PronunciationButton'
 import { cn } from '@/lib/utils/cn'
+import type { Language } from '@/lib/db/schema'
 
 export interface FlashCardProps {
   question: string
@@ -9,6 +11,8 @@ export interface FlashCardProps {
   isFlipped: boolean
   onFlip: () => void
   notes?: string
+  questionLanguage?: Language | 'german'
+  answerLanguage?: Language | 'german'
 }
 
 export function FlashCard({
@@ -17,6 +21,8 @@ export function FlashCard({
   isFlipped,
   onFlip,
   notes,
+  questionLanguage,
+  answerLanguage,
 }: FlashCardProps) {
   return (
     <motion.div
@@ -74,9 +80,19 @@ export function FlashCard({
           >
             Frage
           </motion.p>
-          <p className="text-vocab-lg text-gray-900 text-center break-words">
-            {question}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-vocab-lg text-gray-900 text-center break-words">
+              {question}
+            </p>
+            {questionLanguage && (
+              <PronunciationButton
+                text={question}
+                language={questionLanguage}
+                size="md"
+                variant="circle"
+              />
+            )}
+          </div>
           <motion.p
             animate={{
               opacity: [0.4, 0.7, 0.4],
@@ -107,9 +123,19 @@ export function FlashCard({
           <p className="text-xs text-primary-400 uppercase tracking-wider mb-4">
             Antwort
           </p>
-          <p className="text-vocab-lg text-primary-700 text-center break-words font-medium">
-            {answer}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-vocab-lg text-primary-700 text-center break-words font-medium">
+              {answer}
+            </p>
+            {answerLanguage && (
+              <PronunciationButton
+                text={answer}
+                language={answerLanguage}
+                size="md"
+                variant="circle"
+              />
+            )}
+          </div>
           {notes && (
             <p className="text-sm text-primary-500 mt-4 text-center">{notes}</p>
           )}
