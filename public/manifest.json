@@ -27,6 +27,36 @@
       "purpose": "maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Übung starten",
+      "short_name": "Üben",
+      "description": "Fällige Vokabeln wiederholen",
+      "url": "/practice",
+      "icons": [{ "src": "/icons/shortcut-practice.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Vokabeln hinzufügen",
+      "short_name": "Hinzufügen",
+      "description": "Neue Vokabeln eingeben oder scannen",
+      "url": "/add",
+      "icons": [{ "src": "/icons/shortcut-add.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Bibliothek",
+      "short_name": "Bücher",
+      "description": "Deine Bücher und Vokabeln verwalten",
+      "url": "/library",
+      "icons": [{ "src": "/icons/shortcut-library.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Eltern-Quiz",
+      "short_name": "Quiz",
+      "description": "Kind mündlich abfragen",
+      "url": "/practice/parent-quiz",
+      "icons": [{ "src": "/icons/shortcut-quiz.png", "sizes": "96x96" }]
+    }
+  ],
   "categories": ["education"],
   "lang": "de"
 }
