@@ -22,6 +22,7 @@ interface GamificationState {
   // XP & Levels
   totalXP: number
   level: number
+  pendingLevelUp: number | null // New level when level-up occurs, null when no pending level-up
 
   // Daily activity
   dailyActivity: Record<string, DailyActivity>
@@ -40,6 +41,7 @@ interface GamificationState {
     dailyGoal: number
   ) => { xpGained: number; bonuses: string[] }
   checkAndUpdateStreak: () => void
+  clearPendingLevelUp: () => void
   resetGamification: () => void
 }
 
@@ -61,6 +63,7 @@ export const useGamification = create<GamificationState>()(
       lastActiveDate: null,
       totalXP: 0,
       level: 1,
+      pendingLevelUp: null,
       dailyActivity: {},
 
       todayActivity: () => {
@@ -120,6 +123,7 @@ export const useGamification = create<GamificationState>()(
         set({
           totalXP: newTotal,
           level: newLevel,
+          pendingLevelUp: leveledUp, // Set pending level-up for popup
           dailyActivity: {
             ...state.dailyActivity,
             [today]: {
@@ -200,6 +204,10 @@ export const useGamification = create<GamificationState>()(
         })
       },
 
+      clearPendingLevelUp: () => {
+        set({ pendingLevelUp: null })
+      },
+
       resetGamification: () => {
         set({
           currentStreak: 0,
@@ -207,6 +215,7 @@ export const useGamification = create<GamificationState>()(
           lastActiveDate: null,
           totalXP: 0,
           level: 1,
+          pendingLevelUp: null,
           dailyActivity: {},
         })
       },

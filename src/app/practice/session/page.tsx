@@ -61,6 +61,7 @@ export default function PracticeSessionPage() {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [showStreakMessage, setShowStreakMessage] = useState<string | null>(null)
   const [screenReaderAnnouncement, setScreenReaderAnnouncement] = useState<string>('')
+  const [itemStartTime, setItemStartTime] = useState<number>(Date.now())
 
   // Redirect if no active session
   useEffect(() => {
@@ -68,6 +69,11 @@ export default function PracticeSessionPage() {
       router.replace('/practice')
     }
   }, [isSessionActive, items.length, router])
+
+  // Reset item start time when moving to a new item
+  useEffect(() => {
+    setItemStartTime(Date.now())
+  }, [currentIndex])
 
   // Create session record on mount
   useEffect(() => {
@@ -175,7 +181,7 @@ export default function PracticeSessionPage() {
         userAnswer: userAnswer || '',
         wasCorrect: isCorrect,
         qualityRating,
-        responseTimeMs: 0, // TODO: track actual response time
+        responseTimeMs: Date.now() - itemStartTime,
       })
 
       // Move to next item after delay
@@ -198,6 +204,7 @@ export default function PracticeSessionPage() {
       recordCorrectAnswer,
       recordCorrectForAchievement,
       recordIncorrectForAchievement,
+      itemStartTime,
     ]
   )
 

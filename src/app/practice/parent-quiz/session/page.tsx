@@ -52,6 +52,7 @@ export default function ParentQuizSessionPage() {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [showStreakMessage, setShowStreakMessage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [itemStartTime, setItemStartTime] = useState<number>(Date.now())
 
   // Redirect if no active session or wrong quiz mode
   useEffect(() => {
@@ -61,6 +62,11 @@ export default function ParentQuizSessionPage() {
       router.replace('/practice/parent-quiz')
     }
   }, [isSessionActive, items.length, quizMode, router])
+
+  // Reset item start time when moving to a new item
+  useEffect(() => {
+    setItemStartTime(Date.now())
+  }, [currentIndex])
 
   // Create session record on mount
   useEffect(() => {
@@ -144,7 +150,7 @@ export default function ParentQuizSessionPage() {
         userAnswer: '',
         wasCorrect: isCorrect,
         qualityRating,
-        responseTimeMs: 0,
+        responseTimeMs: Date.now() - itemStartTime,
       })
 
       // Move to next item after short delay
@@ -161,6 +167,7 @@ export default function ParentQuizSessionPage() {
       currentStreak,
       recordAnswer,
       nextItem,
+      itemStartTime,
     ]
   )
 
