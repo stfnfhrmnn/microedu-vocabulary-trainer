@@ -19,6 +19,14 @@ import type {
   CreateSection,
   CreateVocabularyItem,
   LanguageHint,
+  Network,
+  NetworkMember,
+  CompetitionStats,
+  NetworkSharedBook,
+  BookCopy,
+  UserBlock,
+  ContentReport,
+  DeletionRequest,
 } from './schema'
 
 type ChangeTable = 'books' | 'chapters' | 'sections' | 'vocabularyItems' | 'learningProgress'
@@ -58,6 +66,15 @@ export class VocabularyDatabase extends Dexie {
   familyMembers!: Table<FamilyMember, string>
   sharedBooks!: Table<SharedBook, string>
   progressShareSettings!: Table<ProgressShareSettings, string>
+  // Network/Competition tables
+  networks!: Table<Network, string>
+  networkMembers!: Table<NetworkMember, string>
+  competitionStats!: Table<CompetitionStats, string>
+  networkSharedBooks!: Table<NetworkSharedBook, string>
+  bookCopies!: Table<BookCopy, string>
+  userBlocks!: Table<UserBlock, string>
+  contentReports!: Table<ContentReport, string>
+  deletionRequests!: Table<DeletionRequest, string>
 
   constructor() {
     super('VocabularyTrainer')
@@ -103,6 +120,32 @@ export class VocabularyDatabase extends Dexie {
       familyMembers: 'id, familyId, userId, role, joinedAt',
       sharedBooks: 'id, bookId, sharedBy, groupId, sharedAt',
       progressShareSettings: 'id, userId, sharedWithId, updatedAt',
+    })
+
+    // Version 4: Network competition & sharing
+    this.version(4).stores({
+      books: 'id, name, language, createdAt',
+      chapters: 'id, bookId, name, order, createdAt',
+      sections: 'id, chapterId, bookId, name, order, coveredInClass, createdAt',
+      vocabularyItems: 'id, sectionId, chapterId, bookId, sourceText, targetText, createdAt',
+      learningProgress: 'id, vocabularyId, nextReviewDate, interval',
+      reviewSessions: 'id, exerciseType, startedAt, completedAt',
+      reviewAttempts: 'id, sessionId, vocabularyId, createdAt',
+      userSettings: 'id',
+      cachedImages: 'id, vocabularyId, createdAt',
+      familyGroups: 'id, inviteCode, createdBy, createdAt',
+      familyMembers: 'id, familyId, userId, role, joinedAt',
+      sharedBooks: 'id, bookId, sharedBy, groupId, sharedAt',
+      progressShareSettings: 'id, userId, sharedWithId, updatedAt',
+      // Network/Competition tables
+      networks: 'id, inviteCode, ownerId, type, createdAt',
+      networkMembers: 'id, networkId, userId, role, joinedAt',
+      competitionStats: 'id, userId, periodType, periodStart, updatedAt',
+      networkSharedBooks: 'id, bookId, ownerId, networkId, sharedAt',
+      bookCopies: 'id, originalBookId, copiedBookId, copiedBy, copiedAt',
+      userBlocks: 'id, blockerId, blockedId, createdAt',
+      contentReports: 'id, reporterId, reportedUserId, networkId, status, createdAt',
+      deletionRequests: 'id, userId, itemType, itemId, status, createdAt',
     })
 
     // Add timestamp hooks

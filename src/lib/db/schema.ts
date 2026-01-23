@@ -170,7 +170,113 @@ export interface CachedImage {
 // Family & Class Sharing
 // ============================================================================
 
-export type UserRole = 'child' | 'parent' | 'teacher'
+export type UserRole = 'child' | 'parent' | 'teacher' | 'admin'
+
+// ============================================================================
+// Network Types (Classes/Study Groups)
+// ============================================================================
+
+export type NetworkType = 'class' | 'study_group' | 'family'
+export type MemberVisibility = 'visible' | 'hidden'
+export type JoinStatus = 'active' | 'pending' | 'blocked'
+export type PeriodType = 'daily' | 'weekly' | 'monthly' | 'all_time'
+export type BlockType = 'full' | 'messages_only'
+export type ReportType = 'inappropriate_content' | 'spam' | 'harassment' | 'other'
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed'
+export type DeletionStatus = 'pending' | 'confirmed' | 'rejected'
+
+export interface Network {
+  id: string
+  name: string
+  type: NetworkType
+  inviteCode: string           // XXXX-XXXX format
+  ownerId: string
+  settings: NetworkSettings
+  createdAt: Date
+  archivedAt?: Date
+}
+
+export interface NetworkSettings {
+  allowChildInvites?: boolean
+  leaderboardVisible?: boolean
+  parentsSeeAllProgress?: boolean
+}
+
+export interface NetworkMember {
+  id: string
+  networkId: string
+  userId: string
+  role: UserRole
+  nickname?: string
+  visibility: MemberVisibility
+  joinStatus: JoinStatus
+  joinedAt: Date
+}
+
+export interface CompetitionStats {
+  id: string
+  userId: string
+  periodType: PeriodType
+  periodStart: Date
+  wordsReviewed: number
+  wordsMastered: number
+  accuracyPercentage: number
+  xpEarned: number
+  streakDays: number
+  sessionsCompleted: number
+  updatedAt: Date
+}
+
+export interface NetworkSharedBook {
+  id: string
+  bookId: string
+  ownerId: string
+  networkId: string
+  permissions: 'copy'          // Only copy model supported
+  copyCount: number
+  sharedAt: Date
+}
+
+export interface BookCopy {
+  id: string
+  originalBookId?: string      // null if original deleted
+  copiedBookId: string
+  copiedBy: string
+  copiedFromUserId?: string    // null if original owner deleted
+  copiedAt: Date
+}
+
+export interface UserBlock {
+  id: string
+  blockerId: string
+  blockedId: string
+  blockType: BlockType
+  createdAt: Date
+}
+
+export interface ContentReport {
+  id: string
+  reporterId: string
+  reportedUserId?: string
+  reportedBookId?: string
+  networkId?: string
+  reportType: ReportType
+  description?: string
+  status: ReportStatus
+  createdAt: Date
+}
+
+export interface DeletionRequest {
+  id: string
+  userId: string
+  itemType: 'vocabulary' | 'book' | 'chapter' | 'section'
+  itemId: string
+  totalReviews: number
+  requiresConfirmation: boolean
+  status: DeletionStatus
+  confirmedBy?: string
+  createdAt: Date
+}
 
 export interface FamilyGroup {
   id: string
@@ -288,7 +394,70 @@ export const UserSettingsSchema = z.object({
   soundEnabled: z.boolean(),
 })
 
-export const UserRoleSchema = z.enum(['child', 'parent', 'teacher'])
+export const UserRoleSchema = z.enum(['child', 'parent', 'teacher', 'admin'])
+
+// Network Schemas
+export const NetworkTypeSchema = z.enum(['class', 'study_group', 'family'])
+export const MemberVisibilitySchema = z.enum(['visible', 'hidden'])
+export const JoinStatusSchema = z.enum(['active', 'pending', 'blocked'])
+export const PeriodTypeSchema = z.enum(['daily', 'weekly', 'monthly', 'all_time'])
+export const BlockTypeSchema = z.enum(['full', 'messages_only'])
+export const ReportTypeSchema = z.enum(['inappropriate_content', 'spam', 'harassment', 'other'])
+export const ReportStatusSchema = z.enum(['pending', 'reviewed', 'resolved', 'dismissed'])
+export const DeletionStatusSchema = z.enum(['pending', 'confirmed', 'rejected'])
+
+export const NetworkSettingsSchema = z.object({
+  allowChildInvites: z.boolean().optional(),
+  leaderboardVisible: z.boolean().optional(),
+  parentsSeeAllProgress: z.boolean().optional(),
+})
+
+export const NetworkSchema = z.object({
+  name: z.string().min(1, 'Name ist erforderlich').max(100),
+  type: NetworkTypeSchema,
+  settings: NetworkSettingsSchema.optional(),
+})
+
+export const NetworkMemberSchema = z.object({
+  networkId: z.string().min(1),
+  userId: z.string().min(1),
+  role: UserRoleSchema,
+  nickname: z.string().max(50).optional(),
+  visibility: MemberVisibilitySchema.optional(),
+})
+
+export const CompetitionStatsSchema = z.object({
+  periodType: PeriodTypeSchema,
+  wordsReviewed: z.number().int().min(0),
+  wordsMastered: z.number().int().min(0),
+  accuracyPercentage: z.number().min(0).max(100),
+  xpEarned: z.number().int().min(0),
+  streakDays: z.number().int().min(0),
+  sessionsCompleted: z.number().int().min(0),
+})
+
+export const NetworkSharedBookSchema = z.object({
+  bookId: z.string().min(1),
+  networkId: z.string().min(1),
+})
+
+export const UserBlockSchema = z.object({
+  blockedId: z.string().min(1),
+  blockType: BlockTypeSchema.optional(),
+})
+
+export const ContentReportSchema = z.object({
+  reportedUserId: z.string().min(1).optional(),
+  reportedBookId: z.string().min(1).optional(),
+  networkId: z.string().min(1).optional(),
+  reportType: ReportTypeSchema,
+  description: z.string().max(1000).optional(),
+})
+
+export const DeletionRequestSchema = z.object({
+  itemType: z.enum(['vocabulary', 'book', 'chapter', 'section']),
+  itemId: z.string().min(1),
+})
 
 export const FamilyGroupSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').max(100),
@@ -366,4 +535,32 @@ export interface VocabularyStats {
 export interface SectionStats extends VocabularyStats {
   sectionId: string
   sectionName: string
+}
+
+// Network helper types
+export type CreateNetwork = z.infer<typeof NetworkSchema>
+export type CreateNetworkMember = z.infer<typeof NetworkMemberSchema>
+export type CreateCompetitionStats = z.infer<typeof CompetitionStatsSchema>
+export type CreateNetworkSharedBook = z.infer<typeof NetworkSharedBookSchema>
+export type CreateUserBlock = z.infer<typeof UserBlockSchema>
+export type CreateContentReport = z.infer<typeof ContentReportSchema>
+export type CreateDeletionRequest = z.infer<typeof DeletionRequestSchema>
+
+// Leaderboard entry for display
+export interface LeaderboardEntry {
+  userId: string
+  nickname: string
+  role: UserRole
+  rank: number
+  xpEarned: number
+  wordsReviewed: number
+  wordsMastered: number
+  accuracyPercentage: number
+  streakDays: number
+}
+
+// Network with member count for display
+export interface NetworkWithMembers extends Network {
+  memberCount: number
+  myRole?: UserRole
 }

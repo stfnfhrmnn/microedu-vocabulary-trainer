@@ -8,6 +8,7 @@ import {
   decimal,
   jsonb,
   uniqueIndex,
+  boolean,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -216,6 +217,212 @@ export const userDataRelations = relations(userData, ({ one }) => ({
 }))
 
 // ============================================================================
+// Networks (Classes/Study Groups)
+// ============================================================================
+
+export const networks = pgTable('networks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  type: varchar('type', { length: 20 }).notNull(), // 'class' | 'study_group' | 'family'
+  inviteCode: varchar('invite_code', { length: 9 }).unique().notNull(), // XXXX-XXXX
+  ownerId: uuid('owner_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+  settings: jsonb('settings').default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
+})
+
+export const networksRelations = relations(networks, ({ one, many }) => ({
+  owner: one(users, { fields: [networks.ownerId], references: [users.id] }),
+  members: many(networkMembers),
+  sharedBooks: many(networkSharedBooks),
+}))
+
+// ============================================================================
+// Network Members
+// ============================================================================
+
+export const networkMembers = pgTable(
+  'network_members',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    networkId: uuid('network_id')
+      .references(() => networks.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    role: varchar('role', { length: 20 }).notNull(), // 'child' | 'parent' | 'teacher' | 'admin'
+    nickname: varchar('nickname', { length: 50 }),
+    visibility: varchar('visibility', { length: 20 }).default('visible'),
+    joinStatus: varchar('join_status', { length: 20 }).default('active'),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [uniqueIndex('network_member_idx').on(table.networkId, table.userId)]
+)
+
+export const networkMembersRelations = relations(networkMembers, ({ one }) => ({
+  network: one(networks, { fields: [networkMembers.networkId], references: [networks.id] }),
+  user: one(users, { fields: [networkMembers.userId], references: [users.id] }),
+}))
+
+// ============================================================================
+// Competition Stats (Aggregated, Privacy-Preserving)
+// ============================================================================
+
+export const competitionStats = pgTable(
+  'competition_stats',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    periodType: varchar('period_type', { length: 20 }).notNull(), // 'daily' | 'weekly' | 'monthly' | 'all_time'
+    periodStart: timestamp('period_start', { withTimezone: true }).notNull(),
+    wordsReviewed: integer('words_reviewed').default(0),
+    wordsMastered: integer('words_mastered').default(0),
+    accuracyPercentage: decimal('accuracy_percentage', { precision: 5, scale: 2 }).default('0'),
+    xpEarned: integer('xp_earned').default(0),
+    streakDays: integer('streak_days').default(0),
+    sessionsCompleted: integer('sessions_completed').default(0),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [uniqueIndex('stats_user_period_idx').on(table.userId, table.periodType, table.periodStart)]
+)
+
+export const competitionStatsRelations = relations(competitionStats, ({ one }) => ({
+  user: one(users, { fields: [competitionStats.userId], references: [users.id] }),
+}))
+
+// ============================================================================
+// Network Shared Books
+// ============================================================================
+
+export const networkSharedBooks = pgTable('network_shared_books', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  bookId: uuid('book_id')
+    .references(() => books.id, { onDelete: 'cascade' })
+    .notNull(),
+  ownerId: uuid('owner_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  networkId: uuid('network_id')
+    .references(() => networks.id, { onDelete: 'cascade' })
+    .notNull(),
+  permissions: varchar('permissions', { length: 20 }).default('copy'),
+  copyCount: integer('copy_count').default(0),
+  sharedAt: timestamp('shared_at', { withTimezone: true }).defaultNow(),
+})
+
+export const networkSharedBooksRelations = relations(networkSharedBooks, ({ one }) => ({
+  book: one(books, { fields: [networkSharedBooks.bookId], references: [books.id] }),
+  owner: one(users, { fields: [networkSharedBooks.ownerId], references: [users.id] }),
+  network: one(networks, { fields: [networkSharedBooks.networkId], references: [networks.id] }),
+}))
+
+// ============================================================================
+// Book Copies (Tracking)
+// ============================================================================
+
+export const bookCopies = pgTable('book_copies', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  originalBookId: uuid('original_book_id')
+    .references(() => books.id, { onDelete: 'set null' }),
+  copiedBookId: uuid('copied_book_id')
+    .references(() => books.id, { onDelete: 'cascade' })
+    .notNull(),
+  copiedBy: uuid('copied_by')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  copiedFromUserId: uuid('copied_from_user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+  copiedAt: timestamp('copied_at', { withTimezone: true }).defaultNow(),
+})
+
+export const bookCopiesRelations = relations(bookCopies, ({ one }) => ({
+  originalBook: one(books, { fields: [bookCopies.originalBookId], references: [books.id] }),
+  copiedBook: one(books, { fields: [bookCopies.copiedBookId], references: [books.id] }),
+  copier: one(users, { fields: [bookCopies.copiedBy], references: [users.id] }),
+  originalOwner: one(users, { fields: [bookCopies.copiedFromUserId], references: [users.id] }),
+}))
+
+// ============================================================================
+// User Blocks
+// ============================================================================
+
+export const userBlocks = pgTable(
+  'user_blocks',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    blockerId: uuid('blocker_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    blockedId: uuid('blocked_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    blockType: varchar('block_type', { length: 20 }).default('full'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [uniqueIndex('user_block_idx').on(table.blockerId, table.blockedId)]
+)
+
+export const userBlocksRelations = relations(userBlocks, ({ one }) => ({
+  blocker: one(users, { fields: [userBlocks.blockerId], references: [users.id] }),
+  blocked: one(users, { fields: [userBlocks.blockedId], references: [users.id] }),
+}))
+
+// ============================================================================
+// Content Reports
+// ============================================================================
+
+export const contentReports = pgTable('content_reports', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  reporterId: uuid('reporter_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+  reportedUserId: uuid('reported_user_id')
+    .references(() => users.id, { onDelete: 'set null' }),
+  reportedBookId: uuid('reported_book_id')
+    .references(() => books.id, { onDelete: 'set null' }),
+  networkId: uuid('network_id')
+    .references(() => networks.id, { onDelete: 'set null' }),
+  reportType: varchar('report_type', { length: 30 }).notNull(),
+  description: text('description'),
+  status: varchar('status', { length: 20 }).default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
+export const contentReportsRelations = relations(contentReports, ({ one }) => ({
+  reporter: one(users, { fields: [contentReports.reporterId], references: [users.id] }),
+  reportedUser: one(users, { fields: [contentReports.reportedUserId], references: [users.id] }),
+  reportedBook: one(books, { fields: [contentReports.reportedBookId], references: [books.id] }),
+  network: one(networks, { fields: [contentReports.networkId], references: [networks.id] }),
+}))
+
+// ============================================================================
+// Deletion Requests (Protected Content)
+// ============================================================================
+
+export const deletionRequests = pgTable('deletion_requests', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  itemType: varchar('item_type', { length: 30 }).notNull(),
+  itemId: uuid('item_id').notNull(),
+  totalReviews: integer('total_reviews').default(0),
+  requiresConfirmation: boolean('requires_confirmation').default(false),
+  status: varchar('status', { length: 20 }).default('pending'),
+  confirmedBy: uuid('confirmed_by')
+    .references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
+export const deletionRequestsRelations = relations(deletionRequests, ({ one }) => ({
+  user: one(users, { fields: [deletionRequests.userId], references: [users.id] }),
+  confirmer: one(users, { fields: [deletionRequests.confirmedBy], references: [users.id] }),
+}))
+
+// ============================================================================
 // Type Exports
 // ============================================================================
 
@@ -233,3 +440,21 @@ export type LearningProgress = typeof learningProgress.$inferSelect
 export type NewLearningProgress = typeof learningProgress.$inferInsert
 export type UserData = typeof userData.$inferSelect
 export type NewUserData = typeof userData.$inferInsert
+
+// Network Types
+export type Network = typeof networks.$inferSelect
+export type NewNetwork = typeof networks.$inferInsert
+export type NetworkMember = typeof networkMembers.$inferSelect
+export type NewNetworkMember = typeof networkMembers.$inferInsert
+export type CompetitionStats = typeof competitionStats.$inferSelect
+export type NewCompetitionStats = typeof competitionStats.$inferInsert
+export type NetworkSharedBook = typeof networkSharedBooks.$inferSelect
+export type NewNetworkSharedBook = typeof networkSharedBooks.$inferInsert
+export type BookCopy = typeof bookCopies.$inferSelect
+export type NewBookCopy = typeof bookCopies.$inferInsert
+export type UserBlock = typeof userBlocks.$inferSelect
+export type NewUserBlock = typeof userBlocks.$inferInsert
+export type ContentReport = typeof contentReports.$inferSelect
+export type NewContentReport = typeof contentReports.$inferInsert
+export type DeletionRequest = typeof deletionRequests.$inferSelect
+export type NewDeletionRequest = typeof deletionRequests.$inferInsert
