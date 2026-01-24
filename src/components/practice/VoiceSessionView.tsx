@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, Volume2, Pause, Play, Square, Moon, Zap } from 'lucide-react'
+import { Mic, Volume2, Pause, Square, Moon, Zap, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useVoiceSession, useVoiceSessionProgress } from '@/stores/voice-session'
-import { getTTSService } from '@/lib/services/text-to-speech'
+import { useSettings } from '@/stores/settings'
+import { getUnifiedTTSService } from '@/lib/services/unified-tts'
 import { getSpeechRecognitionService } from '@/lib/services/speech-recognition'
+import { getVoiceAnalyzerService } from '@/lib/services/voice-analyzer'
 import { extractAnswer } from '@/lib/learning/answer-extractor'
 import { combinedMatch } from '@/lib/learning/phonetic-match'
 import {
@@ -57,10 +59,28 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
   } = useVoiceSession()
 
   const progress = useVoiceSessionProgress()
-  const ttsService = useRef(getTTSService())
+
+  // Get settings for TTS and AI analysis
+  const { ttsProvider, googleApiKey, useAIAnalysis } = useSettings()
+
+  // Services
+  const ttsService = useRef(getUnifiedTTSService())
   const sttService = useRef(getSpeechRecognitionService())
+  const analyzerService = useRef(getVoiceAnalyzerService())
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [interimTranscript, setInterimTranscript] = useState('')
+  const [usingAI, setUsingAI] = useState(false)
+
+  // Configure services on mount and when settings change
+  useEffect(() => {
+    ttsService.current.configure({
+      provider: ttsProvider,
+      googleApiKey,
+    })
+    analyzerService.current.setApiKey(googleApiKey)
+    analyzerService.current.setUseAI(useAIAnalysis)
+    setUsingAI(useAIAnalysis && !!googleApiKey)
+  }, [ttsProvider, googleApiKey, useAIAnalysis])
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -82,6 +102,32 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
       await ttsService.current.speak(text, language, { rate })
     },
     [mode]
+  )
+
+  /**
+   * Process answer using AI analyzer when available
+   */
+  const analyzeWithAI = useCallback(
+    async (transcript: string) => {
+      if (!analyzerService.current.isAvailable()) {
+        return null
+      }
+
+      try {
+        const result = await analyzerService.current.analyze(
+          transcript,
+          currentAnswer,
+          currentQuestion,
+          currentQuestionLanguage,
+          currentAnswerLanguage
+        )
+        return result
+      } catch (error) {
+        console.error('AI analysis failed:', error)
+        return null
+      }
+    },
+    [currentAnswer, currentQuestion, currentQuestionLanguage, currentAnswerLanguage]
   )
 
   /**
@@ -131,7 +177,86 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
         timeoutRef.current = null
       }
 
-      // Extract the answer from natural speech
+      // Try AI analysis first if available
+      const aiResult = await analyzeWithAI(transcript)
+
+      if (aiResult) {
+        // Use AI analysis result
+        const { intent, extractedAnswer, isCorrect, confidence, suggestedFeedback } = aiResult
+
+        // Handle intents
+        if (intent === 'repeat') {
+          const script = generateRepeatScript(currentQuestion, mode)
+          await speak(script, 'german')
+          await new Promise((r) => setTimeout(r, getQuestionPause(mode)))
+          setStatus('asking')
+          return
+        }
+        if (intent === 'skip') {
+          const script = generateSkipScript(currentAnswer, mode)
+          await speak(script, 'german')
+          recordAnswer(false, 1 as QualityRating, transcript, '')
+          await new Promise((r) => setTimeout(r, getFeedbackPause(mode)))
+          if (!nextItem()) {
+            setStatus('summary')
+          } else {
+            setStatus('asking')
+          }
+          return
+        }
+        if (intent === 'stop') {
+          sttService.current.stop()
+          const correctCount = items.filter((i) => i.correct).length
+          const script = generateStopScript(mode, currentIndex, correctCount)
+          await speak(script, 'german')
+          stop()
+          onSessionComplete()
+          return
+        }
+        if (intent === 'hint') {
+          const hint = items[currentIndex]?.vocabulary.notes
+          const script = hint
+            ? `Hinweis: ${hint}`
+            : `Es fängt mit "${currentAnswer.charAt(0).toUpperCase()}" an.`
+          await speak(script, 'german')
+          await new Promise((r) => setTimeout(r, 500))
+          setStatus('asking')
+          return
+        }
+        if (intent === 'dont_know') {
+          const script = generateDontKnowScript(currentAnswer, mode)
+          await speak(script, 'german')
+          recordAnswer(false, 1 as QualityRating, transcript, '')
+          await new Promise((r) => setTimeout(r, getFeedbackPause(mode)))
+          setStatus('feedback')
+          return
+        }
+
+        // It's an answer - use AI's evaluation
+        const qualityRating: QualityRating = isCorrect
+          ? confidence >= 0.95 ? 5 : confidence >= 0.8 ? 4 : 3
+          : confidence >= 0.5 ? 2 : 1
+
+        recordAnswer(isCorrect, qualityRating, transcript, extractedAnswer)
+
+        // Use AI's suggested feedback if available, otherwise generate
+        const feedbackScript = suggestedFeedback || generateFeedbackScript({
+          mode,
+          wasCorrect: isCorrect,
+          expectedAnswer: currentAnswer,
+          userAnswer: extractedAnswer,
+          currentStreak: isCorrect ? currentStreak + 1 : 0,
+          questionNumber: currentIndex,
+          totalQuestions: items.length,
+          isLastQuestion: currentIndex === items.length - 1,
+        })
+
+        await speak(feedbackScript, 'german')
+        setStatus('feedback')
+        return
+      }
+
+      // Fallback to rule-based extraction
       const extraction = extractAnswer(
         transcript,
         currentAnswer,
@@ -252,6 +377,7 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
       nextItem,
       stop,
       onSessionComplete,
+      analyzeWithAI,
     ]
   )
 
@@ -539,6 +665,18 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* AI indicator */}
+      {usingAI && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute top-8 right-8 mt-12 flex items-center gap-1 text-purple-400 text-sm"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>AI</span>
+        </motion.div>
+      )}
 
       {/* Tap hint */}
       <motion.div

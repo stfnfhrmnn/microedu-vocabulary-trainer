@@ -34,6 +34,11 @@ const ocrOptions = [
   { value: 'google-vision', label: 'Google Vision (Online)' },
 ]
 
+const ttsOptions = [
+  { value: 'web-speech', label: 'Web Speech API (Kostenlos)' },
+  { value: 'google-cloud', label: 'Google Cloud TTS (Bessere Qualität)' },
+]
+
 export default function SettingsPage() {
   const settings = useSettings()
   const [showApiKey, setShowApiKey] = useState(false)
@@ -170,6 +175,54 @@ export default function SettingsPage() {
                     {' '}mit aktivierter Vision API.
                   </p>
                 </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Voice Practice Settings */}
+        <Card>
+          <CardContent>
+            <h3 className="font-semibold text-gray-900 mb-4">Sprachübung</h3>
+
+            <div className="space-y-4">
+              <Select
+                label="Sprachausgabe (TTS)"
+                options={ttsOptions}
+                value={settings.ttsProvider}
+                onChange={(e) =>
+                  settings.setTTSProvider(e.target.value as typeof settings.ttsProvider)
+                }
+                helperText={
+                  settings.ttsProvider === 'google-cloud'
+                    ? 'Benötigt Google Cloud API-Schlüssel (oben)'
+                    : 'Kostenlos, Qualität variiert je nach Browser'
+                }
+              />
+
+              {settings.ttsProvider === 'google-cloud' && !settings.googleApiKey && (
+                <p className="text-sm text-warning-600 bg-warning-50 p-2 rounded">
+                  Bitte gib einen Google Cloud API-Schlüssel ein (siehe OCR-Einstellungen oben).
+                </p>
+              )}
+
+              <Toggle
+                checked={settings.useAIAnalysis}
+                onChange={settings.setUseAIAnalysis}
+                label="KI-Analyse"
+                description="Nutzt Gemini zur besseren Erkennung gesprochener Antworten"
+              />
+
+              {settings.useAIAnalysis && !settings.googleApiKey && (
+                <p className="text-sm text-warning-600 bg-warning-50 p-2 rounded">
+                  Für KI-Analyse wird ein Google Cloud API-Schlüssel mit aktivierter Gemini API benötigt.
+                </p>
+              )}
+
+              {settings.useAIAnalysis && settings.googleApiKey && (
+                <p className="text-sm text-gray-500">
+                  KI-Analyse versteht natürliche Sprache besser und kann auch semantisch ähnliche Antworten erkennen.
+                </p>
               )}
             </div>
           </CardContent>

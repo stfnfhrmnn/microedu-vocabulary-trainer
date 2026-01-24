@@ -4,6 +4,8 @@ import type { PracticeDirection, ExerciseType } from '@/lib/db/schema'
 import type { StrictnessLevel } from '@/lib/learning/fuzzy-match'
 import type { OCRProviderType } from '@/lib/ocr/types'
 
+export type TTSProvider = 'web-speech' | 'google-cloud'
+
 interface SettingsState {
   // Practice defaults
   defaultDirection: PracticeDirection
@@ -13,6 +15,10 @@ interface SettingsState {
   // OCR settings
   ocrProvider: OCRProviderType
   googleApiKey: string | null
+
+  // Voice practice settings
+  ttsProvider: TTSProvider
+  useAIAnalysis: boolean  // Use Gemini for answer analysis
 
   // App settings
   soundEnabled: boolean
@@ -24,6 +30,8 @@ interface SettingsState {
   setTypingStrictness: (strictness: StrictnessLevel) => void
   setOcrProvider: (provider: OCRProviderType) => void
   setGoogleApiKey: (key: string | null) => void
+  setTTSProvider: (provider: TTSProvider) => void
+  setUseAIAnalysis: (enabled: boolean) => void
   setSoundEnabled: (enabled: boolean) => void
   setHapticEnabled: (enabled: boolean) => void
 }
@@ -37,6 +45,8 @@ export const useSettings = create<SettingsState>()(
       typingStrictness: 'normal',
       ocrProvider: 'tesseract',
       googleApiKey: null,
+      ttsProvider: 'web-speech',
+      useAIAnalysis: false,
       soundEnabled: true,
       hapticEnabled: true,
 
@@ -46,6 +56,8 @@ export const useSettings = create<SettingsState>()(
       setTypingStrictness: (strictness) => set({ typingStrictness: strictness }),
       setOcrProvider: (provider) => set({ ocrProvider: provider }),
       setGoogleApiKey: (key) => set({ googleApiKey: key }),
+      setTTSProvider: (provider) => set({ ttsProvider: provider }),
+      setUseAIAnalysis: (enabled) => set({ useAIAnalysis: enabled }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
     }),
