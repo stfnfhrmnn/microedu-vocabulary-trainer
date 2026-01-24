@@ -171,6 +171,57 @@ export default function HomePage() {
         </Link>
       </div>
 
+      {/* Voice Practice Card */}
+      {totalCount > 0 && (
+        <Link href="/practice/voice">
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
+            <Card className="bg-gradient-to-r from-slate-700 to-slate-800 border-slate-600 mb-4">
+              <CardContent>
+                <div className="text-white flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-7 h-7 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-lg">Sprachübung</p>
+                    <p className="text-slate-300 text-sm">
+                      Ohne Bildschirm lernen
+                    </p>
+                  </div>
+                  <svg
+                    className="w-6 h-6 text-slate-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Link>
+      )}
+
       {/* Parent Quiz Card */}
       {totalCount > 0 && (
         <Link href="/practice/parent-quiz">
