@@ -2,12 +2,15 @@
 
 A kid-friendly, offline-capable PWA for learning foreign language vocabulary — with class competitions and family sharing.
 
+> **New to setup?** See [SETUP.md](./SETUP.md) for API key configuration (Google TTS, AI analysis, OCR).
+
 ## Features at a Glance
 
 | Feature | Description |
 |---------|-------------|
 | **Library** | Organize vocabulary in books, chapters, and sections |
 | **Practice Modes** | Flashcards, multiple choice, typed answers |
+| **Voice Practice** | Screen-free learning with speech recognition ([setup](./SETUP.md)) |
 | **Parent Quiz** | Parents verbally quiz children, rate their answers |
 | **Spaced Repetition** | SM-2 algorithm schedules optimal review times |
 | **Gamification** | XP, levels, streaks, and achievements |
