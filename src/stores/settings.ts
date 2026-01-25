@@ -5,6 +5,7 @@ import type { StrictnessLevel } from '@/lib/learning/fuzzy-match'
 import type { OCRProviderType } from '@/lib/ocr/types'
 
 export type TTSProvider = 'web-speech' | 'google-cloud'
+export type GoogleVoiceType = 'wavenet' | 'standard'
 
 interface SettingsState {
   // Practice defaults
@@ -20,6 +21,11 @@ interface SettingsState {
   ttsProvider: TTSProvider
   useAIAnalysis: boolean  // Use Gemini for answer analysis
 
+  // Voice control settings
+  ttsRate: number         // 0.5 to 2.0 (1.0 = normal)
+  ttsPitch: number        // 0.5 to 2.0 (1.0 = normal) - Web Speech only
+  googleVoiceType: GoogleVoiceType  // WaveNet (better) or Standard
+
   // App settings
   soundEnabled: boolean
   hapticEnabled: boolean
@@ -32,6 +38,9 @@ interface SettingsState {
   setGoogleApiKey: (key: string | null) => void
   setTTSProvider: (provider: TTSProvider) => void
   setUseAIAnalysis: (enabled: boolean) => void
+  setTTSRate: (rate: number) => void
+  setTTSPitch: (pitch: number) => void
+  setGoogleVoiceType: (type: GoogleVoiceType) => void
   setSoundEnabled: (enabled: boolean) => void
   setHapticEnabled: (enabled: boolean) => void
 }
@@ -47,6 +56,9 @@ export const useSettings = create<SettingsState>()(
       googleApiKey: null,
       ttsProvider: 'web-speech',
       useAIAnalysis: false,
+      ttsRate: 1.0,
+      ttsPitch: 1.0,
+      googleVoiceType: 'wavenet',
       soundEnabled: true,
       hapticEnabled: true,
 
@@ -58,6 +70,9 @@ export const useSettings = create<SettingsState>()(
       setGoogleApiKey: (key) => set({ googleApiKey: key }),
       setTTSProvider: (provider) => set({ ttsProvider: provider }),
       setUseAIAnalysis: (enabled) => set({ useAIAnalysis: enabled }),
+      setTTSRate: (rate) => set({ ttsRate: rate }),
+      setTTSPitch: (pitch) => set({ ttsPitch: pitch }),
+      setGoogleVoiceType: (type) => set({ googleVoiceType: type }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
     }),

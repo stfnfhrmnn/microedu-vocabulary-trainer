@@ -61,7 +61,8 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
   const progress = useVoiceSessionProgress()
 
   // Get settings for TTS and AI analysis
-  const { ttsProvider, googleApiKey, useAIAnalysis } = useSettings()
+  const { ttsProvider, googleApiKey, useAIAnalysis, ttsRate, ttsPitch, googleVoiceType } = useSettings()
+  const [error, setError] = useState<string | null>(null)
 
   // Services
   const ttsService = useRef(getUnifiedTTSService())
@@ -76,11 +77,12 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
     ttsService.current.configure({
       provider: ttsProvider,
       googleApiKey,
+      googleVoiceType,
     })
     analyzerService.current.setApiKey(googleApiKey)
     analyzerService.current.setUseAI(useAIAnalysis)
     setUsingAI(useAIAnalysis && !!googleApiKey)
-  }, [ttsProvider, googleApiKey, useAIAnalysis])
+  }, [ttsProvider, googleApiKey, useAIAnalysis, googleVoiceType])
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -98,10 +100,24 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
    */
   const speak = useCallback(
     async (text: string, language: 'german' | 'french' | 'spanish' | 'latin' = 'german') => {
-      const rate = getTTSRate(mode)
-      await ttsService.current.speak(text, language, { rate })
+      // Combine mode-based rate with user settings
+      const modeRate = getTTSRate(mode)
+      const effectiveRate = modeRate * ttsRate
+      try {
+        const result = await ttsService.current.speak(text, language, {
+          rate: effectiveRate,
+          pitch: ttsPitch,
+        })
+        if (!result.success) {
+          console.warn('TTS failed:', result.error)
+          // Don't throw - let the session continue without speech
+        }
+      } catch (err) {
+        console.error('TTS error:', err)
+        // Don't throw - let the session continue without speech
+      }
     },
-    [mode]
+    [mode, ttsRate, ttsPitch]
   )
 
   /**
@@ -386,24 +402,26 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
    */
   useEffect(() => {
     const runStateMachine = async () => {
-      switch (status) {
-        case 'intro': {
-          // Generate and speak intro
-          const introScript = generateIntroScript({
-            mode,
-            totalItems: items.length,
-            direction,
-            targetLanguage: targetLanguage!,
-            sectionNames,
-          })
-          await speak(introScript, 'german')
-          await new Promise((r) => setTimeout(r, getQuestionPause(mode)))
-          setStatus('asking')
-          break
-        }
+      try {
+        switch (status) {
+          case 'intro': {
+            // Generate and speak intro
+            const introScript = generateIntroScript({
+              mode,
+              totalItems: items.length,
+              direction,
+              targetLanguage: targetLanguage!,
+              sectionNames,
+            })
+            await speak(introScript, 'german')
+            await new Promise((r) => setTimeout(r, getQuestionPause(mode)))
+            setStatus('asking')
+            break
+          }
 
         case 'asking': {
-          // Speak the question
+          // Speak the question - the script is always in German, even if it
+          // contains a foreign word (e.g., "Wie heißt 'le chien' auf Deutsch?")
           const questionScript = generateQuestionScript(currentQuestion, {
             mode,
             questionNumber: currentIndex,
@@ -412,7 +430,13 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
             direction,
             targetLanguage: targetLanguage!,
           })
-          await speak(questionScript, currentQuestionLanguage)
+          // Always speak in German - the script is German text
+          await speak(questionScript, 'german')
+          // Then speak just the foreign word in its proper language for clarity
+          if (currentQuestionLanguage !== 'german') {
+            await new Promise((r) => setTimeout(r, 200))
+            await speak(currentQuestion, currentQuestionLanguage)
+          }
           await new Promise((r) => setTimeout(r, 300))
           setStatus('listening')
           break
@@ -451,6 +475,16 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
           await new Promise((r) => setTimeout(r, 1000))
           onSessionComplete()
           break
+        }
+        }
+      } catch (err) {
+        console.error('Voice session error:', err)
+        setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
+        // Try to recover by moving to next state
+        if (status === 'intro' || status === 'asking') {
+          setStatus('listening')
+        } else if (status === 'processing') {
+          setStatus('feedback')
         }
       }
     }
@@ -677,6 +711,24 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
           <span>AI</span>
         </motion.div>
       )}
+
+      {/* Error message */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute bottom-20 bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-2 rounded-lg text-sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              setError(null)
+            }}
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tap hint */}
       <motion.div

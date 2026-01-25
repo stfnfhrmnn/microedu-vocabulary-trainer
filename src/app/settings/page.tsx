@@ -39,6 +39,11 @@ const ttsOptions = [
   { value: 'google-cloud', label: 'Google Cloud TTS (Bessere Qualität)' },
 ]
 
+const googleVoiceOptions = [
+  { value: 'wavenet', label: 'WaveNet (Beste Qualität)' },
+  { value: 'standard', label: 'Standard (Schneller)' },
+]
+
 export default function SettingsPage() {
   const settings = useSettings()
   const [showApiKey, setShowApiKey] = useState(false)
@@ -204,6 +209,62 @@ export default function SettingsPage() {
                 <p className="text-sm text-warning-600 bg-warning-50 p-2 rounded">
                   Bitte gib einen Google Cloud API-Schlüssel ein (siehe OCR-Einstellungen oben).
                 </p>
+              )}
+
+              {settings.ttsProvider === 'google-cloud' && settings.googleApiKey && (
+                <Select
+                  label="Google Stimmentyp"
+                  options={googleVoiceOptions}
+                  value={settings.googleVoiceType}
+                  onChange={(e) =>
+                    settings.setGoogleVoiceType(e.target.value as typeof settings.googleVoiceType)
+                  }
+                  helperText="WaveNet klingt natürlicher, Standard ist schneller"
+                />
+              )}
+
+              {/* Voice Speed */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sprechgeschwindigkeit: {Math.round(settings.ttsRate * 100)}%
+                </label>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={settings.ttsRate}
+                  onChange={(e) => settings.setTTSRate(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Langsam</span>
+                  <span>Normal</span>
+                  <span>Schnell</span>
+                </div>
+              </div>
+
+              {/* Voice Pitch (Web Speech only) */}
+              {settings.ttsProvider === 'web-speech' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tonhöhe: {Math.round(settings.ttsPitch * 100)}%
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2.0"
+                    step="0.1"
+                    value={settings.ttsPitch}
+                    onChange={(e) => settings.setTTSPitch(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Tief</span>
+                    <span>Normal</span>
+                    <span>Hoch</span>
+                  </div>
+                </div>
               )}
 
               <Toggle

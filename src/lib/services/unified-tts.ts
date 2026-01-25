@@ -9,11 +9,11 @@
 import type { Language } from '@/lib/db/schema'
 import { getTTSService } from './text-to-speech'
 import { getGoogleTTSService, type GoogleTTSOptions } from './google-tts'
-import type { TTSProvider } from '@/stores/settings'
+import type { TTSProvider, GoogleVoiceType } from '@/stores/settings'
 
 interface UnifiedTTSOptions {
-  rate?: number    // Speaking rate (0.1-2.0 for Web Speech, 0.25-4.0 for Google)
-  pitch?: number   // Pitch adjustment
+  rate?: number    // Speaking rate (0.5-2.0, 1.0 = normal)
+  pitch?: number   // Pitch adjustment (0.5-2.0, 1.0 = normal)
   volume?: number  // Volume (0-1)
 }
 
@@ -29,6 +29,7 @@ interface SpeakResult {
 export class UnifiedTTSService {
   private provider: TTSProvider = 'web-speech'
   private googleApiKey: string | null = null
+  private googleVoiceType: GoogleVoiceType = 'wavenet'
   private webTTS = getTTSService()
   private googleTTS = getGoogleTTSService()
 
@@ -38,11 +39,15 @@ export class UnifiedTTSService {
   configure(config: {
     provider: TTSProvider
     googleApiKey?: string | null
+    googleVoiceType?: GoogleVoiceType
   }) {
     this.provider = config.provider
     if (config.googleApiKey !== undefined) {
       this.googleApiKey = config.googleApiKey
       this.googleTTS.setApiKey(config.googleApiKey)
+    }
+    if (config.googleVoiceType !== undefined) {
+      this.googleVoiceType = config.googleVoiceType
     }
   }
 
@@ -95,9 +100,14 @@ export class UnifiedTTSService {
   ): Promise<SpeakResult> {
     // Try primary provider first
     if (this.provider === 'google-cloud' && this.googleTTS.isAvailable()) {
+      // Map normalized pitch (0.5-2.0) to Google's range (-20 to 20)
+      const normalizedPitch = options.pitch ?? 1.0
+      const googlePitch = (normalizedPitch - 1.0) * 20
+
       const googleOptions: GoogleTTSOptions = {
         speakingRate: options.rate ?? 1.0,
-        pitch: options.pitch ?? 0,
+        pitch: googlePitch,
+        useWaveNet: this.googleVoiceType === 'wavenet',
       }
 
       const result = await this.googleTTS.speak(text, language, googleOptions)

@@ -29,7 +29,7 @@ const STANDARD_VOICE_MAP: Record<Language | 'german', { languageCode: string; na
 
 export interface GoogleTTSOptions {
   speakingRate?: number  // 0.25 to 4.0, default 1.0
-  pitch?: number         // -20.0 to 20.0, default 0
+  pitch?: number         // -20.0 to 20.0, default 0 (mapping from normalized done in unified-tts)
   volumeGainDb?: number  // -96.0 to 16.0, default 0
   useWaveNet?: boolean   // Use WaveNet voices (better quality, slightly more expensive)
 }

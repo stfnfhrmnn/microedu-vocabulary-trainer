@@ -229,7 +229,7 @@ export default function HomePage() {
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 border-purple-500 mb-6">
+            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 border-purple-500 mb-4">
               <CardContent>
                 <div className="text-white flex items-center gap-4">
                   <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -255,6 +255,57 @@ export default function HomePage() {
                   </div>
                   <svg
                     className="w-6 h-6 text-purple-200"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </Link>
+      )}
+
+      {/* Group Practice Card */}
+      {totalCount > 0 && (
+        <Link href="/practice/group">
+          <motion.div
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
+            <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 border-indigo-500 mb-6">
+              <CardContent>
+                <div className="text-white flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-7 h-7 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-lg">Lernkreis</p>
+                    <p className="text-indigo-100 text-sm">
+                      Zusammen mit Freunden lernen
+                    </p>
+                  </div>
+                  <svg
+                    className="w-6 h-6 text-indigo-200"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
