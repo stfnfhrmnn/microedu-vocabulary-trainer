@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { Search, X } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -74,10 +75,22 @@ export default function LibraryPage() {
   const modal = useModal()
   const imageModal = useModal()
 
+  const [searchQuery, setSearchQuery] = useState('')
   const [name, setName] = useState('')
   const [language, setLanguage] = useState<Language>('french')
   const [coverColor, setCoverColor] = useState('#3b82f6')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Filter books based on search query
+  const filteredBooks = useMemo(() => {
+    if (!searchQuery.trim()) return books
+    const query = searchQuery.toLowerCase()
+    return books.filter(
+      (book) =>
+        book.name.toLowerCase().includes(query) ||
+        languageOptions.find((l) => l.value === book.language)?.label.toLowerCase().includes(query)
+    )
+  }, [books, searchQuery])
 
   const handleCreateBookFromImage = async (bookName: string, bookLanguage: Language, bookCoverColor: string) => {
     await createBook({
@@ -145,6 +158,28 @@ export default function LibraryPage() {
         }
       />
 
+      {/* Search Bar - only show when there are books */}
+      {!isLoading && books.length > 0 && (
+        <div className="mb-4 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Bücher suchen..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -188,13 +223,22 @@ export default function LibraryPage() {
             </Button>
           </CardContent>
         </Card>
+      ) : filteredBooks.length === 0 && searchQuery ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-gray-500 mb-2">Keine Bücher gefunden für &ldquo;{searchQuery}&rdquo;</p>
+            <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')}>
+              Suche zurücksetzen
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <motion.div
           className="space-y-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          {books.map((book, index) => (
+          {filteredBooks.map((book, index) => (
             <motion.div
               key={book.id}
               initial={{ opacity: 0, y: 20 }}

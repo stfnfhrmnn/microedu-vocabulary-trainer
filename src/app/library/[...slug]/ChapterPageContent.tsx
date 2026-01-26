@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronDown, ChevronRight, MoreHorizontal, Plus, Trash2, Edit2, Camera } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -14,126 +15,345 @@ import { Modal, useModal } from '@/components/ui/Modal'
 import { EditNameModal } from '@/components/ui/EditNameModal'
 import { useBook, useChapter, useSections } from '@/lib/db/hooks/useBooks'
 import { useVocabulary, useSectionVocabularyCount } from '@/lib/db/hooks/useVocabulary'
-import { createSection, deleteChapter, toggleSectionCovered, deleteSection, updateChapter, updateSection } from '@/lib/db/db'
+import {
+  createSection,
+  deleteChapter,
+  toggleSectionCovered,
+  deleteSection,
+  updateChapter,
+  updateSection,
+  createVocabularyItem,
+  deleteVocabularyItem as dbDeleteVocabularyItem,
+} from '@/lib/db/db'
+import { useSettings } from '@/stores/settings'
 import type { Section, VocabularyItem } from '@/lib/db/schema'
 
-function SectionCard({
+// Expandable section with inline vocabulary
+function ExpandableSection({
   section,
+  bookId,
+  isExpanded,
+  onToggleExpand,
   onToggleCovered,
   onDelete,
   onEdit,
 }: {
   section: Section
+  bookId: string
+  isExpanded: boolean
+  onToggleExpand: () => void
   onToggleCovered: (covered: boolean) => void
   onDelete: () => void
   onEdit: () => void
 }) {
   const vocabCount = useSectionVocabularyCount(section.id)
-  const [showActions, setShowActions] = useState(false)
+  const { vocabulary, deleteVocabularyItem } = useVocabulary(isExpanded ? section.id : undefined)
+  const [showMenu, setShowMenu] = useState(false)
+  const [deletingVocabId, setDeletingVocabId] = useState<string | null>(null)
+
+  // Inline add form state
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [sourceText, setSourceText] = useState('')
+  const [targetText, setTargetText] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+
+  const handleAddVocabulary = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!sourceText.trim() || !targetText.trim()) return
+
+    setIsAdding(true)
+    try {
+      await createVocabularyItem({
+        sourceText: sourceText.trim(),
+        targetText: targetText.trim(),
+        sectionId: section.id,
+        chapterId: section.chapterId,
+        bookId: bookId,
+      })
+      setSourceText('')
+      setTargetText('')
+      // Keep form open for adding more
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  const handleDeleteVocabulary = async (vocabId: string) => {
+    setDeletingVocabId(vocabId)
+  }
+
+  const confirmDeleteVocabulary = async () => {
+    if (!deletingVocabId) return
+    await deleteVocabularyItem(deletingVocabId)
+    setDeletingVocabId(null)
+  }
 
   return (
     <Card>
-      <CardContent>
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="p-0">
+        {/* Section Header - Click to expand */}
+        <button
+          onClick={onToggleExpand}
+          className="w-full flex items-center gap-3 p-4 text-left hover:bg-gray-50 transition-colors"
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+          ) : (
+            <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+          )}
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-900">{section.name}</h3>
             <p className="text-sm text-gray-500">{vocabCount} Vokabeln</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {section.coveredInClass && (
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                Im Unterricht
+              </span>
+            )}
             <button
-              onClick={() => setShowActions(!showActions)}
-              className="p-2 text-gray-400 hover:text-gray-600"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowMenu(!showMenu)
+              }}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                />
-              </svg>
+              <MoreHorizontal className="w-5 h-5" />
             </button>
           </div>
-        </div>
+        </button>
 
-        {showActions && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mt-3 pt-3 border-t border-gray-100 flex gap-2"
-          >
-            <Button variant="secondary" size="sm" fullWidth onClick={onEdit}>
-              Umbenennen
+        {/* Dropdown Menu */}
+        <AnimatePresence>
+          {showMenu && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden border-t border-gray-100"
+            >
+              <div className="p-3 space-y-2">
+                <Toggle
+                  checked={section.coveredInClass}
+                  onChange={onToggleCovered}
+                  label="Im Unterricht behandelt"
+                />
+                <div className="flex gap-2 pt-2">
+                  <Button variant="secondary" size="sm" fullWidth onClick={onEdit}>
+                    <Edit2 className="w-4 h-4 mr-1" />
+                    Umbenennen
+                  </Button>
+                  <Button variant="danger" size="sm" fullWidth onClick={onDelete}>
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Löschen
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Expanded Content - Vocabulary List */}
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-gray-100">
+                {/* Vocabulary Items */}
+                {vocabulary.length > 0 ? (
+                  <div className="divide-y divide-gray-100">
+                    {vocabulary.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                      >
+                        <div className="flex-1 min-w-0 mr-3">
+                          <p className="font-medium text-gray-900">{item.sourceText}</p>
+                          <p className="text-sm text-gray-500">{item.targetText}</p>
+                          {item.notes && (
+                            <p className="text-xs text-gray-400 mt-0.5">{item.notes}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleDeleteVocabulary(item.id)}
+                          className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-4 py-6 text-center text-gray-500 text-sm">
+                    Noch keine Vokabeln in diesem Abschnitt.
+                  </div>
+                )}
+
+                {/* Inline Add Form */}
+                <div className="border-t border-gray-100 p-4">
+                  {showAddForm ? (
+                    <form onSubmit={handleAddVocabulary} className="space-y-3">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Deutsch"
+                          value={sourceText}
+                          onChange={(e) => setSourceText(e.target.value)}
+                          className="flex-1"
+                          autoFocus
+                        />
+                        <Input
+                          placeholder="Fremdsprache"
+                          value={targetText}
+                          onChange={(e) => setTargetText(e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setShowAddForm(false)
+                            setSourceText('')
+                            setTargetText('')
+                          }}
+                        >
+                          Abbrechen
+                        </Button>
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          size="sm"
+                          loading={isAdding}
+                          disabled={!sourceText.trim() || !targetText.trim()}
+                        >
+                          Hinzufügen
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      fullWidth
+                      onClick={() => setShowAddForm(true)}
+                      className="text-primary-600"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Vokabel hinzufügen
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </CardContent>
+
+      {/* Delete Vocabulary Confirmation */}
+      <Modal
+        isOpen={!!deletingVocabId}
+        onClose={() => setDeletingVocabId(null)}
+        title="Vokabel löschen?"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Möchtest du diese Vokabel wirklich löschen?
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" fullWidth onClick={() => setDeletingVocabId(null)}>
+              Abbrechen
             </Button>
-            <Button variant="danger" size="sm" fullWidth onClick={onDelete}>
+            <Button variant="danger" fullWidth onClick={confirmDeleteVocabulary}>
               Löschen
             </Button>
-          </motion.div>
-        )}
-
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <Toggle
-            checked={section.coveredInClass}
-            onChange={onToggleCovered}
-            label="Im Unterricht behandelt"
-            description={section.coveredInClass ? 'Wird bei Übungen berücksichtigt' : ''}
-          />
+          </div>
         </div>
-      </CardContent>
+      </Modal>
     </Card>
   )
 }
 
-function VocabularyListItem({
-  item,
-  onDelete,
+// Breadcrumb component
+function Breadcrumb({
+  bookId,
+  bookName,
+  chapterName,
 }: {
-  item: VocabularyItem
-  onDelete: () => void
+  bookId: string
+  bookName: string
+  chapterName: string
 }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-      <div className="flex-1 min-w-0 mr-3">
-        <p className="font-medium text-gray-900">{item.sourceText}</p>
-        <p className="text-sm text-gray-500">{item.targetText}</p>
-        {item.notes && <p className="text-xs text-gray-400 mt-1">{item.notes}</p>}
-      </div>
-      <button onClick={onDelete} className="p-2 text-gray-400 hover:text-error-500">
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
-        </svg>
-      </button>
-    </div>
+    <nav className="flex items-center gap-1 text-sm text-gray-500 mb-4 overflow-x-auto">
+      <Link href="/library" className="hover:text-primary-600 whitespace-nowrap">
+        Bibliothek
+      </Link>
+      <ChevronRight className="w-4 h-4 flex-shrink-0" />
+      <Link href={`/library/${bookId}`} className="hover:text-primary-600 whitespace-nowrap">
+        {bookName}
+      </Link>
+      <ChevronRight className="w-4 h-4 flex-shrink-0" />
+      <span className="text-gray-900 font-medium whitespace-nowrap">{chapterName}</span>
+    </nav>
   )
 }
 
-export default function ChapterPageContent({ bookId, chapterId }: { bookId: string; chapterId: string }) {
+export default function ChapterPageContent({
+  bookId,
+  chapterId,
+}: {
+  bookId: string
+  chapterId: string
+}) {
   const router = useRouter()
+  const { lastViewedSections, setLastViewedSection } = useSettings()
 
   const { book } = useBook(bookId)
   const { chapter, isLoading: chapterLoading } = useChapter(chapterId)
   const { sections, isLoading: sectionsLoading } = useSections(chapterId)
 
   const addModal = useModal()
-  const deleteModal = useModal()
+  const deleteChapterModal = useModal()
+  const deleteSectionModal = useModal()
   const editChapterModal = useModal()
   const editSectionModal = useModal()
+  const menuModal = useModal()
 
   const [name, setName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null)
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null)
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
-
-  const { vocabulary, deleteVocabularyItem } = useVocabulary(selectedSectionId || undefined)
+  const [deletingSectionId, setDeletingSectionId] = useState<string | null>(null)
 
   const isLoading = chapterLoading || sectionsLoading
 
-  const editingSection = sections.find(s => s.id === editingSectionId)
+  // Restore last viewed section
+  useEffect(() => {
+    if (sections.length > 0 && !expandedSectionId) {
+      const lastViewed = lastViewedSections[chapterId]
+      if (lastViewed && sections.some((s) => s.id === lastViewed)) {
+        setExpandedSectionId(lastViewed)
+      }
+    }
+  }, [sections, chapterId, lastViewedSections, expandedSectionId])
+
+  const editingSection = sections.find((s) => s.id === editingSectionId)
+  const deletingSection = sections.find((s) => s.id === deletingSectionId)
+
+  const handleToggleSection = (sectionId: string) => {
+    const newExpanded = expandedSectionId === sectionId ? null : sectionId
+    setExpandedSectionId(newExpanded)
+    if (newExpanded) {
+      setLastViewedSection(chapterId, newExpanded)
+    }
+  }
 
   const handleEditChapterName = async (newName: string) => {
     await updateChapter(chapterId, { name: newName })
@@ -149,13 +369,18 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
     editSectionModal.open()
   }
 
+  const handleOpenDeleteSection = (sectionId: string) => {
+    setDeletingSectionId(sectionId)
+    deleteSectionModal.open()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
     setIsSubmitting(true)
     try {
-      await createSection({
+      const newSection = await createSection({
         name: name.trim(),
         chapterId,
         bookId,
@@ -164,6 +389,9 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
       })
       addModal.close()
       setName('')
+      // Auto-expand the new section
+      setExpandedSectionId(newSection.id)
+      setLastViewedSection(chapterId, newSection.id)
     } finally {
       setIsSubmitting(false)
     }
@@ -179,15 +407,18 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
     }
   }
 
-  const handleToggleCovered = async (sectionId: string, covered: boolean) => {
-    await toggleSectionCovered(sectionId, covered)
+  const handleDeleteSection = async () => {
+    if (!deletingSectionId) return
+    await deleteSection(deletingSectionId)
+    if (expandedSectionId === deletingSectionId) {
+      setExpandedSectionId(null)
+    }
+    setDeletingSectionId(null)
+    deleteSectionModal.close()
   }
 
-  const handleDeleteSection = async (sectionId: string) => {
-    await deleteSection(sectionId)
-    if (selectedSectionId === sectionId) {
-      setSelectedSectionId(null)
-    }
+  const handleToggleCovered = async (sectionId: string, covered: boolean) => {
+    await toggleSectionCovered(sectionId, covered)
   }
 
   if (!chapter && !isLoading) {
@@ -216,65 +447,21 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
         onBack={() => router.push(`/library/${bookId}`)}
         action={
           <div className="flex gap-2">
-            <Link href={`/add/scan?bookId=${bookId}&chapterId=${chapterId}`}>
-              <Button variant="ghost" size="icon" title="Vokabeln scannen">
-                <svg
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </Button>
-            </Link>
-            <Button variant="ghost" size="icon" onClick={editChapterModal.open}>
-              <svg
-                className="w-5 h-5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={deleteModal.open}>
-              <svg
-                className="w-5 h-5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
+            <Button variant="ghost" size="icon" onClick={menuModal.open}>
+              <MoreHorizontal className="w-5 h-5 text-gray-500" />
             </Button>
             <Button variant="primary" size="sm" onClick={addModal.open}>
-              + Abschnitt
+              <Plus className="w-4 h-4 mr-1" />
+              Abschnitt
             </Button>
           </div>
         }
       />
+
+      {/* Breadcrumb */}
+      {book && chapter && (
+        <Breadcrumb bookId={bookId} bookName={book.name} chapterName={chapter.name} />
+      )}
 
       {isLoading ? (
         <div className="space-y-3">
@@ -315,94 +502,26 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
           </CardContent>
         </Card>
       ) : (
-        <>
-          {/* Sections */}
-          <div className="space-y-3 mb-6">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Abschnitte
-            </h2>
-            {sections.map((section, index) => (
-              <motion.div
-                key={section.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <SectionCard
-                  section={section}
-                  onToggleCovered={(covered) => handleToggleCovered(section.id, covered)}
-                  onDelete={() => handleDeleteSection(section.id)}
-                  onEdit={() => handleOpenEditSection(section.id)}
-                />
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Vocabulary by Section */}
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-              Vokabeln
-            </h2>
-
-            {/* Section Tabs */}
-            <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() =>
-                    setSelectedSectionId(
-                      selectedSectionId === section.id ? null : section.id
-                    )
-                  }
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    selectedSectionId === section.id
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {section.name}
-                </button>
-              ))}
-            </div>
-
-            {selectedSectionId ? (
-              vocabulary.length > 0 ? (
-                <Card>
-                  <CardContent padding="sm">
-                    {vocabulary.map((item) => (
-                      <VocabularyListItem
-                        key={item.id}
-                        item={item}
-                        onDelete={() => deleteVocabularyItem(item.id)}
-                      />
-                    ))}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-8">
-                    <p className="text-gray-500">
-                      Noch keine Vokabeln in diesem Abschnitt.
-                    </p>
-                    <Link href={`/add?sectionId=${selectedSectionId}`}>
-                      <Button variant="primary" size="sm" className="mt-4">
-                        Vokabeln hinzufügen
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              )
-            ) : (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <p className="text-gray-500">
-                    Wähle einen Abschnitt um die Vokabeln zu sehen.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </>
+        <div className="space-y-3">
+          {sections.map((section, index) => (
+            <motion.div
+              key={section.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <ExpandableSection
+                section={section}
+                bookId={bookId}
+                isExpanded={expandedSectionId === section.id}
+                onToggleExpand={() => handleToggleSection(section.id)}
+                onToggleCovered={(covered) => handleToggleCovered(section.id, covered)}
+                onDelete={() => handleOpenDeleteSection(section.id)}
+                onEdit={() => handleOpenEditSection(section.id)}
+              />
+            </motion.div>
+          ))}
+        </div>
       )}
 
       {/* Add Section Modal */}
@@ -415,14 +534,8 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
             onChange={(e) => setName(e.target.value)}
             autoFocus
           />
-
           <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth
-              onClick={addModal.close}
-            >
+            <Button type="button" variant="secondary" fullWidth onClick={addModal.close}>
               Abbrechen
             </Button>
             <Button
@@ -438,24 +551,59 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
         </form>
       </Modal>
 
+      {/* Chapter Actions Menu Modal */}
+      <Modal isOpen={menuModal.isOpen} onClose={menuModal.close} title="Kapitel-Optionen">
+        <div className="space-y-2">
+          <Link href={`/add/scan?bookId=${bookId}&chapterId=${chapterId}`}>
+            <Button variant="secondary" fullWidth className="justify-start">
+              <Camera className="w-4 h-4 mr-2" />
+              Vokabeln scannen
+            </Button>
+          </Link>
+          <Button
+            variant="secondary"
+            fullWidth
+            className="justify-start"
+            onClick={() => {
+              menuModal.close()
+              editChapterModal.open()
+            }}
+          >
+            <Edit2 className="w-4 h-4 mr-2" />
+            Kapitel umbenennen
+          </Button>
+          <Button
+            variant="danger"
+            fullWidth
+            className="justify-start"
+            onClick={() => {
+              menuModal.close()
+              deleteChapterModal.open()
+            }}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Kapitel löschen
+          </Button>
+        </div>
+      </Modal>
+
       {/* Delete Chapter Modal */}
       <Modal
-        isOpen={deleteModal.isOpen}
-        onClose={deleteModal.close}
+        isOpen={deleteChapterModal.isOpen}
+        onClose={deleteChapterModal.close}
         title="Kapitel löschen?"
       >
         <div className="space-y-4">
           <p className="text-gray-600">
-            Möchtest du <strong>{chapter?.name}</strong> wirklich löschen? Alle
-            Abschnitte und Vokabeln werden unwiderruflich gelöscht.
+            Möchtest du <strong>{chapter?.name}</strong> wirklich löschen? Alle Abschnitte
+            und Vokabeln werden unwiderruflich gelöscht.
           </p>
-
           <div className="flex gap-3 pt-4">
             <Button
               type="button"
               variant="secondary"
               fullWidth
-              onClick={deleteModal.close}
+              onClick={deleteChapterModal.close}
             >
               Abbrechen
             </Button>
@@ -466,6 +614,33 @@ export default function ChapterPageContent({ bookId, chapterId }: { bookId: stri
               loading={isSubmitting}
               onClick={handleDeleteChapter}
             >
+              Löschen
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Section Modal */}
+      <Modal
+        isOpen={deleteSectionModal.isOpen}
+        onClose={deleteSectionModal.close}
+        title="Abschnitt löschen?"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Möchtest du <strong>{deletingSection?.name}</strong> wirklich löschen? Alle
+            Vokabeln in diesem Abschnitt werden unwiderruflich gelöscht.
+          </p>
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              onClick={deleteSectionModal.close}
+            >
+              Abbrechen
+            </Button>
+            <Button type="button" variant="danger" fullWidth onClick={handleDeleteSection}>
               Löschen
             </Button>
           </div>

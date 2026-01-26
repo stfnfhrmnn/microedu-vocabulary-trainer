@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { ChevronRight, MoreHorizontal, Plus, Trash2, Edit2, Camera, Image } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -16,6 +17,19 @@ import { useBook, useChapters } from '@/lib/db/hooks/useBooks'
 import { useVocabularyByChapter } from '@/lib/db/hooks/useVocabulary'
 import { createChapter, deleteBook, updateBook } from '@/lib/db/db'
 import type { Chapter } from '@/lib/db/schema'
+
+// Breadcrumb component
+function Breadcrumb({ bookName }: { bookName: string }) {
+  return (
+    <nav className="flex items-center gap-1 text-sm text-gray-500 mb-4 overflow-x-auto">
+      <Link href="/library" className="hover:text-primary-600 whitespace-nowrap">
+        Bibliothek
+      </Link>
+      <ChevronRight className="w-4 h-4 flex-shrink-0" />
+      <span className="text-gray-900 font-medium whitespace-nowrap">{bookName}</span>
+    </nav>
+  )
+}
 
 function ChapterCard({ chapter, bookId }: { chapter: Chapter; bookId: string }) {
   const { vocabulary } = useVocabularyByChapter(chapter.id)
@@ -56,6 +70,7 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
   const deleteModal = useModal()
   const editNameModal = useModal()
   const imageModal = useModal()
+  const menuModal = useModal()
 
   const [name, setName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -127,80 +142,19 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
         showBack
         action={
           <div className="flex gap-2">
-            <Link href={`/add/scan?bookId=${bookId}`}>
-              <Button variant="ghost" size="icon" title="Vokabeln scannen">
-                <svg
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </Button>
-            </Link>
-            <Button variant="ghost" size="icon" onClick={editNameModal.open}>
-              <svg
-                className="w-5 h-5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={deleteModal.open}>
-              <svg
-                className="w-5 h-5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-            </Button>
-            <Button variant="ghost" size="icon" onClick={imageModal.open} title="Kapitel aus Bild erstellen">
-              <svg
-                className="w-5 h-5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+            <Button variant="ghost" size="icon" onClick={menuModal.open}>
+              <MoreHorizontal className="w-5 h-5 text-gray-500" />
             </Button>
             <Button variant="primary" size="sm" onClick={addModal.open}>
-              + Kapitel
+              <Plus className="w-4 h-4 mr-1" />
+              Kapitel
             </Button>
           </div>
         }
       />
+
+      {/* Breadcrumb */}
+      {book && <Breadcrumb bookName={book.name} />}
 
       {isLoading ? (
         <div className="space-y-3">
@@ -342,6 +296,54 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
         bookId={bookId}
         bookLanguage={book?.language}
       />
+
+      {/* Book Actions Menu Modal */}
+      <Modal isOpen={menuModal.isOpen} onClose={menuModal.close} title="Buch-Optionen">
+        <div className="space-y-2">
+          <Link href={`/add/scan?bookId=${bookId}`}>
+            <Button variant="secondary" fullWidth className="justify-start">
+              <Camera className="w-4 h-4 mr-2" />
+              Vokabeln scannen
+            </Button>
+          </Link>
+          <Button
+            variant="secondary"
+            fullWidth
+            className="justify-start"
+            onClick={() => {
+              menuModal.close()
+              imageModal.open()
+            }}
+          >
+            <Image className="w-4 h-4 mr-2" />
+            Kapitel aus Bild erstellen
+          </Button>
+          <Button
+            variant="secondary"
+            fullWidth
+            className="justify-start"
+            onClick={() => {
+              menuModal.close()
+              editNameModal.open()
+            }}
+          >
+            <Edit2 className="w-4 h-4 mr-2" />
+            Buch umbenennen
+          </Button>
+          <Button
+            variant="danger"
+            fullWidth
+            className="justify-start"
+            onClick={() => {
+              menuModal.close()
+              deleteModal.open()
+            }}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Buch löschen
+          </Button>
+        </div>
+      </Modal>
     </PageContainer>
   )
 }

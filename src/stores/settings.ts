@@ -56,6 +56,9 @@ interface SettingsState {
   practicePresets: PracticePreset[]
   lastPracticeConfig: LastPracticeConfig | null
 
+  // Library navigation settings
+  lastViewedSections: Record<string, string>  // chapterId -> sectionId
+
   // Actions
   setDefaultDirection: (direction: PracticeDirection) => void
   setDefaultExerciseType: (type: ExerciseType) => void
@@ -74,6 +77,7 @@ interface SettingsState {
   setLastPracticeConfig: (config: LastPracticeConfig) => void
   addPracticePreset: (preset: PracticePreset) => void
   removePracticePreset: (id: string) => void
+  setLastViewedSection: (chapterId: string, sectionId: string) => void
 }
 
 export const useSettings = create<SettingsState>()(
@@ -96,6 +100,7 @@ export const useSettings = create<SettingsState>()(
       recentSectionIds: [],
       practicePresets: [],
       lastPracticeConfig: null,
+      lastViewedSections: {},
 
       // Actions
       setDefaultDirection: (direction) => set({ defaultDirection: direction }),
@@ -122,6 +127,9 @@ export const useSettings = create<SettingsState>()(
       })),
       removePracticePreset: (id) => set((state) => ({
         practicePresets: state.practicePresets.filter((p) => p.id !== id)
+      })),
+      setLastViewedSection: (chapterId, sectionId) => set((state) => ({
+        lastViewedSections: { ...state.lastViewedSections, [chapterId]: sectionId }
       })),
     }),
     {
