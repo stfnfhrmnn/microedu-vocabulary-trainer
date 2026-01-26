@@ -1,9 +1,10 @@
 'use client'
 
-import { Suspense, useState, useEffect, useRef } from 'react'
+import { Suspense, useState, useEffect, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronDown, ChevronRight, Plus, Clock, X } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -12,14 +13,28 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 import { useAllSections } from '@/lib/db/hooks/useBooks'
-import { createVocabularyItem } from '@/lib/db/db'
+import { createVocabularyItem, createSection } from '@/lib/db/db'
 import { getLangCode, SOURCE_LANG_CODE } from '@/lib/utils/language-codes'
 import { useSettings } from '@/stores/settings'
+
+// Group sections by book and chapter for hierarchical display
+interface GroupedSections {
+  bookId: string
+  bookName: string
+  chapters: {
+    chapterId: string
+    chapterName: string
+    sections: {
+      id: string
+      name: string
+    }[]
+  }[]
+}
 
 function AddVocabularyForm() {
   const searchParams = useSearchParams()
   const urlSectionId = searchParams.get('sectionId')
-  const { lastUsedSectionId, setLastUsedSectionId } = useSettings()
+  const { lastUsedSectionId, setLastUsedSectionId, recentSectionIds, addRecentSection } = useSettings()
 
   // Use URL param first, then fall back to last used section
   const initialSectionId = urlSectionId || lastUsedSectionId
@@ -27,6 +42,14 @@ function AddVocabularyForm() {
   const { sections, isLoading } = useAllSections()
   const sourceInputRef = useRef<HTMLInputElement>(null)
   const [showSectionPicker, setShowSectionPicker] = useState(false)
+  const [showCreateSection, setShowCreateSection] = useState(false)
+  const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set())
+  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
+
+  // New section form state
+  const [newSectionName, setNewSectionName] = useState('')
+  const [newSectionChapterId, setNewSectionChapterId] = useState('')
+  const [isCreatingSection, setIsCreatingSection] = useState(false)
 
   const [sectionId, setSectionId] = useState('')
   const [sourceText, setSourceText] = useState('')
@@ -45,10 +68,67 @@ function AddVocabularyForm() {
     }
   }, [initialSectionId, sections])
 
-  const sectionOptions = sections.map((section) => ({
-    value: section.id,
-    label: `${section.book?.name} › ${section.chapter?.name} › ${section.name}`,
-  }))
+  // Group sections by book and chapter
+  const groupedSections = useMemo((): GroupedSections[] => {
+    const groups = new Map<string, GroupedSections>()
+
+    for (const section of sections) {
+      if (!section.book || !section.chapter) continue
+
+      let bookGroup = groups.get(section.bookId)
+      if (!bookGroup) {
+        bookGroup = {
+          bookId: section.bookId,
+          bookName: section.book.name,
+          chapters: []
+        }
+        groups.set(section.bookId, bookGroup)
+      }
+
+      let chapter = bookGroup.chapters.find(c => c.chapterId === section.chapterId)
+      if (!chapter) {
+        chapter = {
+          chapterId: section.chapterId,
+          chapterName: section.chapter.name,
+          sections: []
+        }
+        bookGroup.chapters.push(chapter)
+      }
+
+      chapter.sections.push({
+        id: section.id,
+        name: section.name
+      })
+    }
+
+    return Array.from(groups.values())
+  }, [sections])
+
+  // Get recent sections that still exist
+  const recentSections = useMemo(() => {
+    return recentSectionIds
+      .map(id => sections.find(s => s.id === id))
+      .filter((s): s is NonNullable<typeof s> => s !== undefined)
+      .slice(0, 5)
+  }, [recentSectionIds, sections])
+
+  // Get chapter options for new section creation (derive from sections)
+  const chapterOptions = useMemo(() => {
+    const seen = new Set<string>()
+    const options: { value: string; label: string; bookId: string }[] = []
+
+    for (const section of sections) {
+      if (!section.chapter || !section.book || seen.has(section.chapterId)) continue
+      seen.add(section.chapterId)
+      options.push({
+        value: section.chapterId,
+        label: `${section.book.name} › ${section.chapter.name}`,
+        bookId: section.bookId,
+      })
+    }
+
+    return options
+  }, [sections])
 
   const selectedSection = sections.find((s) => s.id === sectionId)
 
@@ -56,6 +136,66 @@ function AddVocabularyForm() {
     setSourceText('')
     setTargetText('')
     setNotes('')
+  }
+
+  const handleSelectSection = (id: string) => {
+    setSectionId(id)
+    setShowSectionPicker(false)
+    addRecentSection(id)
+  }
+
+  const handleCreateSection = async () => {
+    if (!newSectionName.trim() || !newSectionChapterId) return
+
+    const chapterOption = chapterOptions.find(c => c.value === newSectionChapterId)
+    if (!chapterOption) return
+
+    // Calculate order based on existing sections in this chapter
+    const existingSectionsInChapter = sections.filter(s => s.chapterId === newSectionChapterId)
+    const nextOrder = existingSectionsInChapter.length
+
+    setIsCreatingSection(true)
+    try {
+      const newSection = await createSection({
+        name: newSectionName.trim(),
+        chapterId: newSectionChapterId,
+        bookId: chapterOption.bookId,
+        order: nextOrder,
+        coveredInClass: false,
+      })
+      setSectionId(newSection.id)
+      addRecentSection(newSection.id)
+      setNewSectionName('')
+      setNewSectionChapterId('')
+      setShowCreateSection(false)
+      setShowSectionPicker(false)
+    } finally {
+      setIsCreatingSection(false)
+    }
+  }
+
+  const toggleBook = (bookId: string) => {
+    setExpandedBooks(prev => {
+      const next = new Set(prev)
+      if (next.has(bookId)) {
+        next.delete(bookId)
+      } else {
+        next.add(bookId)
+      }
+      return next
+    })
+  }
+
+  const toggleChapter = (chapterId: string) => {
+    setExpandedChapters(prev => {
+      const next = new Set(prev)
+      if (next.has(chapterId)) {
+        next.delete(chapterId)
+      } else {
+        next.add(chapterId)
+      }
+      return next
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,6 +217,7 @@ function AddVocabularyForm() {
       })
       // Remember this section for next time
       setLastUsedSectionId(section.id)
+      addRecentSection(section.id)
       setSavedCount((prev) => prev + 1)
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 2000)
@@ -111,6 +252,61 @@ function AddVocabularyForm() {
               </svg>
               <span className="font-medium">Gespeichert!</span>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Create Section Modal */}
+      <AnimatePresence>
+        {showCreateSection && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+            onClick={() => setShowCreateSection(false)}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Neuer Abschnitt</h3>
+                <button
+                  onClick={() => setShowCreateSection(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <Select
+                  label="Kapitel"
+                  options={chapterOptions}
+                  value={newSectionChapterId}
+                  onChange={(e) => setNewSectionChapterId(e.target.value)}
+                  placeholder="Wähle ein Kapitel..."
+                />
+                <Input
+                  label="Abschnittsname"
+                  placeholder="z.B. Lektion 3.1"
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                />
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={handleCreateSection}
+                  loading={isCreatingSection}
+                  disabled={!newSectionName.trim() || !newSectionChapterId}
+                >
+                  Abschnitt erstellen
+                </Button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -178,23 +374,127 @@ function AddVocabularyForm() {
           ) : (
             <Card className="mb-4">
               <CardContent>
-                <Select
-                  label="Abschnitt auswählen"
-                  options={sectionOptions}
-                  value={sectionId}
-                  onChange={(e) => {
-                    setSectionId(e.target.value)
-                    setShowSectionPicker(false)
-                  }}
-                  placeholder="Wähle einen Abschnitt..."
-                />
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-700">Abschnitt auswählen</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateSection(true)}
+                    className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Neu
+                  </button>
+                </div>
+
+                {/* Recent Sections Pills */}
+                {recentSections.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
+                      <Clock className="w-3 h-3" />
+                      <span>Zuletzt verwendet</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {recentSections.map((section) => (
+                        <button
+                          key={section.id}
+                          type="button"
+                          onClick={() => handleSelectSection(section.id)}
+                          className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                            sectionId === section.id
+                              ? 'bg-primary-500 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {section.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Grouped Section Tree */}
+                <div className="border rounded-xl overflow-hidden">
+                  {groupedSections.map((book) => (
+                    <div key={book.bookId} className="border-b last:border-b-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleBook(book.bookId)}
+                        className="w-full flex items-center gap-2 p-3 hover:bg-gray-50 text-left"
+                      >
+                        {expandedBooks.has(book.bookId) ? (
+                          <ChevronDown className="w-4 h-4 text-gray-400" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                        )}
+                        <span className="font-medium text-gray-900">{book.bookName}</span>
+                      </button>
+
+                      <AnimatePresence>
+                        {expandedBooks.has(book.bookId) && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="overflow-hidden"
+                          >
+                            {book.chapters.map((chapter) => (
+                              <div key={chapter.chapterId} className="border-t border-gray-100">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleChapter(chapter.chapterId)}
+                                  className="w-full flex items-center gap-2 p-3 pl-8 hover:bg-gray-50 text-left"
+                                >
+                                  {expandedChapters.has(chapter.chapterId) ? (
+                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                                  )}
+                                  <span className="text-gray-700">{chapter.chapterName}</span>
+                                </button>
+
+                                <AnimatePresence>
+                                  {expandedChapters.has(chapter.chapterId) && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.15 }}
+                                      className="overflow-hidden"
+                                    >
+                                      {chapter.sections.map((section) => (
+                                        <button
+                                          key={section.id}
+                                          type="button"
+                                          onClick={() => handleSelectSection(section.id)}
+                                          className={`w-full p-3 pl-14 text-left transition-colors ${
+                                            sectionId === section.id
+                                              ? 'bg-primary-50 text-primary-700 font-medium'
+                                              : 'hover:bg-gray-50 text-gray-600'
+                                          }`}
+                                        >
+                                          {section.name}
+                                        </button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
+
                 {sectionId && showSectionPicker && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowSectionPicker(false)}
-                    className="mt-2"
+                    className="mt-3"
                   >
                     Abbrechen
                   </Button>

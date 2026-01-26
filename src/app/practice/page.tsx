@@ -3,54 +3,53 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Bookmark, Plus, X, Trash2 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Toggle } from '@/components/ui/Toggle'
+import { Input } from '@/components/ui/Input'
 import { useAllSections } from '@/lib/db/hooks/useBooks'
 import { useVocabularyWithProgress } from '@/lib/db/hooks/useVocabulary'
 import { useDueWords } from '@/lib/db/hooks/useDueWords'
 import { usePracticeSession } from '@/stores/practice-session'
-import { useSettings } from '@/stores/settings'
+import { useSettings, type PracticePreset } from '@/stores/settings'
 import type { ExerciseType, PracticeDirection } from '@/lib/db/schema'
 
-const exerciseTypes: { id: ExerciseType; label: string; icon: string }[] = [
-  { id: 'flashcard', label: 'Karteikarten', icon: '🎴' },
-  { id: 'multipleChoice', label: 'Multiple Choice', icon: '🔘' },
-  { id: 'typed', label: 'Eingabe', icon: '⌨️' },
+const exerciseTypes: { id: ExerciseType; label: string; icon: string; short: string }[] = [
+  { id: 'flashcard', label: 'Karteikarten', icon: '🎴', short: 'Karten' },
+  { id: 'multipleChoice', label: 'Multiple Choice', icon: '🔘', short: 'MC' },
+  { id: 'typed', label: 'Eingabe', icon: '⌨️', short: 'Tippen' },
 ]
 
-const directions: { id: PracticeDirection; label: string; description: string }[] = [
-  {
-    id: 'sourceToTarget',
-    label: 'Deutsch → Fremdsprache',
-    description: 'Übersetze deutsche Wörter',
-  },
-  {
-    id: 'targetToSource',
-    label: 'Fremdsprache → Deutsch',
-    description: 'Übersetze Fremdwörter',
-  },
-  { id: 'mixed', label: 'Gemischt', description: 'Wechselt ab' },
+const directions: { id: PracticeDirection; label: string; short: string }[] = [
+  { id: 'sourceToTarget', label: 'DE → Fremdsprache', short: 'DE→FS' },
+  { id: 'targetToSource', label: 'Fremdsprache → DE', short: 'FS→DE' },
+  { id: 'mixed', label: 'Gemischt', short: 'Mix' },
 ]
 
 export default function PracticePage() {
   const router = useRouter()
   const { sections, isLoading: sectionsLoading } = useAllSections()
   const startSession = usePracticeSession((state) => state.startSession)
-  const settings = useSettings()
+  const {
+    defaultExerciseType,
+    defaultDirection,
+    practicePresets,
+    setLastPracticeConfig,
+    addPracticePreset,
+    removePracticePreset,
+  } = useSettings()
 
   const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([])
-  const [exerciseType, setExerciseType] = useState<ExerciseType>(
-    settings.defaultExerciseType
-  )
-  const [direction, setDirection] = useState<PracticeDirection>(
-    settings.defaultDirection
-  )
+  const [exerciseType, setExerciseType] = useState<ExerciseType>(defaultExerciseType)
+  const [direction, setDirection] = useState<PracticeDirection>(defaultDirection)
   const [dueOnly, setDueOnly] = useState(true)
   const [sectionsExpanded, setSectionsExpanded] = useState(false)
+  const [settingsExpanded, setSettingsExpanded] = useState(false)
+  const [showSavePreset, setShowSavePreset] = useState(false)
+  const [presetName, setPresetName] = useState('')
 
   // Get vocabulary for selected sections
   const { vocabulary: allVocabulary, isLoading: vocabLoading } =
@@ -86,6 +85,14 @@ export default function PracticePage() {
   const handleStart = () => {
     if (wordCount === 0) return
 
+    // Save this configuration for quick start
+    setLastPracticeConfig({
+      exerciseType,
+      direction,
+      dueOnly,
+      sectionIds: selectedSectionIds,
+    })
+
     // Get target language from the first selected section's book
     const selectedSection = sections.find((s) => selectedSectionIds.includes(s.id))
     const targetLanguage = selectedSection?.book?.language
@@ -103,6 +110,41 @@ export default function PracticePage() {
 
     router.push('/practice/session')
   }
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) return
+
+    const preset: PracticePreset = {
+      id: Date.now().toString(),
+      name: presetName.trim(),
+      exerciseType,
+      direction,
+      dueOnly,
+      sectionIds: selectedSectionIds.length === sections.length ? 'all' : selectedSectionIds,
+    }
+
+    addPracticePreset(preset)
+    setPresetName('')
+    setShowSavePreset(false)
+  }
+
+  const handleLoadPreset = (preset: PracticePreset) => {
+    setExerciseType(preset.exerciseType)
+    setDirection(preset.direction)
+    setDueOnly(preset.dueOnly)
+    if (preset.sectionIds === 'all') {
+      setSelectedSectionIds(sections.map(s => s.id))
+    } else {
+      // Only select sections that still exist
+      const validIds = preset.sectionIds.filter(id => sections.some(s => s.id === id))
+      setSelectedSectionIds(validIds)
+    }
+  }
+
+  // Get current settings summary for collapsed view
+  const currentExercise = exerciseTypes.find(e => e.id === exerciseType)
+  const currentDirection = directions.find(d => d.id === direction)
+  const settingsSummary = `${currentExercise?.short} · ${currentDirection?.short} · ${dueOnly ? 'Fällige' : 'Alle'}`
 
   const isLoading = sectionsLoading || vocabLoading
 
@@ -220,66 +262,163 @@ export default function PracticePage() {
               </CardContent>
             </Card>
 
-            {/* Exercise Type - Compact */}
-            <Card>
-              <CardContent>
-                <h3 className="font-semibold text-gray-900 mb-3">Übungsart</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {exerciseTypes.map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => setExerciseType(type.id)}
-                      className={`p-3 rounded-xl text-center transition-colors ${
-                        exerciseType === type.id
-                          ? 'bg-primary-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      <span className="text-2xl block mb-1">{type.icon}</span>
-                      <span className="text-xs font-medium">{type.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Presets - Quick Access */}
+            {practicePresets.length > 0 && (
+              <Card>
+                <CardContent>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Bookmark className="w-4 h-4 text-gray-500" />
+                    <h3 className="font-semibold text-gray-900 text-sm">Voreinstellungen</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {practicePresets.map((preset) => (
+                      <div key={preset.id} className="flex items-center">
+                        <button
+                          onClick={() => handleLoadPreset(preset)}
+                          className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-l-full text-sm text-gray-700 transition-colors"
+                        >
+                          {preset.name}
+                        </button>
+                        <button
+                          onClick={() => removePracticePreset(preset.id)}
+                          className="px-2 py-1.5 bg-gray-100 hover:bg-red-100 hover:text-red-600 rounded-r-full text-gray-400 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Direction - Compact horizontal layout */}
+            {/* Consolidated Settings - Collapsible */}
             <Card>
-              <CardContent>
-                <h3 className="font-semibold text-gray-900 mb-3">Richtung</h3>
-                <div className="flex gap-2">
-                  {directions.map((dir) => (
-                    <button
-                      key={dir.id}
-                      onClick={() => setDirection(dir.id)}
-                      className={`flex-1 p-2 rounded-xl text-center transition-colors ${
-                        direction === dir.id
-                          ? 'bg-primary-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+              <CardContent className="p-0">
+                <button
+                  onClick={() => setSettingsExpanded(!settingsExpanded)}
+                  className="w-full flex items-center justify-between p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-semibold text-gray-900">Einstellungen</h3>
+                    <span className="text-sm text-gray-500">
+                      {settingsSummary}
+                    </span>
+                  </div>
+                  {settingsExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                <AnimatePresence>
+                  {settingsExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
                     >
-                      <p className="text-xs font-medium">
-                        {dir.id === 'sourceToTarget' ? 'DE → FS' : dir.id === 'targetToSource' ? 'FS → DE' : 'Gemischt'}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                      <div className="px-4 pb-4 border-t border-gray-100 space-y-4">
+                        {/* Exercise Type */}
+                        <div className="pt-4">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Übungsart</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {exerciseTypes.map((type) => (
+                              <button
+                                key={type.id}
+                                onClick={() => setExerciseType(type.id)}
+                                className={`p-2 rounded-xl text-center transition-colors ${
+                                  exerciseType === type.id
+                                    ? 'bg-primary-500 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                <span className="text-xl block">{type.icon}</span>
+                                <span className="text-xs font-medium">{type.short}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-            {/* Due Only Toggle */}
-            <Card>
-              <CardContent>
-                <Toggle
-                  checked={dueOnly}
-                  onChange={setDueOnly}
-                  label="Nur fällige Vokabeln"
-                  description={
-                    dueOnly
-                      ? `${dueWords.length} bereit zur Wiederholung`
-                      : `${allVocabulary.length} insgesamt`
-                  }
-                />
+                        {/* Direction */}
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-2">Richtung</p>
+                          <div className="flex gap-2">
+                            {directions.map((dir) => (
+                              <button
+                                key={dir.id}
+                                onClick={() => setDirection(dir.id)}
+                                className={`flex-1 p-2 rounded-xl text-center transition-colors ${
+                                  direction === dir.id
+                                    ? 'bg-primary-500 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                <p className="text-xs font-medium">{dir.short}</p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Due Only Toggle */}
+                        <div>
+                          <Toggle
+                            checked={dueOnly}
+                            onChange={setDueOnly}
+                            label="Nur fällige Vokabeln"
+                            description={
+                              dueOnly
+                                ? `${dueWords.length} bereit`
+                                : `${allVocabulary.length} insgesamt`
+                            }
+                          />
+                        </div>
+
+                        {/* Save Preset */}
+                        <div className="pt-2 border-t border-gray-100">
+                          {showSavePreset ? (
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Name der Voreinstellung"
+                                value={presetName}
+                                onChange={(e) => setPresetName(e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={handleSavePreset}
+                                disabled={!presetName.trim()}
+                              >
+                                Speichern
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setShowSavePreset(false)
+                                  setPresetName('')
+                                }}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setShowSavePreset(true)}
+                              className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Als Voreinstellung speichern
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </CardContent>
             </Card>
           </div>

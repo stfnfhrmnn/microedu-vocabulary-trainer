@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { Zap, Settings2 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -16,10 +17,13 @@ import {
   ProgressPredictionCard,
   OptimalStudyTimeCard,
 } from '@/components/recommendations'
-import { useDueWordsCount, useVocabularyStats } from '@/lib/db/hooks/useDueWords'
+import { useDueWordsCount, useVocabularyStats, useDueWords } from '@/lib/db/hooks/useDueWords'
 import { useVocabularyCount } from '@/lib/db/hooks/useVocabulary'
+import { useAllSections } from '@/lib/db/hooks/useBooks'
 import { useOnboarding } from '@/stores/onboarding'
 import { useGamification, useTodayProgress } from '@/stores/gamification'
+import { usePracticeSession } from '@/stores/practice-session'
+import { useSettings } from '@/stores/settings'
 
 export default function HomePage() {
   const router = useRouter()
@@ -31,6 +35,50 @@ export default function HomePage() {
   const { hasCompletedOnboarding, dailyGoal } = useOnboarding()
   const { currentStreak, totalXP, level } = useGamification()
   const todayProgress = useTodayProgress(dailyGoal)
+
+  // Quick start support
+  const { sections } = useAllSections()
+  const allSectionIds = sections.map(s => s.id)
+  const { dueWords } = useDueWords(allSectionIds)
+  const startSession = usePracticeSession((state) => state.startSession)
+  const { lastPracticeConfig, setLastPracticeConfig, defaultExerciseType, defaultDirection } = useSettings()
+
+  const handleQuickStart = () => {
+    if (dueWords.length === 0) return
+
+    // Use last config or sensible defaults
+    const config = lastPracticeConfig || {
+      exerciseType: defaultExerciseType,
+      direction: defaultDirection,
+      dueOnly: true,
+      sectionIds: allSectionIds,
+    }
+
+    // Get target language from first section
+    const firstSection = sections.find(s => config.sectionIds.includes(s.id) || config.sectionIds.length === 0)
+    const targetLanguage = firstSection?.book?.language
+
+    // Save this config for next time
+    setLastPracticeConfig({
+      exerciseType: config.exerciseType,
+      direction: config.direction,
+      dueOnly: true,
+      sectionIds: allSectionIds,
+    })
+
+    startSession({
+      exerciseType: config.exerciseType,
+      direction: config.direction,
+      sectionIds: allSectionIds,
+      targetLanguage,
+      items: dueWords.map((v) => ({
+        vocabulary: v,
+        progress: v.progress,
+      })),
+    })
+
+    router.push('/practice/session')
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -84,41 +132,47 @@ export default function HomePage() {
       )}
 
       {/* Due Words Card - Main CTA */}
-      <Link href="/practice">
-        <motion.div
-          whileTap={{ scale: 0.98 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        >
-          <Card className="bg-primary-500 border-primary-500 mb-6">
-            <CardContent>
-              <div className="text-white">
-                <p className="text-primary-100 text-sm font-medium mb-1">
-                  Heute zu wiederholen
-                </p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-bold">{dueCount}</span>
-                  <span className="text-primary-200 text-lg">Vokabeln</span>
-                </div>
-                {dueCount > 0 && (
-                  <p className="text-primary-100 text-sm mt-3">
-                    Tippe um zu üben →
-                  </p>
-                )}
-                {dueCount === 0 && totalCount > 0 && (
-                  <p className="text-primary-100 text-sm mt-3">
-                    Super! Alles wiederholt
-                  </p>
-                )}
-                {totalCount === 0 && (
-                  <p className="text-primary-100 text-sm mt-3">
-                    Füge deine ersten Vokabeln hinzu
-                  </p>
-                )}
+      <Card className="bg-primary-500 border-primary-500 mb-6">
+        <CardContent>
+          <div className="text-white">
+            <p className="text-primary-100 text-sm font-medium mb-1">
+              Heute zu wiederholen
+            </p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-5xl font-bold">{dueCount}</span>
+              <span className="text-primary-200 text-lg">Vokabeln</span>
+            </div>
+            {dueCount > 0 && (
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={handleQuickStart}
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Schnell starten
+                </Button>
+                <Link href="/practice" className="flex-1">
+                  <Button variant="outline" fullWidth className="border-white/30 text-white hover:bg-white/10">
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Einrichten
+                  </Button>
+                </Link>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </Link>
+            )}
+            {dueCount === 0 && totalCount > 0 && (
+              <p className="text-primary-100 text-sm mt-3">
+                Super! Alles wiederholt
+              </p>
+            )}
+            {totalCount === 0 && (
+              <p className="text-primary-100 text-sm mt-3">
+                Füge deine ersten Vokabeln hinzu
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3 mb-6">

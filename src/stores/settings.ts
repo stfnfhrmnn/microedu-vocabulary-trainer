@@ -7,6 +7,24 @@ import type { OCRProviderType } from '@/lib/ocr/types'
 export type TTSProvider = 'web-speech' | 'google-cloud'
 export type GoogleVoiceType = 'wavenet' | 'standard'
 
+// Practice preset configuration
+export interface PracticePreset {
+  id: string
+  name: string
+  exerciseType: ExerciseType
+  direction: PracticeDirection
+  dueOnly: boolean
+  sectionIds: string[] | 'all'  // 'all' means all available sections
+}
+
+// Last used practice configuration for quick start
+export interface LastPracticeConfig {
+  exerciseType: ExerciseType
+  direction: PracticeDirection
+  dueOnly: boolean
+  sectionIds: string[]
+}
+
 interface SettingsState {
   // Practice defaults
   defaultDirection: PracticeDirection
@@ -32,6 +50,11 @@ interface SettingsState {
 
   // Add vocabulary settings
   lastUsedSectionId: string | null
+  recentSectionIds: string[]  // Last 5 used sections for quick-picker
+
+  // Practice settings
+  practicePresets: PracticePreset[]
+  lastPracticeConfig: LastPracticeConfig | null
 
   // Actions
   setDefaultDirection: (direction: PracticeDirection) => void
@@ -47,6 +70,10 @@ interface SettingsState {
   setSoundEnabled: (enabled: boolean) => void
   setHapticEnabled: (enabled: boolean) => void
   setLastUsedSectionId: (id: string | null) => void
+  addRecentSection: (id: string) => void
+  setLastPracticeConfig: (config: LastPracticeConfig) => void
+  addPracticePreset: (preset: PracticePreset) => void
+  removePracticePreset: (id: string) => void
 }
 
 export const useSettings = create<SettingsState>()(
@@ -66,6 +93,9 @@ export const useSettings = create<SettingsState>()(
       soundEnabled: true,
       hapticEnabled: true,
       lastUsedSectionId: null,
+      recentSectionIds: [],
+      practicePresets: [],
+      lastPracticeConfig: null,
 
       // Actions
       setDefaultDirection: (direction) => set({ defaultDirection: direction }),
@@ -81,6 +111,18 @@ export const useSettings = create<SettingsState>()(
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
       setLastUsedSectionId: (id) => set({ lastUsedSectionId: id }),
+      addRecentSection: (id) => set((state) => {
+        // Remove if already exists, add to front, keep max 5
+        const filtered = state.recentSectionIds.filter((s) => s !== id)
+        return { recentSectionIds: [id, ...filtered].slice(0, 5) }
+      }),
+      setLastPracticeConfig: (config) => set({ lastPracticeConfig: config }),
+      addPracticePreset: (preset) => set((state) => ({
+        practicePresets: [...state.practicePresets, preset]
+      })),
+      removePracticePreset: (id) => set((state) => ({
+        practicePresets: state.practicePresets.filter((p) => p.id !== id)
+      })),
     }),
     {
       name: 'vocabulary-trainer-settings',
