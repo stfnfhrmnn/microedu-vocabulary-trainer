@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, Copy, Check, ArrowLeft, Users, UserPlus } from 'lucide-react'
 import type { Network, UserRole } from '@/lib/db/schema'
+import { useSyncStatus } from '@/stores/sync'
+import { CloudSyncRequired } from './CloudSyncRequired'
 
 interface FamilySetupWizardProps {
   isOpen: boolean
@@ -14,6 +16,7 @@ interface FamilySetupWizardProps {
 type Step = 'role' | 'create' | 'join' | 'success'
 
 export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWizardProps) {
+  const { isRegistered } = useSyncStatus()
   const [step, setStep] = useState<Step>('role')
   const [userRole, setUserRole] = useState<'parent' | 'child' | null>(null)
 
@@ -197,8 +200,20 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
             </div>
 
             <AnimatePresence mode="wait">
+              {/* Cloud Sync Required */}
+              {!isRegistered && (
+                <motion.div
+                  key="cloud-required"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <CloudSyncRequired onClose={onClose} />
+                </motion.div>
+              )}
+
               {/* Step 1: Role Selection */}
-              {step === 'role' && (
+              {isRegistered && step === 'role' && (
                 <motion.div
                   key="role"
                   initial={{ opacity: 0, x: 20 }}
@@ -245,7 +260,7 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
               )}
 
               {/* Step 2a: Create Family (Parent) */}
-              {step === 'create' && (
+              {isRegistered && step === 'create' && (
                 <motion.div
                   key="create"
                   initial={{ opacity: 0, x: 20 }}
@@ -308,7 +323,7 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
               )}
 
               {/* Step 2b: Join Family (Child) */}
-              {step === 'join' && (
+              {isRegistered && step === 'join' && (
                 <motion.div
                   key="join"
                   initial={{ opacity: 0, x: 20 }}
@@ -377,7 +392,7 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
               )}
 
               {/* Step 3: Success */}
-              {step === 'success' && createdNetwork && (
+              {isRegistered && step === 'success' && createdNetwork && (
                 <motion.div
                   key="success"
                   initial={{ opacity: 0, scale: 0.95 }}

@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Users, Loader2 } from 'lucide-react'
 import type { Network, UserRole } from '@/lib/db/schema'
+import { useSyncStatus } from '@/stores/sync'
+import { CloudSyncRequired } from './CloudSyncRequired'
 
 interface JoinNetworkModalProps {
   isOpen: boolean
@@ -12,6 +14,7 @@ interface JoinNetworkModalProps {
 }
 
 export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModalProps) {
+  const { isRegistered } = useSyncStatus()
   const [inviteCode, setInviteCode] = useState('')
   const [nickname, setNickname] = useState('')
   const [role, setRole] = useState<UserRole>('child')
@@ -107,7 +110,10 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
               </button>
             </div>
 
-            {/* Form */}
+            {!isRegistered ? (
+              <CloudSyncRequired onClose={onClose} />
+            ) : (
+            /* Form */
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               {/* Invite Code */}
               <div>
@@ -212,6 +218,7 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
                 )}
               </button>
             </form>
+            )}
           </motion.div>
         </motion.div>
       )}

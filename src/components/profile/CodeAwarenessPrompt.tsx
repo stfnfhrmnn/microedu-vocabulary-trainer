@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AlertTriangle, Copy, Check, X, Camera } from 'lucide-react'
+import { Info, Copy, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useSyncStatus } from '@/stores/sync'
 import { useCurrentProfile } from '@/stores/user-session'
@@ -60,16 +60,16 @@ export function CodeAwarenessPrompt({ onDismiss }: CodeAwarenessPromptProps) {
           className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-amber-50">
-            <div className="flex items-center gap-2 text-amber-800">
-              <AlertTriangle className="w-5 h-5" />
+          <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-blue-50">
+            <div className="flex items-center gap-2 text-blue-800">
+              <Info className="w-5 h-5" />
               <h2 className="font-semibold">Dein persönlicher Code</h2>
             </div>
             <button
               onClick={handleDismiss}
-              className="p-2 hover:bg-amber-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
             >
-              <X className="h-5 w-5 text-amber-700" />
+              <X className="h-5 w-5 text-blue-700" />
             </button>
           </div>
 
@@ -94,34 +94,26 @@ export function CodeAwarenessPrompt({ onDismiss }: CodeAwarenessPromptProps) {
               </div>
             </div>
 
-            {/* Warning Message */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <p className="text-sm text-amber-800 font-medium mb-2">
-                Wichtig: Speichere diesen Code!
+            {/* Info Message */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800 font-medium mb-2">
+                Wofür ist dieser Code?
               </p>
-              <p className="text-sm text-amber-700">
-                Du brauchst ihn, um dich auf einem anderen Gerät anzumelden oder wenn du die App neu installierst.
-                Ohne diesen Code kannst du nicht auf deine Daten zugreifen.
+              <p className="text-sm text-blue-700">
+                Mit diesem Code kannst du dich auf anderen Geräten anmelden oder die App neu installieren
+                und behältst trotzdem alle Daten.
               </p>
             </div>
 
-            {/* Tips */}
-            <div className="space-y-2 text-sm text-gray-600">
-              <p className="font-medium text-gray-900">So sicherst du den Code:</p>
-              <ul className="space-y-1">
-                <li className="flex items-center gap-2">
-                  <Copy className="w-4 h-4 text-gray-400" />
-                  <span>In einer sicheren Notiz speichern</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-gray-400" />
-                  <span>Screenshot machen</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-lg">📝</span>
-                  <span>Auf Papier aufschreiben</span>
-                </li>
-              </ul>
+            {/* Where to find it */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-900 font-medium mb-2">
+                Keine Sorge - du findest ihn immer wieder!
+              </p>
+              <p className="text-sm text-gray-600">
+                Dein Code ist jederzeit im <strong>Profil-Menü</strong> sichtbar (oben rechts auf dein Profil tippen).
+                Du musst ihn nicht jetzt aufschreiben.
+              </p>
             </div>
 
             {/* Actions */}
@@ -130,7 +122,7 @@ export function CodeAwarenessPrompt({ onDismiss }: CodeAwarenessPromptProps) {
                 {copiedId ? 'Kopiert!' : 'Code kopieren'}
               </Button>
               <Button variant="ghost" fullWidth onClick={handleDismiss}>
-                Ich habe ihn gesichert
+                Verstanden
               </Button>
             </div>
           </div>

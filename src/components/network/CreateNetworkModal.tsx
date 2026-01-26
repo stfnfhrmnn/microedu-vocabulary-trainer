@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus, Loader2, Copy, Check } from 'lucide-react'
 import type { Network, NetworkType, UserRole } from '@/lib/db/schema'
+import { useSyncStatus } from '@/stores/sync'
+import { CloudSyncRequired } from './CloudSyncRequired'
 
 interface CreateNetworkModalProps {
   isOpen: boolean
@@ -12,6 +14,7 @@ interface CreateNetworkModalProps {
 }
 
 export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetworkModalProps) {
+  const { isRegistered } = useSyncStatus()
   const [step, setStep] = useState<'form' | 'success'>('form')
   const [name, setName] = useState('')
   const [type, setType] = useState<NetworkType>('class')
@@ -120,7 +123,9 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
               </button>
             </div>
 
-            {step === 'form' ? (
+            {!isRegistered ? (
+              <CloudSyncRequired onClose={onClose} />
+            ) : step === 'form' ? (
               <form onSubmit={handleSubmit} className="p-4 space-y-4">
                 {/* Name */}
                 <div>
