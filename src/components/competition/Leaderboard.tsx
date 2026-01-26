@@ -33,7 +33,7 @@ export function Leaderboard({ networkId, currentUserId }: LeaderboardProps) {
           `/api/networks/${networkId}/leaderboard?period=${currentPeriod}`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+              Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
             },
           }
         )

@@ -53,7 +53,7 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
         },
         body: JSON.stringify({
           inviteCode,

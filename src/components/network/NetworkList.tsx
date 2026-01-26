@@ -24,7 +24,7 @@ export function NetworkList({ userId, onSelectNetwork }: NetworkListProps) {
       try {
         const response = await fetch('/api/networks', {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
           },
         })
 

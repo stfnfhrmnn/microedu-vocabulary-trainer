@@ -84,7 +84,7 @@ export default function NetworksPage() {
 
   const fetchNetworks = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
+      const token = localStorage.getItem('sync-auth-token')
       if (!token) {
         setNetworks([])
         setIsLoading(false)

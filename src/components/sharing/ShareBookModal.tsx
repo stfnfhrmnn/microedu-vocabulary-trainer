@@ -27,7 +27,7 @@ export function ShareBookModal({ isOpen, onClose, book, onShared }: ShareBookMod
       try {
         const response = await fetch('/api/networks', {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
           },
         })
 
@@ -58,7 +58,7 @@ export function ShareBookModal({ isOpen, onClose, book, onShared }: ShareBookMod
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
         },
         body: JSON.stringify({
           bookId: book.id,

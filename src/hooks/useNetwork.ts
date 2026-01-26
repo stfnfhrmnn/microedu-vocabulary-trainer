@@ -7,7 +7,7 @@ import type { Network, NetworkMember, PeriodType, LeaderboardEntry } from '@/lib
 
 // Helper to get auth token
 function getAuthHeader(): Record<string, string> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+  const token = typeof window !== 'undefined' ? localStorage.getItem('sync-auth-token') : null
   if (token) {
     return { Authorization: `Bearer ${token}` }
   }

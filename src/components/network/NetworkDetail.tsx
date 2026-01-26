@@ -47,7 +47,7 @@ export function NetworkDetail({ networkId, currentUserId, onBack }: NetworkDetai
       try {
         const response = await fetch(`/api/networks/${networkId}`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
           },
         })
         if (response.ok) {
@@ -65,7 +65,7 @@ export function NetworkDetail({ networkId, currentUserId, onBack }: NetworkDetai
       try {
         const response = await fetch(`/api/networks/${networkId}/members`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
           },
         })
         if (response.ok) {
@@ -94,7 +94,7 @@ export function NetworkDetail({ networkId, currentUserId, onBack }: NetworkDetai
       const response = await fetch(`/api/networks/${networkId}/regenerate-code`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
         },
       })
       if (response.ok) {
@@ -114,7 +114,7 @@ export function NetworkDetail({ networkId, currentUserId, onBack }: NetworkDetai
       const response = await fetch(`/api/networks/${networkId}/members/${member.userId}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
         },
       })
       if (response.ok) {
@@ -138,7 +138,7 @@ export function NetworkDetail({ networkId, currentUserId, onBack }: NetworkDetai
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
         },
         body: JSON.stringify(updates),
       })

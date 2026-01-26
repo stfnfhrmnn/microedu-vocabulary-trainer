@@ -37,7 +37,7 @@ export default function NetworkDetailPage() {
   useEffect(() => {
     const fetchNetwork = async () => {
       try {
-        const token = localStorage.getItem('auth_token')
+        const token = localStorage.getItem('sync-auth-token')
         if (!token) {
           setError('Bitte melde dich an')
           setIsLoading(false)

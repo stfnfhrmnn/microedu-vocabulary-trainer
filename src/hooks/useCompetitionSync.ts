@@ -47,7 +47,7 @@ export function useCompetitionSync() {
       return
     }
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    const token = typeof window !== 'undefined' ? localStorage.getItem('sync-auth-token') : null
     if (!token) {
       console.warn('No auth token, skipping stats submission')
       return
@@ -101,7 +101,7 @@ export function useCompetitionSync() {
     const handleBeforeUnload = () => {
       if (pendingSessionStats.wordsReviewed > 0) {
         // Use sendBeacon for reliable submission on page close
-        const token = localStorage.getItem('auth_token')
+        const token = localStorage.getItem('sync-auth-token')
         if (token) {
           const data = JSON.stringify({
             ...pendingSessionStats,

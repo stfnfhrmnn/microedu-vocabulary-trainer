@@ -41,7 +41,7 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
       try {
         const response = await fetch(`/api/networks/${networkId}/shared-books`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
           },
         })
 
@@ -67,7 +67,7 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
       const response = await fetch(`/api/shared-books/${sharedBookId}/copy`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
         },
       })
 
