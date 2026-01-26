@@ -14,13 +14,19 @@ import { Select } from '@/components/ui/Select'
 import { useAllSections } from '@/lib/db/hooks/useBooks'
 import { createVocabularyItem } from '@/lib/db/db'
 import { getLangCode, SOURCE_LANG_CODE } from '@/lib/utils/language-codes'
+import { useSettings } from '@/stores/settings'
 
 function AddVocabularyForm() {
   const searchParams = useSearchParams()
-  const initialSectionId = searchParams.get('sectionId')
+  const urlSectionId = searchParams.get('sectionId')
+  const { lastUsedSectionId, setLastUsedSectionId } = useSettings()
+
+  // Use URL param first, then fall back to last used section
+  const initialSectionId = urlSectionId || lastUsedSectionId
 
   const { sections, isLoading } = useAllSections()
   const sourceInputRef = useRef<HTMLInputElement>(null)
+  const [showSectionPicker, setShowSectionPicker] = useState(false)
 
   const [sectionId, setSectionId] = useState('')
   const [sourceText, setSourceText] = useState('')
@@ -69,6 +75,8 @@ function AddVocabularyForm() {
         chapterId: section.chapterId,
         bookId: section.bookId,
       })
+      // Remember this section for next time
+      setLastUsedSectionId(section.id)
       setSavedCount((prev) => prev + 1)
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 2000)
@@ -144,15 +152,59 @@ function AddVocabularyForm() {
         </Card>
       ) : (
         <form onSubmit={handleSubmit}>
+          {/* Section Context - Always Visible */}
+          {selectedSection && !showSectionPicker ? (
+            <Card className="mb-4 bg-primary-50 border-primary-200">
+              <CardContent className="py-3">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-primary-600 font-medium mb-0.5">Hinzufügen zu:</p>
+                    <p className="text-sm font-semibold text-primary-900 truncate">
+                      {selectedSection.book?.name} › {selectedSection.chapter?.name} › {selectedSection.name}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSectionPicker(true)}
+                    className="ml-3 flex-shrink-0"
+                  >
+                    Ändern
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="mb-4">
+              <CardContent>
+                <Select
+                  label="Abschnitt auswählen"
+                  options={sectionOptions}
+                  value={sectionId}
+                  onChange={(e) => {
+                    setSectionId(e.target.value)
+                    setShowSectionPicker(false)
+                  }}
+                  placeholder="Wähle einen Abschnitt..."
+                />
+                {sectionId && showSectionPicker && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSectionPicker(false)}
+                    className="mt-2"
+                  >
+                    Abbrechen
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="mb-4">
             <CardContent className="space-y-4">
-              <Select
-                label="Abschnitt"
-                options={sectionOptions}
-                value={sectionId}
-                onChange={(e) => setSectionId(e.target.value)}
-                placeholder="Wähle einen Abschnitt..."
-              />
 
               <Input
                 ref={sourceInputRef}

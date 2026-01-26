@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -49,6 +50,7 @@ export default function PracticePage() {
     settings.defaultDirection
   )
   const [dueOnly, setDueOnly] = useState(true)
+  const [sectionsExpanded, setSectionsExpanded] = useState(false)
 
   // Get vocabulary for selected sections
   const { vocabulary: allVocabulary, isLoading: vocabLoading } =
@@ -131,146 +133,179 @@ export default function PracticePage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {/* Section Selection */}
-          <Card>
-            <CardContent>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900">Abschnitte</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={selectAll}
-                    className="text-sm text-primary-600 hover:text-primary-700"
-                  >
-                    Alle
-                  </button>
-                  <span className="text-gray-300">|</span>
-                  <button
-                    onClick={deselectAll}
-                    className="text-sm text-primary-600 hover:text-primary-700"
-                  >
-                    Keine
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => toggleSection(section.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                      selectedSectionIds.includes(section.id)
-                        ? 'bg-primary-50 border-2 border-primary-500'
-                        : 'bg-gray-50 border-2 border-transparent'
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                        selectedSectionIds.includes(section.id)
+        <>
+          {/* Scrollable content with extra bottom padding for fixed footer */}
+          <div className="space-y-4 pb-32">
+            {/* Section Selection - Collapsible */}
+            <Card>
+              <CardContent className="p-0">
+                <button
+                  onClick={() => setSectionsExpanded(!sectionsExpanded)}
+                  className="w-full flex items-center justify-between p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-semibold text-gray-900">Abschnitte</h3>
+                    <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                      {selectedSectionIds.length} von {sections.length}
+                    </span>
+                  </div>
+                  {sectionsExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                <AnimatePresence>
+                  {sectionsExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 pb-4 border-t border-gray-100">
+                        <div className="flex justify-end gap-2 py-2">
+                          <button
+                            onClick={selectAll}
+                            className="text-sm text-primary-600 hover:text-primary-700"
+                          >
+                            Alle
+                          </button>
+                          <span className="text-gray-300">|</span>
+                          <button
+                            onClick={deselectAll}
+                            className="text-sm text-primary-600 hover:text-primary-700"
+                          >
+                            Keine
+                          </button>
+                        </div>
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {sections.map((section) => (
+                            <button
+                              key={section.id}
+                              onClick={() => toggleSection(section.id)}
+                              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                                selectedSectionIds.includes(section.id)
+                                  ? 'bg-primary-50 border-2 border-primary-500'
+                                  : 'bg-gray-50 border-2 border-transparent'
+                              }`}
+                            >
+                              <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                                  selectedSectionIds.includes(section.id)
+                                    ? 'bg-primary-500 text-white'
+                                    : 'bg-gray-200'
+                                }`}
+                              >
+                                {selectedSectionIds.includes(section.id) && (
+                                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex-1 text-left">
+                                <p className="font-medium text-gray-900">{section.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {section.book?.name} › {section.chapter?.name}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CardContent>
+            </Card>
+
+            {/* Exercise Type - Compact */}
+            <Card>
+              <CardContent>
+                <h3 className="font-semibold text-gray-900 mb-3">Übungsart</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {exerciseTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => setExerciseType(type.id)}
+                      className={`p-3 rounded-xl text-center transition-colors ${
+                        exerciseType === type.id
                           ? 'bg-primary-500 text-white'
-                          : 'bg-gray-200'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {selectedSectionIds.includes(section.id) && (
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-medium text-gray-900">{section.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {section.book?.name} › {section.chapter?.name}
+                      <span className="text-2xl block mb-1">{type.icon}</span>
+                      <span className="text-xs font-medium">{type.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Direction - Compact horizontal layout */}
+            <Card>
+              <CardContent>
+                <h3 className="font-semibold text-gray-900 mb-3">Richtung</h3>
+                <div className="flex gap-2">
+                  {directions.map((dir) => (
+                    <button
+                      key={dir.id}
+                      onClick={() => setDirection(dir.id)}
+                      className={`flex-1 p-2 rounded-xl text-center transition-colors ${
+                        direction === dir.id
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <p className="text-xs font-medium">
+                        {dir.id === 'sourceToTarget' ? 'DE → FS' : dir.id === 'targetToSource' ? 'FS → DE' : 'Gemischt'}
                       </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Exercise Type */}
-          <Card>
-            <CardContent>
-              <h3 className="font-semibold text-gray-900 mb-3">Übungsart</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {exerciseTypes.map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => setExerciseType(type.id)}
-                    className={`p-3 rounded-xl text-center transition-colors ${
-                      exerciseType === type.id
-                        ? 'bg-primary-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    <span className="text-2xl block mb-1">{type.icon}</span>
-                    <span className="text-xs font-medium">{type.label}</span>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            {/* Due Only Toggle */}
+            <Card>
+              <CardContent>
+                <Toggle
+                  checked={dueOnly}
+                  onChange={setDueOnly}
+                  label="Nur fällige Vokabeln"
+                  description={
+                    dueOnly
+                      ? `${dueWords.length} bereit zur Wiederholung`
+                      : `${allVocabulary.length} insgesamt`
+                  }
+                />
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Direction */}
-          <Card>
-            <CardContent>
-              <h3 className="font-semibold text-gray-900 mb-3">Richtung</h3>
-              <div className="space-y-2">
-                {directions.map((dir) => (
-                  <button
-                    key={dir.id}
-                    onClick={() => setDirection(dir.id)}
-                    className={`w-full p-3 rounded-xl text-left transition-colors ${
-                      direction === dir.id
-                        ? 'bg-primary-50 border-2 border-primary-500'
-                        : 'bg-gray-50 border-2 border-transparent'
-                    }`}
-                  >
-                    <p className="font-medium text-gray-900">{dir.label}</p>
-                    <p className="text-xs text-gray-500">{dir.description}</p>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Due Only Toggle */}
-          <Card>
-            <CardContent>
-              <Toggle
-                checked={dueOnly}
-                onChange={setDueOnly}
-                label="Nur fällige Vokabeln"
-                description={
-                  dueOnly
-                    ? `${dueWords.length} Vokabeln bereit zur Wiederholung`
-                    : `${allVocabulary.length} Vokabeln insgesamt`
-                }
-              />
-            </CardContent>
-          </Card>
-
-          {/* Word Count & Start */}
-          <motion.div
-            className="bg-primary-500 rounded-2xl p-4 text-white text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <p className="text-4xl font-bold">{wordCount}</p>
-            <p className="text-primary-100 mb-4">
-              {wordCount === 1 ? 'Vokabel' : 'Vokabeln'} zum Üben
-            </p>
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={handleStart}
-              disabled={wordCount === 0}
+          {/* Fixed Start Button Footer */}
+          <div className="fixed bottom-20 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent pt-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-lg mx-auto"
             >
-              {wordCount === 0 ? 'Keine Vokabeln ausgewählt' : 'Übung starten'}
-            </Button>
-          </motion.div>
-        </div>
+              <Button
+                variant="primary"
+                fullWidth
+                size="lg"
+                onClick={handleStart}
+                disabled={wordCount === 0}
+                className="shadow-lg"
+              >
+                {wordCount === 0
+                  ? 'Keine Vokabeln ausgewählt'
+                  : `${wordCount} ${wordCount === 1 ? 'Vokabel' : 'Vokabeln'} üben`}
+              </Button>
+            </motion.div>
+          </div>
+        </>
       )}
     </PageContainer>
   )

@@ -30,6 +30,9 @@ interface SettingsState {
   soundEnabled: boolean
   hapticEnabled: boolean
 
+  // Add vocabulary settings
+  lastUsedSectionId: string | null
+
   // Actions
   setDefaultDirection: (direction: PracticeDirection) => void
   setDefaultExerciseType: (type: ExerciseType) => void
@@ -43,6 +46,7 @@ interface SettingsState {
   setGoogleVoiceType: (type: GoogleVoiceType) => void
   setSoundEnabled: (enabled: boolean) => void
   setHapticEnabled: (enabled: boolean) => void
+  setLastUsedSectionId: (id: string | null) => void
 }
 
 export const useSettings = create<SettingsState>()(
@@ -61,6 +65,7 @@ export const useSettings = create<SettingsState>()(
       googleVoiceType: 'wavenet',
       soundEnabled: true,
       hapticEnabled: true,
+      lastUsedSectionId: null,
 
       // Actions
       setDefaultDirection: (direction) => set({ defaultDirection: direction }),
@@ -75,6 +80,7 @@ export const useSettings = create<SettingsState>()(
       setGoogleVoiceType: (type) => set({ googleVoiceType: type }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
+      setLastUsedSectionId: (id) => set({ lastUsedSectionId: id }),
     }),
     {
       name: 'vocabulary-trainer-settings',
