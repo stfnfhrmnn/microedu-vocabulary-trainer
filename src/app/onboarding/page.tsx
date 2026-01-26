@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useOnboarding } from '@/stores/onboarding'
-import { useUserSession, useCurrentProfile } from '@/stores/user-session'
+import { useUserSession } from '@/stores/user-session'
+import type { AvatarEmoji } from '@/stores/user-session'
 import { WelcomeSlide } from '@/components/onboarding/WelcomeSlide'
+import { ProfileSetup } from '@/components/onboarding/ProfileSetup'
 import { GoalSelection } from '@/components/onboarding/GoalSelection'
 import { SetupComplete } from '@/components/onboarding/SetupComplete'
 
@@ -17,12 +19,15 @@ export default function OnboardingPage() {
     hasCompletedOnboarding,
     currentStep,
     dailyGoal,
+    profileName,
+    profileAvatar,
     setCurrentStep,
     setDailyGoal,
+    setProfileSetup,
     completeOnboarding,
   } = useOnboarding()
 
-  const currentProfile = useCurrentProfile()
+  const { profiles, createProfile } = useUserSession()
 
   useEffect(() => {
     setMounted(true)
@@ -38,12 +43,22 @@ export default function OnboardingPage() {
     return null
   }
 
+  const handleProfileSetup = (name: string, avatar: AvatarEmoji) => {
+    setProfileSetup(name, avatar)
+    setCurrentStep(2)
+  }
+
   const handleComplete = () => {
+    // Create the profile with the name and avatar chosen during onboarding
+    // Only create if no profile exists yet
+    if (profiles.length === 0 && profileName && profileAvatar) {
+      createProfile(profileName, profileAvatar)
+    }
     completeOnboarding()
     router.push('/')
   }
 
-  const totalSteps = 3
+  const totalSteps = 4 // Welcome, Profile Setup, Goals, Complete
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -76,19 +91,29 @@ export default function OnboardingPage() {
           )}
 
           {currentStep === 1 && (
-            <GoalSelection
-              key="goals"
-              selectedGoal={dailyGoal}
-              onSelectGoal={setDailyGoal}
-              onNext={() => setCurrentStep(2)}
+            <ProfileSetup
+              key="profile"
+              initialName={profileName}
+              initialAvatar={profileAvatar || undefined}
+              onComplete={handleProfileSetup}
               onBack={() => setCurrentStep(0)}
             />
           )}
 
           {currentStep === 2 && (
+            <GoalSelection
+              key="goals"
+              selectedGoal={dailyGoal}
+              onSelectGoal={setDailyGoal}
+              onNext={() => setCurrentStep(3)}
+              onBack={() => setCurrentStep(1)}
+            />
+          )}
+
+          {currentStep === 3 && (
             <SetupComplete
               key="complete"
-              userName={currentProfile?.name || ''}
+              userName={profileName || 'Benutzer'}
               dailyGoal={dailyGoal}
               onComplete={handleComplete}
             />

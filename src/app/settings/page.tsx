@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { Users, ChevronRight } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -8,8 +10,12 @@ import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
 import { Toggle } from '@/components/ui/Toggle'
 import { Button } from '@/components/ui/Button'
+import { FamilySetupWizard } from '@/components/network/FamilySetupWizard'
+import { JoinNetworkModal } from '@/components/network/JoinNetworkModal'
+import { CreateNetworkModal } from '@/components/network/CreateNetworkModal'
 import { useSettings } from '@/stores/settings'
 import { db } from '@/lib/db/db'
+import type { Network } from '@/lib/db/schema'
 
 const directionOptions = [
   { value: 'sourceToTarget', label: 'Deutsch → Fremdsprache' },
@@ -48,6 +54,19 @@ export default function SettingsPage() {
   const settings = useSettings()
   const [showApiKey, setShowApiKey] = useState(false)
   const [exportMessage, setExportMessage] = useState<string | null>(null)
+
+  // Network modals
+  const [showFamilyWizard, setShowFamilyWizard] = useState(false)
+  const [showJoinModal, setShowJoinModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [networkSuccess, setNetworkSuccess] = useState<string | null>(null)
+
+  const handleNetworkComplete = (network: Network | null) => {
+    if (network) {
+      setNetworkSuccess(`Erfolgreich: ${network.name}`)
+      setTimeout(() => setNetworkSuccess(null), 3000)
+    }
+  }
 
   const handleExport = async () => {
     try {
@@ -94,6 +113,78 @@ export default function SettingsPage() {
       <Header title="Einstellungen" />
 
       <div className="space-y-4">
+        {/* Network Discovery - Gemeinsam lernen */}
+        <Card>
+          <CardContent>
+            <div className="flex items-center gap-2 mb-4">
+              <Users className="w-5 h-5 text-primary-500" />
+              <h3 className="font-semibold text-gray-900">Gemeinsam lernen</h3>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Verbinde dich mit Familie, Freunden oder deiner Klasse.
+            </p>
+
+            {networkSuccess && (
+              <div className="p-3 bg-success-50 text-success-600 text-sm rounded-lg mb-4">
+                {networkSuccess}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {/* Family Setup */}
+              <button
+                onClick={() => setShowFamilyWizard(true)}
+                className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left flex items-center gap-3"
+              >
+                <span className="text-2xl">👨‍👩‍👧‍👦</span>
+                <div className="flex-1">
+                  <span className="font-medium text-gray-900 block">Familie einrichten</span>
+                  <span className="text-sm text-gray-500">Für Eltern und Kinder</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+
+              {/* Join Class */}
+              <button
+                onClick={() => setShowJoinModal(true)}
+                className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left flex items-center gap-3"
+              >
+                <span className="text-2xl">🏫</span>
+                <div className="flex-1">
+                  <span className="font-medium text-gray-900 block">Klasse beitreten</span>
+                  <span className="text-sm text-gray-500">Mit Einladungscode</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+
+              {/* Create Study Group */}
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="w-full p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left flex items-center gap-3"
+              >
+                <span className="text-2xl">📚</span>
+                <div className="flex-1">
+                  <span className="font-medium text-gray-900 block">Lerngruppe erstellen</span>
+                  <span className="text-sm text-gray-500">Mit Freunden lernen</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Link to Network Overview */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <Link
+                href="/networks"
+                className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
+              >
+                Meine Netzwerke verwalten
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Practice Defaults */}
         <Card>
           <CardContent>
@@ -346,6 +437,34 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Network Modals */}
+      <FamilySetupWizard
+        isOpen={showFamilyWizard}
+        onClose={() => setShowFamilyWizard(false)}
+        onComplete={(network) => {
+          setShowFamilyWizard(false)
+          handleNetworkComplete(network)
+        }}
+      />
+
+      <JoinNetworkModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onJoined={(network) => {
+          setShowJoinModal(false)
+          handleNetworkComplete(network)
+        }}
+      />
+
+      <CreateNetworkModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={(network) => {
+          setShowCreateModal(false)
+          handleNetworkComplete(network)
+        }}
+      />
     </PageContainer>
   )
 }

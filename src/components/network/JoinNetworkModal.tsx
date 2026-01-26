@@ -130,24 +130,42 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
                 <label className="block text-sm font-medium mb-1.5">
                   Ich bin...
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-2">
                   {[
-                    { value: 'child', label: 'Schüler', emoji: '🎒' },
-                    { value: 'parent', label: 'Eltern', emoji: '👨‍👩‍👧' },
-                    { value: 'teacher', label: 'Lehrer', emoji: '👨‍🏫' },
+                    {
+                      value: 'child',
+                      label: 'Schüler/Kind',
+                      emoji: '🎒',
+                      description: 'Dein Fortschritt erscheint in der Gruppen-Übersicht',
+                    },
+                    {
+                      value: 'parent',
+                      label: 'Elternteil',
+                      emoji: '👨‍👩‍👧',
+                      description: 'Du siehst den Fortschritt deiner Kinder',
+                    },
+                    {
+                      value: 'teacher',
+                      label: 'Lehrer',
+                      emoji: '👨‍🏫',
+                      description: 'Du siehst alle Teilnehmer und kannst Bücher teilen',
+                    },
                   ].map((option) => (
                     <button
                       key={option.value}
                       type="button"
                       onClick={() => setRole(option.value as UserRole)}
-                      className={`p-3 rounded-xl border-2 transition-all ${
+                      className={`w-full p-3 rounded-xl border-2 transition-all flex items-start gap-3 text-left ${
                         role === option.value
                           ? 'border-primary bg-primary/10'
                           : 'border-transparent bg-secondary hover:bg-secondary/80'
                       }`}
                     >
-                      <span className="text-2xl block mb-1">{option.emoji}</span>
-                      <span className="text-sm">{option.label}</span>
+                      <span className="text-2xl">{option.emoji}</span>
+                      <div>
+                        <span className="font-medium block">{option.label}</span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
+                      </div>
                     </button>
                   ))}
                 </div>

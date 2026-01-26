@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { UserMenuButton, UserMenu } from '@/components/user'
+import { CodeAwarenessPrompt } from '@/components/profile/CodeAwarenessPrompt'
 import { StreakDisplay, DailyGoalCard, LevelBadge } from '@/components/gamification'
 import {
   StudyRecommendationsCard,
@@ -110,6 +111,9 @@ export default function HomePage() {
         isOpen={isUserMenuOpen}
         onClose={() => setIsUserMenuOpen(false)}
       />
+
+      {/* Code Awareness Prompt - shows after first sync */}
+      <CodeAwarenessPrompt />
 
       {/* Daily Goal & Streak Cards */}
       {totalCount > 0 && (

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { AlertTriangle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -12,6 +13,7 @@ import { SyncStatus } from '@/components/profile/SyncStatus'
 import {
   useUserSession,
   useCurrentProfile,
+  AVATAR_OPTIONS,
   type AvatarEmoji,
   type UserProfile,
 } from '@/stores/user-session'
@@ -35,6 +37,11 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [copiedId, setCopiedId] = useState(false)
+
+  // New profile creation state
+  const [showNewProfileModal, setShowNewProfileModal] = useState(false)
+  const [newProfileName, setNewProfileName] = useState('')
+  const [newProfileAvatar, setNewProfileAvatar] = useState<AvatarEmoji>(AVATAR_OPTIONS[0])
 
   const handleNameSubmit = useCallback(() => {
     if (editedName.trim()) {
@@ -77,10 +84,19 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
     [switchProfile, onClose]
   )
 
-  const handleNewProfile = useCallback(() => {
-    createProfile()
+  const handleNewProfileClick = useCallback(() => {
+    // Reset form and show modal
+    setNewProfileName('')
+    setNewProfileAvatar(AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)])
+    setShowNewProfileModal(true)
+  }, [])
+
+  const handleCreateNewProfile = useCallback(() => {
+    if (newProfileName.trim().length < 2) return
+    createProfile(newProfileName.trim(), newProfileAvatar)
+    setShowNewProfileModal(false)
     onClose()
-  }, [createProfile, onClose])
+  }, [createProfile, newProfileName, newProfileAvatar, onClose])
 
   const handleDelete = useCallback(() => {
     if (profiles.length > 1) {
@@ -225,8 +241,11 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
         {!showAvatarPicker && otherProfiles.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Gespeicherte Profile
+              Profile auf diesem Gerät
             </label>
+            <p className="text-xs text-gray-500 mb-3">
+              Jedes Profil hat einen eigenen Code für Cloud-Sync und Login.
+            </p>
             <div className="space-y-2">
               {/* Current profile */}
               <ProfileListItem profile={profile} isCurrent />
@@ -246,7 +265,7 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
         {!showAvatarPicker && (
           <div className="flex gap-3 pt-2">
             <Button
-              onClick={handleNewProfile}
+              onClick={handleNewProfileClick}
               variant="outline"
               className="flex-1"
             >
@@ -324,6 +343,100 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
           </div>
         )}
       </div>
+
+      {/* New Profile Creation Modal */}
+      {showNewProfileModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Neues Profil erstellen
+            </h3>
+
+            {/* Warning */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <div className="flex gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">Was passiert mit deinen Daten?</p>
+                  <p>
+                    Dein aktuelles Profil und alle Vokabeln bleiben erhalten.
+                    Das neue Profil startet komplett leer.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Name Input */}
+            <div className="mb-4">
+              <Input
+                label="Name für das neue Profil"
+                placeholder="z.B. Lisa, Arbeit, Test..."
+                value={newProfileName}
+                onChange={(e) => setNewProfileName(e.target.value)}
+                autoFocus
+              />
+              {newProfileName.length > 0 && newProfileName.trim().length < 2 && (
+                <p className="text-sm text-error-500 mt-1">Mindestens 2 Zeichen</p>
+              )}
+            </div>
+
+            {/* Avatar Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Avatar
+              </label>
+              <div className="grid grid-cols-8 gap-2">
+                {AVATAR_OPTIONS.map((avatar) => (
+                  <button
+                    key={avatar}
+                    type="button"
+                    onClick={() => setNewProfileAvatar(avatar)}
+                    className={cn(
+                      'w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all',
+                      newProfileAvatar === avatar
+                        ? 'bg-primary-100 ring-2 ring-primary-500 scale-110'
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    )}
+                  >
+                    {avatar}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="flex items-center gap-3 py-3 px-4 bg-gray-50 rounded-lg mb-4">
+              <span className="text-2xl">{newProfileAvatar}</span>
+              <span className="font-medium text-gray-900">
+                {newProfileName.trim() || 'Neues Profil'}
+              </span>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setShowNewProfileModal(false)}
+              >
+                Abbrechen
+              </Button>
+              <Button
+                variant="primary"
+                fullWidth
+                onClick={handleCreateNewProfile}
+                disabled={newProfileName.trim().length < 2}
+              >
+                Profil erstellen
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </Modal>
   )
 }
@@ -336,39 +449,51 @@ interface ProfileListItemProps {
 }
 
 function ProfileListItem({ profile, isCurrent, onClick }: ProfileListItemProps) {
+  // Format creation date
+  const createdDate = new Date(profile.createdAt)
+  const dateStr = createdDate.toLocaleDateString('de-DE', {
+    day: 'numeric',
+    month: 'short',
+    year: createdDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
+  })
+
   return (
     <button
       onClick={onClick}
       disabled={isCurrent}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+        'w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left',
         isCurrent
           ? 'bg-primary-50 border border-primary-200'
           : 'bg-gray-50 hover:bg-gray-100'
       )}
     >
-      <span className="text-xl">{profile.avatar}</span>
-      <span className="flex-1 text-left font-medium text-gray-900">
-        {profile.name}
-      </span>
-      <span className="text-sm text-gray-500 font-mono">
-        {formatUserIdShort(profile.id)}
-      </span>
-      {isCurrent && (
-        <svg
-          className="w-5 h-5 text-primary-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M5 13l4 4L19 7"
-          />
-        </svg>
-      )}
+      <span className="text-2xl">{profile.avatar}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-gray-900 truncate">{profile.name}</span>
+          {isCurrent && (
+            <svg
+              className="w-4 h-4 text-primary-500 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="font-mono">{profile.id}</span>
+          <span>·</span>
+          <span>seit {dateStr}</span>
+        </div>
+      </div>
     </button>
   )
 }

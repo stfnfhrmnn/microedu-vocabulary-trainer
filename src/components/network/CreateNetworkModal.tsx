@@ -173,23 +173,36 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
                   <label className="block text-sm font-medium mb-1.5">
                     Meine Rolle
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
                     {[
-                      { value: 'teacher', label: 'Lehrer/Admin', emoji: '👨‍🏫' },
-                      { value: 'parent', label: 'Eltern', emoji: '👨‍👩‍👧' },
+                      {
+                        value: 'teacher',
+                        label: 'Lehrer/Admin',
+                        emoji: '👨‍🏫',
+                        description: 'Du verwaltest das Netzwerk und siehst alle Teilnehmer',
+                      },
+                      {
+                        value: 'parent',
+                        label: 'Elternteil',
+                        emoji: '👨‍👩‍👧',
+                        description: 'Du siehst den Fortschritt deiner Kinder',
+                      },
                     ].map((option) => (
                       <button
                         key={option.value}
                         type="button"
                         onClick={() => setRole(option.value as UserRole)}
-                        className={`p-3 rounded-xl border-2 transition-all ${
+                        className={`w-full p-3 rounded-xl border-2 transition-all flex items-start gap-3 text-left ${
                           role === option.value
                             ? 'border-primary bg-primary/10'
                             : 'border-transparent bg-secondary hover:bg-secondary/80'
                         }`}
                       >
-                        <span className="text-2xl block mb-1">{option.emoji}</span>
-                        <span className="text-sm">{option.label}</span>
+                        <span className="text-2xl">{option.emoji}</span>
+                        <div>
+                          <span className="font-medium block">{option.label}</span>
+                          <span className="text-xs text-muted-foreground">{option.description}</span>
+                        </div>
                       </button>
                     ))}
                   </div>

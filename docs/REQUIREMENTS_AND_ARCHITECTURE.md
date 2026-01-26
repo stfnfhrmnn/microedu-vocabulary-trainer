@@ -12,6 +12,7 @@
 8. [Technical Specifications](#technical-specifications)
 9. [Implementation Phases](#implementation-phases)
 10. [Risk Analysis](#risk-analysis)
+11. [Profile & Network System](#profile--network-system)
 
 ---
 
@@ -969,6 +970,118 @@ class VocabDatabase extends Dexie {
 
 ---
 
+## Profile & Network System
+
+### User Profile Architecture
+
+The app uses a **local-first profile system** where users don't need to create an account initially. Profiles are created locally and can optionally sync to the cloud.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Profile & Network Model                          │
+│                                                                     │
+│  Local Device                                                       │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Profile 1 (Max)          Profile 2 (Lisa)                  │   │
+│  │  ├─ Name, Avatar          ├─ Name, Avatar                   │   │
+│  │  ├─ Vocabulary Data       ├─ Vocabulary Data                │   │
+│  │  └─ Learning Progress     └─ Learning Progress              │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                    │                                                │
+│         [Optional Cloud Sync with XXXX-XXXX code]                  │
+│                    ↓                                                │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    Cloud Backend                             │   │
+│  │  User Account (code: AB12-XY34)                             │   │
+│  │  ├─ Can join multiple Networks                               │   │
+│  │  └─ Synced vocabulary & progress                            │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                    │                                                │
+│                    ↓                                                │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Networks (Class, Family, Study Group)                       │   │
+│  │  ├─ Members with Roles (child, parent, teacher, admin)      │   │
+│  │  ├─ Shared Books                                             │   │
+│  │  └─ Leaderboards                                             │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Profile Schema
+
+```typescript
+interface UserProfile {
+  id: string;              // UUID for local identification
+  name: string;            // User-chosen display name
+  avatar: string;          // Emoji avatar
+  isActive: boolean;       // Currently selected profile
+  createdAt: number;       // Timestamp
+}
+```
+
+### Network Types
+
+| Type | Purpose | Use Case |
+|------|---------|----------|
+| `family` | Parents tracking children's progress | Home learning with parental oversight |
+| `class` | Teacher-managed classroom | School environment with formal tracking |
+| `study_group` | Peer learning groups | Friends studying together |
+
+### User Roles
+
+Roles are **per-network**, meaning the same user can have different roles in different networks.
+
+| Role | Permissions | Typical User |
+|------|-------------|--------------|
+| `child` | View own progress, access shared books, see leaderboard | Students |
+| `parent` | View all family members' progress, share books, invite members | Parents/Guardians |
+| `teacher` | Manage class roster, share books, view all students | Teachers |
+| `admin` | Full network management (auto-assigned to creator) | Network creator |
+
+### Authentication Flow
+
+The app uses a **code-based authentication** system (no email/password):
+
+1. **Local-only phase**: User creates profile with name/avatar, gets unique XXXX-XXXX code
+2. **Cloud registration**: When cloud features are enabled, the code becomes the login credential
+3. **Multi-device**: User enters their code on new devices to access synced data
+
+```
+First Launch → Name/Avatar Prompt → Local Profile Created
+                                           │
+                                           ↓
+                               [Enable Cloud Sync]
+                                           │
+                                           ↓
+                              Code Awareness Prompt
+                           "Save your code: AB12-XY34"
+                                           │
+                                           ↓
+                              [Join/Create Network]
+```
+
+### UX Guidelines for Profiles & Networks
+
+1. **Never auto-create profiles silently** - always prompt for name
+2. **Warn before creating new profiles** - explain data isolation
+3. **Show profile context** - display code and stats in profile switcher
+4. **Guide network setup** - provide wizard flows for families
+5. **Explain roles clearly** - show what each role can do
+6. **Emphasize code importance** - prompt users to save their code
+
+### Key Components
+
+| Feature | Component | Location |
+|---------|-----------|----------|
+| First launch setup | `ProfileSetup` | `src/components/onboarding/ProfileSetup.tsx` |
+| Profile switching | `UserMenu` | `src/components/user/UserMenu.tsx` |
+| Network discovery | Settings page | `src/app/settings/page.tsx` |
+| Family setup | `FamilySetupWizard` | `src/components/network/FamilySetupWizard.tsx` |
+| Network management | Networks page | `src/app/networks/page.tsx` |
+| Code awareness | `CodeAwarenessPrompt` | `src/components/profile/CodeAwarenessPrompt.tsx` |
+
+---
+
 ## Appendix A: Supported Languages
 
 Initial support for common German Gymnasium second foreign languages:
@@ -1013,3 +1126,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 |---------|------|--------|---------|
 | 1.0 | 2026-01-20 | Initial | Initial requirements and architecture |
 | 1.1 | 2026-01-20 | Update | Added pluggable OCR provider architecture (Gemini, Cloud Vision, OpenAI, Tesseract); Reinforced offline-first design; Added offline capability matrix |
+| 1.2 | 2026-01-26 | Update | Added Profile & Network System section documenting user profiles, network types, roles, and authentication flow |
