@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
+import { parsePaginationParams, paginateArray } from '@/lib/api/pagination'
 import { eq, and, sql } from 'drizzle-orm'
 
 export async function GET(
@@ -145,13 +146,19 @@ export async function GET(
     // Find user's rank
     const myEntry = kids.find((e) => e.isMe) || supporters.find((e) => e.isMe)
 
+    // Apply pagination to the leaderboard
+    const paginationParams = parsePaginationParams(url)
+    const allEntries = [...kids, ...supporters]
+    const paginatedLeaderboard = paginateArray(allEntries, paginationParams)
+
     return NextResponse.json({
-      leaderboard: [...kids, ...supporters],
-      competitors: kids,
-      supporters,
+      leaderboard: paginatedLeaderboard.data,
+      competitors: kids.slice(0, paginationParams.limit),
+      supporters: supporters.slice(0, paginationParams.limit),
       myRank: myEntry?.rank || null,
       period: periodType,
       periodStart: periodStart.toISOString(),
+      pagination: paginatedLeaderboard.pagination,
     })
   } catch (error) {
     console.error('Get leaderboard error:', error)

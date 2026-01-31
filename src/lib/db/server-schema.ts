@@ -8,6 +8,7 @@ import {
   decimal,
   jsonb,
   uniqueIndex,
+  index,
   boolean,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
@@ -159,7 +160,11 @@ export const vocabularyItems = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
-  (table) => [uniqueIndex('vocab_user_local_idx').on(table.userId, table.localId)]
+  (table) => [
+    uniqueIndex('vocab_user_local_idx').on(table.userId, table.localId),
+    index('vocab_book_idx').on(table.bookId),
+    index('vocab_section_idx').on(table.sectionId),
+  ]
 )
 
 export const vocabularyItemsRelations = relations(vocabularyItems, ({ one }) => ({
@@ -191,7 +196,10 @@ export const learningProgress = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   },
-  (table) => [uniqueIndex('progress_user_vocab_idx').on(table.userId, table.localVocabularyId)]
+  (table) => [
+    uniqueIndex('progress_user_vocab_idx').on(table.userId, table.localVocabularyId),
+    index('progress_next_review_idx').on(table.userId, table.nextReviewDate),
+  ]
 )
 
 export const learningProgressRelations = relations(learningProgress, ({ one }) => ({
@@ -217,6 +225,26 @@ export const userDataRelations = relations(userData, ({ one }) => ({
 }))
 
 // ============================================================================
+// Device Transfer Tokens (secure account transfer between devices)
+// ============================================================================
+
+export const deviceTransferTokens = pgTable('device_transfer_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  token: varchar('token', { length: 64 }).unique().notNull(),
+  pin: varchar('pin', { length: 4 }).notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
+export const deviceTransferTokensRelations = relations(deviceTransferTokens, ({ one }) => ({
+  user: one(users, { fields: [deviceTransferTokens.userId], references: [users.id] }),
+}))
+
+// ============================================================================
 // Networks (Classes/Study Groups)
 // ============================================================================
 
@@ -224,7 +252,7 @@ export const networks = pgTable('networks', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
   type: varchar('type', { length: 20 }).notNull(), // 'class' | 'study_group' | 'family'
-  inviteCode: varchar('invite_code', { length: 9 }).unique().notNull(), // XXXX-XXXX
+  inviteCode: varchar('invite_code', { length: 7 }).unique().notNull(), // XXX-XXX
   ownerId: uuid('owner_id')
     .references(() => users.id, { onDelete: 'set null' }),
   settings: jsonb('settings').default({}),
@@ -287,7 +315,10 @@ export const competitionStats = pgTable(
     sessionsCompleted: integer('sessions_completed').default(0),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   },
-  (table) => [uniqueIndex('stats_user_period_idx').on(table.userId, table.periodType, table.periodStart)]
+  (table) => [
+    uniqueIndex('stats_user_period_idx').on(table.userId, table.periodType, table.periodStart),
+    index('stats_period_type_idx').on(table.periodType),
+  ]
 )
 
 export const competitionStatsRelations = relations(competitionStats, ({ one }) => ({
@@ -458,3 +489,5 @@ export type ContentReport = typeof contentReports.$inferSelect
 export type NewContentReport = typeof contentReports.$inferInsert
 export type DeletionRequest = typeof deletionRequests.$inferSelect
 export type NewDeletionRequest = typeof deletionRequests.$inferInsert
+export type DeviceTransferToken = typeof deviceTransferTokens.$inferSelect
+export type NewDeviceTransferToken = typeof deviceTransferTokens.$inferInsert

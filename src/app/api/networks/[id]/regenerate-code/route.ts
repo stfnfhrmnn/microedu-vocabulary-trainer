@@ -7,17 +7,8 @@
 import { NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
+import { generateNetworkInviteCode } from '@/lib/utils/user-id'
 import { eq } from 'drizzle-orm'
-
-function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 8; i++) {
-    if (i === 4) code += '-'
-    code += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return code
-}
 
 export async function POST(
   request: Request,
@@ -41,15 +32,15 @@ export async function POST(
       return NextResponse.json({ error: 'Only admins can regenerate invite codes' }, { status: 403 })
     }
 
-    // Generate unique code
-    let newCode = generateInviteCode()
+    // Generate unique code (XXX-XXX format)
+    let newCode = generateNetworkInviteCode()
     let attempts = 0
     while (attempts < 10) {
       const existing = await serverDb.query.networks.findFirst({
         where: (networks, { eq }) => eq(networks.inviteCode, newCode),
       })
       if (!existing) break
-      newCode = generateInviteCode()
+      newCode = generateNetworkInviteCode()
       attempts++
     }
 

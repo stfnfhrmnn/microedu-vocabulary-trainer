@@ -1,6 +1,15 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'development-secret-key-change-me')
+// Require JWT_SECRET in production, allow fallback only in development
+const getJwtSecret = (): Uint8Array => {
+  const secret = process.env.JWT_SECRET
+  if (!secret && process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production')
+  }
+  return new TextEncoder().encode(secret || 'development-secret-key-change-me')
+}
+
+const JWT_SECRET = getJwtSecret()
 
 export interface TokenPayload extends JWTPayload {
   userId: string
@@ -14,7 +23,7 @@ export async function signToken(payload: { userId: string; userCode: string }): 
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('30d') // Long-lived for mobile/PWA convenience
+    .setExpirationTime('14d') // 14 days for mobile/PWA convenience (balanced with security)
     .sign(JWT_SECRET)
 }
 

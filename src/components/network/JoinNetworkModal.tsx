@@ -24,9 +24,9 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
   const formatInviteCode = (value: string) => {
     // Remove non-alphanumeric characters and uppercase
     const cleaned = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-    // Add dash after 4 characters
-    if (cleaned.length > 4) {
-      return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}`
+    // Add dash after 3 characters (XXX-XXX format)
+    if (cleaned.length > 3) {
+      return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}`
     }
     return cleaned
   }
@@ -40,8 +40,8 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (inviteCode.replace(/-/g, '').length !== 8) {
-      setError('Bitte gib einen gültigen Code ein (XXXX-XXXX)')
+    if (inviteCode.replace(/-/g, '').length !== 6) {
+      setError('Bitte gib einen gültigen Code ein (XXX-XXX)')
       return
     }
 
@@ -124,8 +124,8 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
                   type="text"
                   value={inviteCode}
                   onChange={handleCodeChange}
-                  placeholder="XXXX-XXXX"
-                  maxLength={9}
+                  placeholder="XXX-XXX"
+                  maxLength={7}
                   className="w-full px-4 py-3 text-center text-2xl tracking-widest font-mono border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
                   autoFocus
                 />
@@ -205,7 +205,7 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isLoading || inviteCode.replace(/-/g, '').length !== 8}
+                disabled={isLoading || inviteCode.replace(/-/g, '').length !== 6}
                 className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (

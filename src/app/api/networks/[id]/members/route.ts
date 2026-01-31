@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
+import { parsePaginationParams, paginateArray } from '@/lib/api/pagination'
 import { eq, and } from 'drizzle-orm'
 
 export async function GET(
@@ -82,11 +83,17 @@ export async function GET(
     const competitors = memberList.filter((m) => m.role === 'child')
     const supporters = memberList.filter((m) => m.role !== 'child')
 
+    // Apply pagination
+    const url = new URL(request.url)
+    const paginationParams = parsePaginationParams(url)
+    const paginatedMembers = paginateArray(memberList, paginationParams)
+
     return NextResponse.json({
-      members: memberList,
-      competitors,
-      supporters,
+      members: paginatedMembers.data,
+      competitors: competitors.slice(0, paginationParams.limit),
+      supporters: supporters.slice(0, paginationParams.limit),
       total: memberList.length,
+      pagination: paginatedMembers.pagination,
     })
   } catch (error) {
     console.error('Get members error:', error)

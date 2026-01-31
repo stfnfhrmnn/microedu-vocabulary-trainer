@@ -1,14 +1,11 @@
 /**
  * Google Cloud Text-to-Speech Service
  *
- * Provides high-quality TTS using Google Cloud API.
+ * Provides high-quality TTS using server-side proxy to Google Cloud API.
  * Falls back to Web Speech API if unavailable.
  */
 
 import type { Language } from '@/lib/db/schema'
-
-// Google Cloud TTS API endpoint
-const TTS_API_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize'
 
 // Language to Google TTS voice mapping
 // Using WaveNet voices for best quality
@@ -41,43 +38,36 @@ export interface GoogleTTSResult {
 }
 
 /**
- * Synthesize speech using Google Cloud TTS API
+ * Synthesize speech using server-side proxy to Google Cloud TTS API
  */
 export async function synthesizeSpeechGoogle(
   text: string,
   language: Language | 'german',
-  apiKey: string,
   options: GoogleTTSOptions = {}
 ): Promise<GoogleTTSResult> {
   const voiceMap = options.useWaveNet !== false ? VOICE_MAP : STANDARD_VOICE_MAP
   const voice = voiceMap[language]
 
-  const requestBody = {
-    input: { text },
-    voice: {
-      languageCode: voice.languageCode,
-      name: voice.name,
-    },
-    audioConfig: {
-      audioEncoding: 'MP3',
-      speakingRate: options.speakingRate ?? 1.0,
-      pitch: options.pitch ?? 0,
-      volumeGainDb: options.volumeGainDb ?? 0,
-    },
-  }
-
   try {
-    const response = await fetch(`${TTS_API_URL}?key=${apiKey}`, {
+    // Use server-side proxy instead of direct API call
+    const response = await fetch('/api/google/tts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        text,
+        languageCode: voice.languageCode,
+        voiceName: voice.name,
+        speakingRate: options.speakingRate ?? 1.0,
+        pitch: options.pitch ?? 0,
+        volumeGainDb: options.volumeGainDb ?? 0,
+      }),
     })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      const errorMessage = errorData.error?.message || `HTTP ${response.status}`
+      const errorMessage = errorData.error || `HTTP ${response.status}`
       return { success: false, error: errorMessage }
     }
 
@@ -132,29 +122,34 @@ export function playBase64Audio(base64Audio: string): Promise<void> {
  * Google TTS Service class with caching and queue management
  */
 export class GoogleTTSService {
-  private apiKey: string | null = null
+  private enabled: boolean = false
   private audioCache = new Map<string, string>() // text -> base64 audio
   private currentAudio: HTMLAudioElement | null = null
   private isPlaying = false
 
   setApiKey(apiKey: string | null) {
-    this.apiKey = apiKey
+    // Legacy method - now just enables/disables service
+    this.enabled = !!apiKey
+  }
+
+  setEnabled(enabled: boolean) {
+    this.enabled = enabled
   }
 
   isAvailable(): boolean {
-    return !!this.apiKey
+    return this.enabled
   }
 
   /**
-   * Speak text using Google Cloud TTS
+   * Speak text using Google Cloud TTS via server-side proxy
    */
   async speak(
     text: string,
     language: Language | 'german',
     options: GoogleTTSOptions = {}
   ): Promise<{ success: boolean; error?: string }> {
-    if (!this.apiKey) {
-      return { success: false, error: 'Google API key not configured' }
+    if (!this.enabled) {
+      return { success: false, error: 'Google TTS not enabled' }
     }
 
     // Check cache
@@ -162,8 +157,8 @@ export class GoogleTTSService {
     let audioContent = this.audioCache.get(cacheKey)
 
     if (!audioContent) {
-      // Synthesize speech
-      const result = await synthesizeSpeechGoogle(text, language, this.apiKey, options)
+      // Synthesize speech via server proxy
+      const result = await synthesizeSpeechGoogle(text, language, options)
       if (!result.success || !result.audioContent) {
         return { success: false, error: result.error }
       }

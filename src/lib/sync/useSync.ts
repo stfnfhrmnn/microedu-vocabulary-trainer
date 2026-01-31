@@ -10,6 +10,7 @@ import {
   registerBackgroundSync,
 } from './sync-service'
 import { getPendingChangeCount, getSyncMeta } from './sync-queue'
+import { toast } from '@/stores/toast'
 
 const SYNC_INTERVAL = 30000 // 30 seconds
 
@@ -45,10 +46,21 @@ export function useSync() {
       } else {
         setError(result.error || 'Sync failed')
         setSyncState('error')
+        // Show toast only for first sync error to avoid spamming
+        const currentError = useSyncStore.getState().error
+        if (!currentError) {
+          toast.error('Synchronisierung fehlgeschlagen. Daten werden lokal gespeichert.')
+        }
       }
     } catch (error) {
-      setError((error as Error).message)
+      const message = (error as Error).message
+      setError(message)
       setSyncState('error')
+      // Show toast only for first sync error
+      const currentError = useSyncStore.getState().error
+      if (!currentError) {
+        toast.error('Synchronisierung fehlgeschlagen. Daten werden lokal gespeichert.')
+      }
     } finally {
       syncInProgressRef.current = false
     }

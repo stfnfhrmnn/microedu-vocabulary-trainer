@@ -1,0 +1,211 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "create": "Erstellen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "confirm": "Bestätigen",
+    "retry": "Erneut versuchen"
+  },
+  "nav": {
+    "home": "Start",
+    "practice": "Üben",
+    "library": "Bibliothek",
+    "add": "Hinzufügen",
+    "profile": "Profil"
+  },
+  "home": {
+    "greeting": "Hallo",
+    "dueWords": "{count, plural, =0 {Keine Vokabeln fällig} =1 {1 Vokabel fällig} other {{count} Vokabeln fällig}}",
+    "startPractice": "Übung starten",
+    "streak": "Tage Streak",
+    "totalWords": "Vokabeln gesamt",
+    "mastered": "Gemeistert"
+  },
+  "practice": {
+    "title": "Übung",
+    "selectSections": "Abschnitte auswählen",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Alle abwählen",
+    "dueOnly": "Nur fällige",
+    "allWords": "Alle Vokabeln",
+    "noWords": "Keine Vokabeln verfügbar",
+    "start": "Starten",
+    "exerciseTypes": {
+      "flashcard": "Karteikarten",
+      "multipleChoice": "Multiple Choice",
+      "typed": "Eingabe"
+    },
+    "directions": {
+      "sourceToTarget": "DE → Fremdsprache",
+      "targetToSource": "Fremdsprache → DE",
+      "mixed": "Gemischt"
+    },
+    "session": {
+      "complete": "Übung abgeschlossen!",
+      "correct": "Richtig",
+      "incorrect": "Leider falsch",
+      "showAnswer": "Antwort zeigen",
+      "next": "Weiter",
+      "finish": "Beenden",
+      "accuracy": "Genauigkeit",
+      "streak": "Streak"
+    }
+  },
+  "library": {
+    "title": "Bibliothek",
+    "newBook": "Neues Buch",
+    "noBooks": "Noch keine Bücher",
+    "noBooksHint": "Erstelle ein Buch, um deine Vokabeln zu organisieren.",
+    "book": {
+      "delete": "Buch löschen?",
+      "deleteMessage": "Möchtest du «{name}» wirklich löschen? Alle Kapitel und Vokabeln werden unwiderruflich gelöscht.",
+      "rename": "Buch umbenennen"
+    },
+    "chapter": {
+      "new": "Neues Kapitel",
+      "delete": "Kapitel löschen?",
+      "deleteMessage": "Möchtest du «{name}» wirklich löschen? Alle Abschnitte und Vokabeln werden unwiderruflich gelöscht."
+    },
+    "section": {
+      "new": "Neuer Abschnitt",
+      "vocabulary": "{count, plural, =0 {Keine Vokabeln} =1 {1 Vokabel} other {{count} Vokabeln}}"
+    }
+  },
+  "vocabulary": {
+    "add": "Vokabeln hinzufügen",
+    "scan": "Scannen",
+    "german": "Deutsch",
+    "foreign": "Fremdsprache",
+    "french": "Französisch",
+    "spanish": "Spanisch",
+    "latin": "Latein",
+    "notes": "Notizen",
+    "notesPlaceholder": "z.B. Plural: die Häuser",
+    "saved": "Gespeichert!",
+    "saveAndContinue": "Speichern & Weiter"
+  },
+  "profile": {
+    "title": "Profil",
+    "settings": "Einstellungen",
+    "cloudSync": "Cloud-Sicherung",
+    "yourCode": "Dein Code",
+    "copyCode": "Code kopieren",
+    "logout": "Abmelden",
+    "networks": "Netzwerke",
+    "achievements": "Erfolge"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "practice": "Übung",
+    "defaultExercise": "Standard-Übungstyp",
+    "defaultDirection": "Standard-Richtung",
+    "typingStrictness": "Tipp-Genauigkeit",
+    "sound": "Sound",
+    "haptic": "Vibration",
+    "ocr": "OCR-Anbieter",
+    "tts": "Sprachausgabe",
+    "googleCloud": "Google Cloud"
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten",
+    "networkError": "Netzwerkfehler",
+    "notFound": "Nicht gefunden",
+    "unauthorized": "Nicht autorisiert",
+    "syncFailed": "Synchronisierung fehlgeschlagen. Daten werden lokal gespeichert."
+  },
+  "achievements": {
+    "title": "Erfolge",
+    "unlocked": "Freigeschaltet",
+    "unlockedOf": "{unlocked} von {total}",
+    "unlockedOn": "Freigeschaltet am {date}",
+    "categories": {
+      "consistency": "Beständigkeit",
+      "volume": "Menge",
+      "accuracy": "Genauigkeit",
+      "special": "Besondere"
+    },
+    "items": {
+      "first_steps": {
+        "name": "Erste Schritte",
+        "description": "Schließe deine erste Übungsrunde ab"
+      },
+      "getting_started": {
+        "name": "Guter Start",
+        "description": "3 Tage in Folge geübt"
+      },
+      "on_a_roll": {
+        "name": "Am Ball",
+        "description": "7 Tage in Folge geübt"
+      },
+      "two_weeks_strong": {
+        "name": "Zwei Wochen stark",
+        "description": "14 Tage in Folge geübt"
+      },
+      "monthly_master": {
+        "name": "Monatsmeister",
+        "description": "30 Tage in Folge geübt"
+      },
+      "unstoppable": {
+        "name": "Unaufhaltsam",
+        "description": "100 Tage in Folge geübt"
+      },
+      "word_collector": {
+        "name": "Wortsammler",
+        "description": "50 Vokabeln gelernt"
+      },
+      "vocabulary_builder": {
+        "name": "Wortschatz-Bauer",
+        "description": "100 Vokabeln gelernt"
+      },
+      "word_wizard": {
+        "name": "Wort-Magier",
+        "description": "500 Vokabeln gelernt"
+      },
+      "dictionary_master": {
+        "name": "Wörterbuch-Meister",
+        "description": "1000 Vokabeln gelernt"
+      },
+      "sharp_mind": {
+        "name": "Scharfer Verstand",
+        "description": "10 richtige Antworten in Folge"
+      },
+      "perfect_memory": {
+        "name": "Perfektes Gedächtnis",
+        "description": "25 richtige Antworten in Folge"
+      },
+      "genius_mode": {
+        "name": "Genie-Modus",
+        "description": "50 richtige Antworten in Folge"
+      },
+      "flawless": {
+        "name": "Makellos",
+        "description": "5 perfekte Übungsrunden"
+      },
+      "night_owl": {
+        "name": "Nachteule",
+        "description": "Übe nach 22 Uhr"
+      },
+      "early_bird": {
+        "name": "Frühaufsteher",
+        "description": "Übe vor 7 Uhr"
+      },
+      "weekend_warrior": {
+        "name": "Wochenend-Kämpfer",
+        "description": "Übe am Wochenende"
+      },
+      "family_time": {
+        "name": "Familienzeit",
+        "description": "10 Eltern-Quiz Runden"
+      }
+    }
+  }
+}

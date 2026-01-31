@@ -231,7 +231,7 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
             </div>
             {isRegistered && (
               <div className="mt-2">
-                <ShareButton userCode={profile.id} className="w-full" />
+                <ShareButton className="w-full" />
               </div>
             )}
           </div>

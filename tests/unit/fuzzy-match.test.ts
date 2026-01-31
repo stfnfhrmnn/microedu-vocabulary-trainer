@@ -191,18 +191,19 @@ describe('Fuzzy Matching', () => {
   describe('highlightDifferences', () => {
     it('should return original string when identical', () => {
       const result = highlightDifferences('hello', 'hello')
-      expect(result).toBe('hello')
+      expect(result).toEqual([{ text: 'hello', isHighlighted: false }])
     })
 
     it('should mark differing characters', () => {
       const result = highlightDifferences('cat', 'bat')
-      expect(result).toContain('<mark')
-      expect(result).toContain('c')
+      // First character 'c' differs from 'b'
+      expect(result.some(s => s.isHighlighted && s.text.includes('c'))).toBe(true)
     })
 
     it('should handle diacritics as identical when normalized', () => {
       const result = highlightDifferences('café', 'cafe')
-      expect(result).toBe('café') // Returns original when normalized versions match
+      // Returns original when normalized versions match
+      expect(result).toEqual([{ text: 'café', isHighlighted: false }])
     })
   })
 

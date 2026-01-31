@@ -2,18 +2,18 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Users, ChevronRight } from 'lucide-react'
+import { Users, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
-import { Input } from '@/components/ui/Input'
 import { Toggle } from '@/components/ui/Toggle'
 import { Button } from '@/components/ui/Button'
 import { FamilySetupWizard } from '@/components/network/FamilySetupWizard'
 import { JoinNetworkModal } from '@/components/network/JoinNetworkModal'
 import { CreateNetworkModal } from '@/components/network/CreateNetworkModal'
 import { useSettings } from '@/stores/settings'
+import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
 import { db } from '@/lib/db/db'
 import type { Network } from '@/lib/db/schema'
 
@@ -35,14 +35,14 @@ const strictnessOptions = [
   { value: 'lenient', label: 'Nachsichtig (70% korrekt)' },
 ]
 
-const ocrOptions = [
+const getOcrOptions = (hasApiKey: boolean) => [
   { value: 'tesseract', label: 'Tesseract (Offline)' },
-  { value: 'google-vision', label: 'Google Vision (Online)' },
+  { value: 'google-vision', label: hasApiKey ? 'Google Vision (Online)' : 'Google Vision (nicht verfügbar)', disabled: !hasApiKey },
 ]
 
-const ttsOptions = [
+const getTtsOptions = (hasApiKey: boolean) => [
   { value: 'web-speech', label: 'Web Speech API (Kostenlos)' },
-  { value: 'google-cloud', label: 'Google Cloud TTS (Bessere Qualität)' },
+  { value: 'google-cloud', label: hasApiKey ? 'Google Cloud TTS (Bessere Qualität)' : 'Google Cloud TTS (nicht verfügbar)', disabled: !hasApiKey },
 ]
 
 const googleVoiceOptions = [
@@ -52,7 +52,7 @@ const googleVoiceOptions = [
 
 export default function SettingsPage() {
   const settings = useSettings()
-  const [showApiKey, setShowApiKey] = useState(false)
+  const { available: hasGoogleApi, loading: googleApiLoading } = useGoogleApiStatus()
   const [exportMessage, setExportMessage] = useState<string | null>(null)
 
   // Network modals
@@ -113,6 +113,26 @@ export default function SettingsPage() {
       <Header title="Einstellungen" />
 
       <div className="space-y-4">
+        {/* Google Cloud Status */}
+        <div className={`flex items-center gap-3 p-3 rounded-lg ${hasGoogleApi ? 'bg-success-50' : 'bg-gray-100'}`}>
+          {hasGoogleApi ? (
+            <>
+              <CheckCircle className="w-5 h-5 text-success-600 shrink-0" />
+              <div className="text-sm">
+                <span className="font-medium text-success-700">Google Cloud aktiviert</span>
+                <span className="text-success-600 ml-1">– Premium-Funktionen verfügbar</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="w-5 h-5 text-gray-400 shrink-0" />
+              <div className="text-sm text-gray-600">
+                Google Cloud nicht konfiguriert – einige Funktionen sind eingeschränkt
+              </div>
+            </>
+          )}
+        </div>
+
         {/* Network Discovery - Gemeinsam lernen */}
         <Card>
           <CardContent>
@@ -230,48 +250,16 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <Select
                 label="OCR-Anbieter"
-                options={ocrOptions}
+                options={getOcrOptions(hasGoogleApi)}
                 value={settings.ocrProvider}
-                onChange={(e) =>
-                  settings.setOcrProvider(e.target.value as typeof settings.ocrProvider)
-                }
-                helperText="Tesseract funktioniert offline, Google Vision benötigt Internet"
+                onChange={(e) => {
+                  const value = e.target.value as typeof settings.ocrProvider
+                  // Don't allow selecting disabled options
+                  if (value === 'google-vision' && !hasGoogleApi) return
+                  settings.setOcrProvider(value)
+                }}
+                helperText="Tesseract funktioniert offline, Google Vision liefert bessere Ergebnisse"
               />
-
-              {settings.ocrProvider === 'google-vision' && (
-                <div>
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1">
-                      <Input
-                        label="Google Cloud API-Schlüssel"
-                        type={showApiKey ? 'text' : 'password'}
-                        value={settings.googleApiKey || ''}
-                        onChange={(e) => settings.setGoogleApiKey(e.target.value || null)}
-                        placeholder="API-Schlüssel eingeben..."
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                    >
-                      {showApiKey ? 'Verbergen' : 'Zeigen'}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Erstelle einen API-Schlüssel in der{' '}
-                    <a
-                      href="https://console.cloud.google.com/apis/credentials"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary-600 hover:underline"
-                    >
-                      Google Cloud Console
-                    </a>
-                    {' '}mit aktivierter Vision API.
-                  </p>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -284,25 +272,22 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <Select
                 label="Sprachausgabe (TTS)"
-                options={ttsOptions}
+                options={getTtsOptions(hasGoogleApi)}
                 value={settings.ttsProvider}
-                onChange={(e) =>
-                  settings.setTTSProvider(e.target.value as typeof settings.ttsProvider)
-                }
+                onChange={(e) => {
+                  const value = e.target.value as typeof settings.ttsProvider
+                  // Don't allow selecting disabled options
+                  if (value === 'google-cloud' && !hasGoogleApi) return
+                  settings.setTTSProvider(value)
+                }}
                 helperText={
                   settings.ttsProvider === 'google-cloud'
-                    ? 'Benötigt Google Cloud API-Schlüssel (oben)'
+                    ? 'Hochwertige Google Cloud Stimmen'
                     : 'Kostenlos, Qualität variiert je nach Browser'
                 }
               />
 
-              {settings.ttsProvider === 'google-cloud' && !settings.googleApiKey && (
-                <p className="text-sm text-warning-600 bg-warning-50 p-2 rounded">
-                  Bitte gib einen Google Cloud API-Schlüssel ein (siehe OCR-Einstellungen oben).
-                </p>
-              )}
-
-              {settings.ttsProvider === 'google-cloud' && settings.googleApiKey && (
+              {settings.ttsProvider === 'google-cloud' && hasGoogleApi && (
                 <Select
                   label="Google Stimmentyp"
                   options={googleVoiceOptions}
@@ -359,19 +344,17 @@ export default function SettingsPage() {
               )}
 
               <Toggle
-                checked={settings.useAIAnalysis}
+                checked={settings.useAIAnalysis && hasGoogleApi}
                 onChange={settings.setUseAIAnalysis}
+                disabled={!hasGoogleApi}
                 label="KI-Analyse"
-                description="Nutzt Gemini zur besseren Erkennung gesprochener Antworten"
+                description={hasGoogleApi
+                  ? "Nutzt Gemini zur besseren Erkennung gesprochener Antworten"
+                  : "Benötigt Google Cloud (nicht konfiguriert)"
+                }
               />
 
-              {settings.useAIAnalysis && !settings.googleApiKey && (
-                <p className="text-sm text-warning-600 bg-warning-50 p-2 rounded">
-                  Für KI-Analyse wird ein Google Cloud API-Schlüssel mit aktivierter Gemini API benötigt.
-                </p>
-              )}
-
-              {settings.useAIAnalysis && settings.googleApiKey && (
+              {settings.useAIAnalysis && hasGoogleApi && (
                 <p className="text-sm text-gray-500">
                   KI-Analyse versteht natürliche Sprache besser und kann auch semantisch ähnliche Antworten erkennen.
                 </p>

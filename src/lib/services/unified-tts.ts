@@ -28,7 +28,7 @@ interface SpeakResult {
  */
 export class UnifiedTTSService {
   private provider: TTSProvider = 'web-speech'
-  private googleApiKey: string | null = null
+  private googleEnabled: boolean = false
   private googleVoiceType: GoogleVoiceType = 'wavenet'
   private webTTS = getTTSService()
   private googleTTS = getGoogleTTSService()
@@ -38,13 +38,18 @@ export class UnifiedTTSService {
    */
   configure(config: {
     provider: TTSProvider
-    googleApiKey?: string | null
+    googleApiKey?: string | null  // Legacy - now just boolean check
+    googleEnabled?: boolean
     googleVoiceType?: GoogleVoiceType
   }) {
     this.provider = config.provider
-    if (config.googleApiKey !== undefined) {
-      this.googleApiKey = config.googleApiKey
-      this.googleTTS.setApiKey(config.googleApiKey)
+    // Support both old googleApiKey (truthy check) and new googleEnabled
+    if (config.googleEnabled !== undefined) {
+      this.googleEnabled = config.googleEnabled
+      this.googleTTS.setEnabled(config.googleEnabled)
+    } else if (config.googleApiKey !== undefined) {
+      this.googleEnabled = !!config.googleApiKey
+      this.googleTTS.setEnabled(!!config.googleApiKey)
     }
     if (config.googleVoiceType !== undefined) {
       this.googleVoiceType = config.googleVoiceType
@@ -59,11 +64,20 @@ export class UnifiedTTSService {
   }
 
   /**
-   * Set Google API key
+   * Set Google API enabled status
    */
   setGoogleApiKey(apiKey: string | null) {
-    this.googleApiKey = apiKey
-    this.googleTTS.setApiKey(apiKey)
+    // Legacy method - now just enables/disables
+    this.googleEnabled = !!apiKey
+    this.googleTTS.setEnabled(!!apiKey)
+  }
+
+  /**
+   * Set Google enabled status
+   */
+  setGoogleEnabled(enabled: boolean) {
+    this.googleEnabled = enabled
+    this.googleTTS.setEnabled(enabled)
   }
 
   /**
@@ -87,7 +101,7 @@ export class UnifiedTTSService {
    * Check if Google Cloud TTS is configured
    */
   isGoogleAvailable(): boolean {
-    return !!this.googleApiKey
+    return this.googleEnabled
   }
 
   /**

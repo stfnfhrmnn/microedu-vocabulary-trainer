@@ -117,30 +117,52 @@ export function checkAnswer(
 }
 
 /**
- * Highlight differences between expected and actual answer
- * Returns HTML string with <mark> tags for differences
+ * Segment representing a part of the highlighted text
  */
-export function highlightDifferences(expected: string, actual: string): string {
+export interface DifferenceSegment {
+  text: string
+  isHighlighted: boolean
+}
+
+/**
+ * Highlight differences between expected and actual answer
+ * Returns an array of segments for safe rendering (no HTML injection risk)
+ */
+export function highlightDifferences(expected: string, actual: string): DifferenceSegment[] {
   const normalizedExpected = normalizeText(expected, true)
   const normalizedActual = normalizeText(actual, true)
 
   if (normalizedExpected === normalizedActual) {
-    return expected
+    return [{ text: expected, isHighlighted: false }]
   }
 
-  // Simple character-by-character comparison
-  let result = ''
-  const maxLength = Math.max(expected.length, actual.length)
+  // Simple character-by-character comparison, grouping consecutive segments
+  const segments: DifferenceSegment[] = []
+  let currentText = ''
+  let currentHighlighted = false
 
   for (let i = 0; i < expected.length; i++) {
-    if (i < actual.length && expected[i].toLowerCase() === actual[i].toLowerCase()) {
-      result += expected[i]
+    const isMatch = i < actual.length && expected[i].toLowerCase() === actual[i].toLowerCase()
+    const shouldHighlight = !isMatch
+
+    if (i === 0) {
+      currentHighlighted = shouldHighlight
+      currentText = expected[i]
+    } else if (shouldHighlight === currentHighlighted) {
+      currentText += expected[i]
     } else {
-      result += `<mark class="bg-error-200 px-0.5 rounded">${expected[i]}</mark>`
+      segments.push({ text: currentText, isHighlighted: currentHighlighted })
+      currentText = expected[i]
+      currentHighlighted = shouldHighlight
     }
   }
 
-  return result
+  // Push the last segment
+  if (currentText) {
+    segments.push({ text: currentText, isHighlighted: currentHighlighted })
+  }
+
+  return segments
 }
 
 /**

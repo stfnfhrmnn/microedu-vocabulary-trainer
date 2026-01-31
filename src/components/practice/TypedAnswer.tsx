@@ -9,7 +9,7 @@ import { VoiceInputButton } from './VoiceInputButton'
 import { PronunciationButton } from '@/components/vocabulary/PronunciationButton'
 import { processAccentInput } from '@/lib/utils/accent-helpers'
 import { checkAnswer, highlightDifferences, hasAccentMismatchOnly } from '@/lib/learning/fuzzy-match'
-import type { StrictnessLevel } from '@/lib/learning/fuzzy-match'
+import type { StrictnessLevel, DifferenceSegment } from '@/lib/learning/fuzzy-match'
 import type { Language } from '@/lib/db/schema'
 
 export interface TypedAnswerProps {
@@ -210,12 +210,17 @@ export function TypedAnswer({
                     {result.hasAccentIssue ? 'Fast richtig!' : 'Nicht ganz...'}
                   </p>
                   <p className="text-sm text-error-600 mb-2">Richtige Antwort:</p>
-                  <p
-                    className="font-medium text-xl"
-                    dangerouslySetInnerHTML={{
-                      __html: highlightDifferences(correctAnswer, userAnswer),
-                    }}
-                  />
+                  <p className="font-medium text-xl">
+                    {highlightDifferences(correctAnswer, userAnswer).map((segment, index) => (
+                      segment.isHighlighted ? (
+                        <mark key={index} className="bg-error-200 px-0.5 rounded">
+                          {segment.text}
+                        </mark>
+                      ) : (
+                        <span key={index}>{segment.text}</span>
+                      )
+                    ))}
+                  </p>
                   {result.hasAccentIssue && (
                     <p className="text-sm text-error-500 mt-2">
                       Achte auf die Akzente!

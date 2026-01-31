@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal, useModal } from '@/components/ui/Modal'
 import { EditNameModal } from '@/components/ui/EditNameModal'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { CreateFromImageModal } from '@/components/library/CreateFromImageModal'
 import { useBook, useChapters } from '@/lib/db/hooks/useBooks'
 import { useVocabularyByChapter } from '@/lib/db/hooks/useVocabulary'
@@ -108,13 +109,8 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
   }
 
   const handleDelete = async () => {
-    setIsSubmitting(true)
-    try {
-      await deleteBook(bookId)
-      router.push('/library')
-    } finally {
-      setIsSubmitting(false)
-    }
+    await deleteBook(bookId)
+    router.push('/library')
   }
 
   if (!book && !isLoading) {
@@ -247,34 +243,15 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={deleteModal.isOpen} onClose={deleteModal.close} title="Buch löschen?">
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            Möchtest du <strong>{book?.name}</strong> wirklich löschen? Alle Kapitel
-            und Vokabeln werden unwiderruflich gelöscht.
-          </p>
-
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth
-              onClick={deleteModal.close}
-            >
-              Abbrechen
-            </Button>
-            <Button
-              type="button"
-              variant="danger"
-              fullWidth
-              loading={isSubmitting}
-              onClick={handleDelete}
-            >
-              Löschen
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={deleteModal.close}
+        onConfirm={handleDelete}
+        title="Buch löschen?"
+        message={`Möchtest du „${book?.name}" wirklich löschen? Alle Kapitel und Vokabeln werden unwiderruflich gelöscht.`}
+        confirmText="Löschen"
+        variant="danger"
+      />
 
       {/* Edit Book Name Modal */}
       <EditNameModal

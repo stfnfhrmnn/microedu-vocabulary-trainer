@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils/cn'
 import { useGroupVoiceSession } from '@/stores/group-voice-session'
 import { useSettings } from '@/stores/settings'
+import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
 import { getUnifiedTTSService } from '@/lib/services/unified-tts'
 import { getSpeechRecognitionService } from '@/lib/services/speech-recognition'
 import { getGroupConversationService } from '@/lib/services/group-conversation'
@@ -69,8 +70,8 @@ export function GroupVoiceSessionView({
   } = useGroupVoiceSession()
 
   // Settings
-  const { googleApiKey, ttsProvider, ttsRate, ttsPitch, googleVoiceType } =
-    useSettings()
+  const { ttsProvider, ttsRate, ttsPitch, googleVoiceType } = useSettings()
+  const { available: hasGoogleApi } = useGoogleApiStatus()
 
   // Services
   const ttsService = useRef(getUnifiedTTSService())
@@ -92,11 +93,11 @@ export function GroupVoiceSessionView({
   useEffect(() => {
     ttsService.current.configure({
       provider: ttsProvider,
-      googleApiKey,
+      googleEnabled: hasGoogleApi,
       googleVoiceType,
     })
-    conversationService.current.setApiKey(googleApiKey)
-  }, [ttsProvider, googleApiKey, googleVoiceType])
+    conversationService.current.setEnabled(hasGoogleApi)
+  }, [ttsProvider, hasGoogleApi, googleVoiceType])
 
   // Cleanup on unmount
   useEffect(() => {

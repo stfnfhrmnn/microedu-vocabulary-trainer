@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { db } from '@/lib/db/db'
 import { useGroupVoiceSession } from '@/stores/group-voice-session'
-import { useSettings } from '@/stores/settings'
+import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
 import type { Language, VocabularyItem } from '@/lib/db/schema'
 import type {
   GroupSessionMode,
@@ -81,7 +81,7 @@ const languageOptions = [
 
 export default function GroupPracticeSetupPage() {
   const router = useRouter()
-  const { googleApiKey } = useSettings()
+  const { available: hasGoogleApi, loading: googleApiLoading } = useGoogleApiStatus()
   const { initSession, addPlayer, addSpectator, players, spectators, reset } =
     useGroupVoiceSession()
 
@@ -259,7 +259,7 @@ export default function GroupPracticeSetupPage() {
   }
 
   // Check if API key is configured
-  if (!googleApiKey) {
+  if (!hasGoogleApi && !googleApiLoading) {
     return (
       <PageContainer>
         <Header title="Gruppen-Übung" showBack />

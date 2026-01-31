@@ -1,6 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { serverDb } from '@/lib/db/postgres'
 import { signToken } from '@/lib/auth/jwt'
+import { validateCSRF } from '@/lib/api/csrf'
+import { authRateLimiter } from '@/lib/api/rate-limit'
 import { z } from 'zod'
 
 const LoginSchema = z.object({
@@ -9,7 +11,15 @@ const LoginSchema = z.object({
     .regex(/^[A-Z0-9]{4}-[A-Z0-9]{4}$/, 'Invalid user code format (expected XXXX-XXXX)'),
 })
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // CSRF protection
+  const csrfError = validateCSRF(request)
+  if (csrfError) return csrfError
+
+  // Rate limiting
+  const rateLimitError = authRateLimiter(request)
+  if (rateLimitError) return rateLimitError
+
   try {
     const body = await request.json()
     const { userCode } = LoginSchema.parse(body)

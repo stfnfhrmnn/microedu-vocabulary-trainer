@@ -8,19 +8,9 @@
 import { NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
+import { generateNetworkInviteCode } from '@/lib/utils/user-id'
 import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
-
-// Generate XXXX-XXXX invite code
-function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 8; i++) {
-    if (i === 4) code += '-'
-    code += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return code
-}
 
 const CreateNetworkSchema = z.object({
   name: z.string().min(1).max(100),
@@ -43,15 +33,15 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { name, type, role, settings } = CreateNetworkSchema.parse(body)
 
-    // Generate unique invite code
-    let inviteCode = generateInviteCode()
+    // Generate unique invite code (XXX-XXX format)
+    let inviteCode = generateNetworkInviteCode()
     let attempts = 0
     while (attempts < 10) {
       const existing = await serverDb.query.networks.findFirst({
         where: (networks, { eq }) => eq(networks.inviteCode, inviteCode),
       })
       if (!existing) break
-      inviteCode = generateInviteCode()
+      inviteCode = generateNetworkInviteCode()
       attempts++
     }
 

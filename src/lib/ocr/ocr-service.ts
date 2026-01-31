@@ -8,7 +8,7 @@ import { getGoogleVisionProvider } from './providers/google-vision'
  */
 class OCRService {
   private preferredProvider: OCRProviderType = 'tesseract'
-  private googleApiKey: string | null = null
+  private googleEnabled: boolean = false
 
   /**
    * Set the preferred OCR provider
@@ -18,12 +18,18 @@ class OCRService {
   }
 
   /**
-   * Set Google API key for cloud-based OCR (Vision API and Gemini)
+   * Set Google API enabled status for cloud-based OCR (Vision API and Gemini)
    */
-  setGoogleApiKey(apiKey: string): void {
-    this.googleApiKey = apiKey
-    getGoogleVisionProvider(apiKey)
-    getGeminiProvider(apiKey)
+  setGoogleApiKey(apiKey: string | null): void {
+    // Legacy method - now just enables/disables based on truthy value
+    this.googleEnabled = !!apiKey
+    const provider = getGoogleVisionProvider()
+    provider.setEnabled(this.googleEnabled)
+    // Gemini provider is a placeholder, just update it if we have an apiKey-like string
+    if (apiKey) {
+      const geminiProvider = getGeminiProvider()
+      geminiProvider.setApiKey(apiKey)
+    }
   }
 
   /**
@@ -39,9 +45,9 @@ class OCRService {
   private getProvider(type: OCRProviderType): OCRProvider {
     switch (type) {
       case 'google-vision':
-        return getGoogleVisionProvider(this.googleApiKey || undefined)
+        return getGoogleVisionProvider()
       case 'gemini':
-        return getGeminiProvider(this.googleApiKey || undefined)
+        return getGeminiProvider()
       case 'tesseract':
       default:
         return getTesseractProvider()

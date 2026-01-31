@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { ocrService } from '@/lib/ocr/ocr-service'
 import { useSettings } from '@/stores/settings'
+import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
 import type { VocabularyCandidate, ExtractionHints, OCRProviderType } from '@/lib/ocr/types'
 
 interface UseOCRResult {
@@ -26,16 +27,15 @@ export function useOCR(): UseOCRResult {
   const [error, setError] = useState<string | null>(null)
   const [activeProvider, setActiveProvider] = useState<OCRProviderType | null>(null)
 
-  const { ocrProvider, googleApiKey } = useSettings()
+  const { ocrProvider } = useSettings()
+  const { available: hasGoogleApi } = useGoogleApiStatus()
 
   // Sync settings with OCR service
   useEffect(() => {
     ocrService.setPreferredProvider(ocrProvider)
-    if (googleApiKey) {
-      ocrService.setGoogleApiKey(googleApiKey)
-    }
+    ocrService.setGoogleApiKey(hasGoogleApi ? 'enabled' : null)  // Legacy method expects string
     ocrService.getActiveProviderType().then(setActiveProvider)
-  }, [ocrProvider, googleApiKey])
+  }, [ocrProvider, hasGoogleApi])
 
   const processImage = useCallback(async (image: Blob, hints?: ExtractionHints) => {
     setIsProcessing(true)

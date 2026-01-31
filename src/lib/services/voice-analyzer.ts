@@ -1,7 +1,7 @@
 /**
  * Voice Answer Analyzer using Gemini LLM
  *
- * Uses Google's Gemini API to intelligently analyze voice transcripts:
+ * Uses server-side proxy to Google's Gemini API to intelligently analyze voice transcripts:
  * - Extract intended answers from natural speech
  * - Detect voice commands and intents
  * - Evaluate answer correctness with semantic understanding
@@ -9,9 +9,6 @@
  */
 
 import type { Language } from '@/lib/db/schema'
-
-// Gemini API endpoint
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
 
 export type VoiceIntent =
   | 'answer'           // User is giving an answer
@@ -100,15 +97,14 @@ Only respond with the JSON, no other text.`
 }
 
 /**
- * Analyze a voice transcript using Gemini
+ * Analyze a voice transcript using Gemini via server-side proxy
  */
 export async function analyzeVoiceResponse(
   transcript: string,
   expectedAnswer: string,
   questionWord: string,
   questionLanguage: Language | 'german',
-  answerLanguage: Language | 'german',
-  apiKey: string
+  answerLanguage: Language | 'german'
 ): Promise<AnalysisResult> {
   const prompt = createAnalysisPrompt(
     transcript,
@@ -119,12 +115,14 @@ export async function analyzeVoiceResponse(
   )
 
   try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    // Use server-side proxy instead of direct API call
+    const response = await fetch('/api/google/gemini', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        model: 'gemini-1.5-flash',
         contents: [
           {
             parts: [{ text: prompt }],
@@ -278,11 +276,16 @@ function levenshteinDistance(a: string, b: string): number {
  * Voice Analyzer Service class
  */
 export class VoiceAnalyzerService {
-  private apiKey: string | null = null
+  private enabled: boolean = false
   private useAI: boolean = true
 
   setApiKey(apiKey: string | null) {
-    this.apiKey = apiKey
+    // Legacy method - now just enables/disables the service
+    this.enabled = !!apiKey
+  }
+
+  setEnabled(enabled: boolean) {
+    this.enabled = enabled
   }
 
   setUseAI(useAI: boolean) {
@@ -290,7 +293,7 @@ export class VoiceAnalyzerService {
   }
 
   isAvailable(): boolean {
-    return !!this.apiKey && this.useAI
+    return this.enabled && this.useAI
   }
 
   async analyze(
@@ -300,7 +303,7 @@ export class VoiceAnalyzerService {
     questionLanguage: Language | 'german',
     answerLanguage: Language | 'german'
   ): Promise<AnalysisResult> {
-    if (!this.apiKey || !this.useAI) {
+    if (!this.enabled || !this.useAI) {
       return fallbackAnalysis(transcript, expectedAnswer, answerLanguage)
     }
 
@@ -309,8 +312,7 @@ export class VoiceAnalyzerService {
       expectedAnswer,
       questionWord,
       questionLanguage,
-      answerLanguage,
-      this.apiKey
+      answerLanguage
     )
   }
 }

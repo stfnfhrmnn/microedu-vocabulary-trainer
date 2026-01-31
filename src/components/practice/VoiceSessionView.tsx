@@ -6,6 +6,7 @@ import { Mic, Volume2, Pause, Square, Moon, Zap, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { useVoiceSession, useVoiceSessionProgress } from '@/stores/voice-session'
 import { useSettings } from '@/stores/settings'
+import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
 import { getUnifiedTTSService } from '@/lib/services/unified-tts'
 import { getSpeechRecognitionService } from '@/lib/services/speech-recognition'
 import { getVoiceAnalyzerService } from '@/lib/services/voice-analyzer'
@@ -61,7 +62,8 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
   const progress = useVoiceSessionProgress()
 
   // Get settings for TTS and AI analysis
-  const { ttsProvider, googleApiKey, useAIAnalysis, ttsRate, ttsPitch, googleVoiceType } = useSettings()
+  const { ttsProvider, useAIAnalysis, ttsRate, ttsPitch, googleVoiceType } = useSettings()
+  const { available: hasGoogleApi } = useGoogleApiStatus()
   const [error, setError] = useState<string | null>(null)
 
   // Services
@@ -76,13 +78,13 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
   useEffect(() => {
     ttsService.current.configure({
       provider: ttsProvider,
-      googleApiKey,
+      googleEnabled: hasGoogleApi,
       googleVoiceType,
     })
-    analyzerService.current.setApiKey(googleApiKey)
+    analyzerService.current.setEnabled(hasGoogleApi)
     analyzerService.current.setUseAI(useAIAnalysis)
-    setUsingAI(useAIAnalysis && !!googleApiKey)
-  }, [ttsProvider, googleApiKey, useAIAnalysis, googleVoiceType])
+    setUsingAI(useAIAnalysis && hasGoogleApi)
+  }, [ttsProvider, hasGoogleApi, useAIAnalysis, googleVoiceType])
 
   // Cleanup timeouts on unmount
   useEffect(() => {

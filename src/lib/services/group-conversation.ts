@@ -2,7 +2,7 @@
  * Group Conversation Service
  *
  * Manages LLM-powered conversations for group voice learning sessions.
- * Uses Gemini 2.0 Flash for fast, multilingual conversation.
+ * Uses server-side proxy to Gemini 2.0 Flash for fast, multilingual conversation.
  */
 
 import type { Language, VocabularyItem } from '@/lib/db/schema'
@@ -13,10 +13,6 @@ import type {
   ImmersionLevel,
   TimingMode,
 } from '@/stores/group-voice-session'
-
-// Gemini 2.0 Flash API endpoint
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 const LANGUAGE_NAMES: Record<Language, { german: string; native: string }> = {
   french: { german: 'Französisch', native: 'français' },
@@ -164,36 +160,35 @@ function buildMessages(
 }
 
 /**
- * Call Gemini API
+ * Call Gemini API via server-side proxy
  */
 async function callGemini(
-  apiKey: string,
   systemPrompt: string,
   messages: Array<{ role: string; parts: Array<{ text: string }> }>
 ): Promise<string> {
-  const requestBody = {
-    contents: messages,
-    systemInstruction: {
-      parts: [{ text: systemPrompt }],
-    },
-    generationConfig: {
-      temperature: 0.8,
-      topP: 0.9,
-      maxOutputTokens: 300,
-    },
-  }
-
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+  // Use server-side proxy instead of direct API call
+  const response = await fetch('/api/google/gemini', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify({
+      model: 'gemini-2.0-flash',
+      contents: messages,
+      systemInstruction: {
+        parts: [{ text: systemPrompt }],
+      },
+      generationConfig: {
+        temperature: 0.8,
+        topP: 0.9,
+        maxOutputTokens: 300,
+      },
+    }),
   })
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || `API error: ${response.status}`)
+    throw new Error(error.error || `API error: ${response.status}`)
   }
 
   const data = await response.json()
@@ -204,21 +199,26 @@ async function callGemini(
  * Group Conversation Service
  */
 export class GroupConversationService {
-  private apiKey: string | null = null
+  private enabled: boolean = false
 
   setApiKey(apiKey: string | null) {
-    this.apiKey = apiKey
+    // Legacy method - now just enables/disables service
+    this.enabled = !!apiKey
+  }
+
+  setEnabled(enabled: boolean) {
+    this.enabled = enabled
   }
 
   isAvailable(): boolean {
-    return !!this.apiKey
+    return this.enabled
   }
 
   /**
    * Generate the opening greeting for the session
    */
   async generateGreeting(context: ConversationContext): Promise<string> {
-    if (!this.apiKey) throw new Error('API key not configured')
+    if (!this.enabled) throw new Error('Gemini not enabled')
 
     const systemPrompt = buildSystemPrompt(context)
     const langInfo = LANGUAGE_NAMES[context.targetLanguage]
@@ -229,7 +229,7 @@ export class GroupConversationService {
         : `Begrüße die Spieler auf ${langInfo.german} (mit etwas Deutsch gemischt). Erkläre kurz die Regeln und dass sie "auf Deutsch" sagen können wenn sie Hilfe brauchen. Dann frag, ob sie bereit sind.`
 
     const messages = buildMessages(context, setupMessage)
-    return callGemini(this.apiKey, systemPrompt, messages)
+    return callGemini(systemPrompt, messages)
   }
 
   /**
@@ -240,7 +240,7 @@ export class GroupConversationService {
     word: VocabularyItem,
     targetPlayer: string
   ): Promise<string> {
-    if (!this.apiKey) throw new Error('API key not configured')
+    if (!this.enabled) throw new Error('Gemini not enabled')
 
     const systemPrompt = buildSystemPrompt(context)
     const langInfo = LANGUAGE_NAMES[context.targetLanguage]
@@ -255,7 +255,7 @@ export class GroupConversationService {
       : `Frage ${targetPlayer}: Wie heißt "${word.sourceText}" auf ${langInfo.german}?`
 
     const messages = buildMessages(context, instruction)
-    return callGemini(this.apiKey, systemPrompt, messages)
+    return callGemini(systemPrompt, messages)
   }
 
   /**
@@ -272,7 +272,7 @@ export class GroupConversationService {
     detectedIntent: 'answer' | 'help_request' | 'dont_know' | 'repeat' | 'stop' | 'other'
     helpedBy?: string
   }> {
-    if (!this.apiKey) throw new Error('API key not configured')
+    if (!this.enabled) throw new Error('Gemini not enabled')
 
     const systemPrompt = buildSystemPrompt(context)
 
@@ -301,7 +301,7 @@ WICHTIG: Beginne deine Antwort mit einem dieser Tags in eckigen Klammern:
 Dann dein gesprochener Text.`
 
     const messages = buildMessages(context, evaluationPrompt)
-    const response = await callGemini(this.apiKey, systemPrompt, messages)
+    const response = await callGemini(systemPrompt, messages)
 
     // Parse the response
     let isCorrect = false
@@ -351,7 +351,7 @@ Dann dein gesprochener Text.`
     context: ConversationContext,
     currentPlayer: string
   ): Promise<string> {
-    if (!this.apiKey) throw new Error('API key not configured')
+    if (!this.enabled) throw new Error('Gemini not enabled')
 
     const systemPrompt = buildSystemPrompt(context)
     const langInfo = LANGUAGE_NAMES[context.targetLanguage]
@@ -362,7 +362,7 @@ Dann dein gesprochener Text.`
         : `${currentPlayer} braucht Zeit. Ermutige kurz, hauptsächlich auf ${langInfo.german} ("Prends ton temps...", "No hay prisa...").`
 
     const messages = buildMessages(context, instruction)
-    return callGemini(this.apiKey, systemPrompt, messages)
+    return callGemini(systemPrompt, messages)
   }
 
   /**
@@ -372,7 +372,7 @@ Dann dein gesprochener Text.`
     context: ConversationContext,
     currentPlayer: string
   ): Promise<string> {
-    if (!this.apiKey) throw new Error('API key not configured')
+    if (!this.enabled) throw new Error('Gemini not enabled')
 
     const systemPrompt = buildSystemPrompt(context)
 
@@ -382,14 +382,14 @@ Dann dein gesprochener Text.`
       : `${currentPlayer} kommt nicht weiter. Biete an dass andere Spieler helfen können, oder dass du einen Tipp gibst.`
 
     const messages = buildMessages(context, instruction)
-    return callGemini(this.apiKey, systemPrompt, messages)
+    return callGemini(systemPrompt, messages)
   }
 
   /**
    * Generate session summary
    */
   async generateSummary(context: ConversationContext): Promise<string> {
-    if (!this.apiKey) throw new Error('API key not configured')
+    if (!this.enabled) throw new Error('Gemini not enabled')
 
     const systemPrompt = buildSystemPrompt(context)
 
@@ -447,7 +447,7 @@ Fasse zusammen:
 Halte es natürlich und warm - wie ein Lehrer der stolz auf seine Schüler ist.`
 
     const messages = buildMessages(context, instruction)
-    return callGemini(this.apiKey, systemPrompt, messages)
+    return callGemini(systemPrompt, messages)
   }
 
   /**
@@ -457,11 +457,11 @@ Halte es natürlich und warm - wie ein Lehrer der stolz auf seine Schüler ist.`
     context: ConversationContext,
     userMessage: string
   ): Promise<string> {
-    if (!this.apiKey) throw new Error('API key not configured')
+    if (!this.enabled) throw new Error('Gemini not enabled')
 
     const systemPrompt = buildSystemPrompt(context)
     const messages = buildMessages(context, userMessage)
-    return callGemini(this.apiKey, systemPrompt, messages)
+    return callGemini(systemPrompt, messages)
   }
 }
 

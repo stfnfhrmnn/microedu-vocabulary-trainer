@@ -1,0 +1,211 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "retry": "Retry"
+  },
+  "nav": {
+    "home": "Home",
+    "practice": "Practice",
+    "library": "Library",
+    "add": "Add",
+    "profile": "Profile"
+  },
+  "home": {
+    "greeting": "Hello",
+    "dueWords": "{count, plural, =0 {No words due} =1 {1 word due} other {{count} words due}}",
+    "startPractice": "Start Practice",
+    "streak": "day streak",
+    "totalWords": "Total Words",
+    "mastered": "Mastered"
+  },
+  "practice": {
+    "title": "Practice",
+    "selectSections": "Select Sections",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "dueOnly": "Due only",
+    "allWords": "All words",
+    "noWords": "No words available",
+    "start": "Start",
+    "exerciseTypes": {
+      "flashcard": "Flashcards",
+      "multipleChoice": "Multiple Choice",
+      "typed": "Typing"
+    },
+    "directions": {
+      "sourceToTarget": "DE → Foreign",
+      "targetToSource": "Foreign → DE",
+      "mixed": "Mixed"
+    },
+    "session": {
+      "complete": "Practice Complete!",
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "showAnswer": "Show Answer",
+      "next": "Next",
+      "finish": "Finish",
+      "accuracy": "Accuracy",
+      "streak": "Streak"
+    }
+  },
+  "library": {
+    "title": "Library",
+    "newBook": "New Book",
+    "noBooks": "No books yet",
+    "noBooksHint": "Create a book to organize your vocabulary.",
+    "book": {
+      "delete": "Delete Book?",
+      "deleteMessage": "Are you sure you want to delete \"{name}\"? All chapters and vocabulary will be permanently deleted.",
+      "rename": "Rename Book"
+    },
+    "chapter": {
+      "new": "New Chapter",
+      "delete": "Delete Chapter?",
+      "deleteMessage": "Are you sure you want to delete \"{name}\"? All sections and vocabulary will be permanently deleted."
+    },
+    "section": {
+      "new": "New Section",
+      "vocabulary": "{count, plural, =0 {No vocabulary} =1 {1 word} other {{count} words}}"
+    }
+  },
+  "vocabulary": {
+    "add": "Add Vocabulary",
+    "scan": "Scan",
+    "german": "German",
+    "foreign": "Foreign Language",
+    "french": "French",
+    "spanish": "Spanish",
+    "latin": "Latin",
+    "notes": "Notes",
+    "notesPlaceholder": "e.g. Plural: houses",
+    "saved": "Saved!",
+    "saveAndContinue": "Save & Continue"
+  },
+  "profile": {
+    "title": "Profile",
+    "settings": "Settings",
+    "cloudSync": "Cloud Backup",
+    "yourCode": "Your Code",
+    "copyCode": "Copy Code",
+    "logout": "Log Out",
+    "networks": "Networks",
+    "achievements": "Achievements"
+  },
+  "settings": {
+    "title": "Settings",
+    "practice": "Practice",
+    "defaultExercise": "Default Exercise Type",
+    "defaultDirection": "Default Direction",
+    "typingStrictness": "Typing Strictness",
+    "sound": "Sound",
+    "haptic": "Haptic Feedback",
+    "ocr": "OCR Provider",
+    "tts": "Text-to-Speech",
+    "googleCloud": "Google Cloud"
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "networkError": "Network error",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized",
+    "syncFailed": "Sync failed. Data saved locally."
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlocked": "Unlocked",
+    "unlockedOf": "{unlocked} of {total}",
+    "unlockedOn": "Unlocked on {date}",
+    "categories": {
+      "consistency": "Consistency",
+      "volume": "Volume",
+      "accuracy": "Accuracy",
+      "special": "Special"
+    },
+    "items": {
+      "first_steps": {
+        "name": "First Steps",
+        "description": "Complete your first practice session"
+      },
+      "getting_started": {
+        "name": "Getting Started",
+        "description": "Practiced 3 days in a row"
+      },
+      "on_a_roll": {
+        "name": "On a Roll",
+        "description": "Practiced 7 days in a row"
+      },
+      "two_weeks_strong": {
+        "name": "Two Weeks Strong",
+        "description": "Practiced 14 days in a row"
+      },
+      "monthly_master": {
+        "name": "Monthly Master",
+        "description": "Practiced 30 days in a row"
+      },
+      "unstoppable": {
+        "name": "Unstoppable",
+        "description": "Practiced 100 days in a row"
+      },
+      "word_collector": {
+        "name": "Word Collector",
+        "description": "Learned 50 words"
+      },
+      "vocabulary_builder": {
+        "name": "Vocabulary Builder",
+        "description": "Learned 100 words"
+      },
+      "word_wizard": {
+        "name": "Word Wizard",
+        "description": "Learned 500 words"
+      },
+      "dictionary_master": {
+        "name": "Dictionary Master",
+        "description": "Learned 1000 words"
+      },
+      "sharp_mind": {
+        "name": "Sharp Mind",
+        "description": "10 correct answers in a row"
+      },
+      "perfect_memory": {
+        "name": "Perfect Memory",
+        "description": "25 correct answers in a row"
+      },
+      "genius_mode": {
+        "name": "Genius Mode",
+        "description": "50 correct answers in a row"
+      },
+      "flawless": {
+        "name": "Flawless",
+        "description": "5 perfect practice sessions"
+      },
+      "night_owl": {
+        "name": "Night Owl",
+        "description": "Practice after 10 PM"
+      },
+      "early_bird": {
+        "name": "Early Bird",
+        "description": "Practice before 7 AM"
+      },
+      "weekend_warrior": {
+        "name": "Weekend Warrior",
+        "description": "Practice on the weekend"
+      },
+      "family_time": {
+        "name": "Family Time",
+        "description": "10 Parent Quiz sessions"
+      }
+    }
+  }
+}

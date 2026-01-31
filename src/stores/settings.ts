@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { PracticeDirection, ExerciseType } from '@/lib/db/schema'
 import type { StrictnessLevel } from '@/lib/learning/fuzzy-match'
 import type { OCRProviderType } from '@/lib/ocr/types'
+import type { Locale } from '@/i18n/config'
 
 export type TTSProvider = 'web-speech' | 'google-cloud'
 export type GoogleVoiceType = 'wavenet' | 'standard'
@@ -33,7 +34,6 @@ interface SettingsState {
 
   // OCR settings
   ocrProvider: OCRProviderType
-  googleApiKey: string | null
 
   // Voice practice settings
   ttsProvider: TTSProvider
@@ -45,6 +45,7 @@ interface SettingsState {
   googleVoiceType: GoogleVoiceType  // WaveNet (better) or Standard
 
   // App settings
+  locale: Locale
   soundEnabled: boolean
   hapticEnabled: boolean
 
@@ -64,12 +65,12 @@ interface SettingsState {
   setDefaultExerciseType: (type: ExerciseType) => void
   setTypingStrictness: (strictness: StrictnessLevel) => void
   setOcrProvider: (provider: OCRProviderType) => void
-  setGoogleApiKey: (key: string | null) => void
   setTTSProvider: (provider: TTSProvider) => void
   setUseAIAnalysis: (enabled: boolean) => void
   setTTSRate: (rate: number) => void
   setTTSPitch: (pitch: number) => void
   setGoogleVoiceType: (type: GoogleVoiceType) => void
+  setLocale: (locale: Locale) => void
   setSoundEnabled: (enabled: boolean) => void
   setHapticEnabled: (enabled: boolean) => void
   setLastUsedSectionId: (id: string | null) => void
@@ -88,12 +89,12 @@ export const useSettings = create<SettingsState>()(
       defaultExerciseType: 'flashcard',
       typingStrictness: 'normal',
       ocrProvider: 'tesseract',
-      googleApiKey: null,
       ttsProvider: 'web-speech',
       useAIAnalysis: false,
       ttsRate: 1.0,
       ttsPitch: 1.0,
       googleVoiceType: 'wavenet',
+      locale: 'de',
       soundEnabled: true,
       hapticEnabled: true,
       lastUsedSectionId: null,
@@ -107,12 +108,12 @@ export const useSettings = create<SettingsState>()(
       setDefaultExerciseType: (type) => set({ defaultExerciseType: type }),
       setTypingStrictness: (strictness) => set({ typingStrictness: strictness }),
       setOcrProvider: (provider) => set({ ocrProvider: provider }),
-      setGoogleApiKey: (key) => set({ googleApiKey: key }),
       setTTSProvider: (provider) => set({ ttsProvider: provider }),
       setUseAIAnalysis: (enabled) => set({ useAIAnalysis: enabled }),
       setTTSRate: (rate) => set({ ttsRate: rate }),
       setTTSPitch: (pitch) => set({ ttsPitch: pitch }),
       setGoogleVoiceType: (type) => set({ googleVoiceType: type }),
+      setLocale: (locale) => set({ locale }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
       setLastUsedSectionId: (id) => set({ lastUsedSectionId: id }),
@@ -134,21 +135,19 @@ export const useSettings = create<SettingsState>()(
     }),
     {
       name: 'vocabulary-trainer-settings',
-      // Migration to rename geminiApiKey to googleApiKey
+      // Migration to clean up old settings
       migrate: (persistedState: unknown) => {
         const state = persistedState as Record<string, unknown>
-        // Migrate old geminiApiKey to googleApiKey
-        if (state.geminiApiKey && !state.googleApiKey) {
-          state.googleApiKey = state.geminiApiKey
-          delete state.geminiApiKey
-        }
+        // Remove old API key fields (now deployment-level via env var)
+        delete state.geminiApiKey
+        delete state.googleApiKey
         // Migrate old 'gemini' provider to 'google-vision'
         if (state.ocrProvider === 'gemini') {
           state.ocrProvider = 'google-vision'
         }
         return state as unknown as SettingsState
       },
-      version: 1,
+      version: 2,
     }
   )
 )

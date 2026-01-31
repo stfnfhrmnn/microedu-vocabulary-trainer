@@ -3,23 +3,28 @@ import { parseVocabularyFromText } from '../parser'
 
 /**
  * Google Cloud Vision API Provider
- * Uses DOCUMENT_TEXT_DETECTION for best vocabulary list recognition
+ * Uses server-side proxy to keep API key secure
  */
 export class GoogleVisionProvider implements OCRProvider {
   name = 'Google Vision'
-  private apiKey: string | null = null
+  private enabled: boolean = false
 
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || null
+  constructor(enabled?: boolean) {
+    this.enabled = enabled ?? false
   }
 
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled
+  }
+
+  // Legacy method for compatibility - now just enables/disables
   setApiKey(apiKey: string): void {
-    this.apiKey = apiKey
+    this.enabled = !!apiKey
   }
 
   async isAvailable(): Promise<boolean> {
-    // Requires API key and network connection
-    if (!this.apiKey) {
+    // Check if enabled and network connection available
+    if (!this.enabled) {
       return false
     }
 
@@ -32,40 +37,28 @@ export class GoogleVisionProvider implements OCRProvider {
   }
 
   async extractText(image: Blob): Promise<OCRResult> {
-    if (!this.apiKey) {
-      throw new Error('Google API key not configured')
+    if (!this.enabled) {
+      throw new Error('Google Vision not enabled')
     }
 
     const base64Image = await this.blobToBase64(image)
 
-    const response = await fetch(
-      `https://vision.googleapis.com/v1/images:annotate?key=${this.apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    // Use server-side proxy instead of direct API call
+    const response = await fetch('/api/google/vision', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        image: {
+          content: base64Image,
         },
-        body: JSON.stringify({
-          requests: [
-            {
-              image: {
-                content: base64Image,
-              },
-              features: [
-                {
-                  type: 'DOCUMENT_TEXT_DETECTION',
-                  maxResults: 1,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    )
+      }),
+    })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      const errorMessage = errorData?.error?.message || response.statusText
+      const errorMessage = errorData?.error || response.statusText
       throw new Error(`Google Vision API error: ${errorMessage}`)
     }
 
@@ -164,11 +157,11 @@ export class GoogleVisionProvider implements OCRProvider {
 // Singleton instance
 let googleVisionInstance: GoogleVisionProvider | null = null
 
-export function getGoogleVisionProvider(apiKey?: string): GoogleVisionProvider {
+export function getGoogleVisionProvider(enabled?: boolean): GoogleVisionProvider {
   if (!googleVisionInstance) {
-    googleVisionInstance = new GoogleVisionProvider(apiKey)
-  } else if (apiKey) {
-    googleVisionInstance.setApiKey(apiKey)
+    googleVisionInstance = new GoogleVisionProvider(enabled)
+  } else if (enabled !== undefined) {
+    googleVisionInstance.setEnabled(enabled)
   }
   return googleVisionInstance
 }

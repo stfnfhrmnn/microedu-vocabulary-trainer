@@ -1,6 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { signToken } from '@/lib/auth/jwt'
+import { validateCSRF } from '@/lib/api/csrf'
+import { authRateLimiter } from '@/lib/api/rate-limit'
 import { z } from 'zod'
 
 // Generate XXXX-XXXX user code
@@ -21,7 +23,15 @@ const RegisterSchema = z.object({
   existingUserCode: z.string().optional(),
 })
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // CSRF protection
+  const csrfError = validateCSRF(request)
+  if (csrfError) return csrfError
+
+  // Rate limiting
+  const rateLimitError = authRateLimiter(request)
+  if (rateLimitError) return rateLimitError
+
   try {
     const body = await request.json()
     const { name, avatar, existingUserCode } = RegisterSchema.parse(body)

@@ -1,17 +1,18 @@
 /**
  * Join Network API Route
  *
- * POST /api/networks/join - Join a network via invite code
+ * POST /api/networks/join - Join a network via invite code (XXX-XXX format)
  */
 
 import { NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
+import { isValidNetworkInviteCode } from '@/lib/utils/user-id'
 import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 
 const JoinNetworkSchema = z.object({
-  inviteCode: z.string().min(1).max(10),
+  inviteCode: z.string().min(1).max(7),
   role: z.enum(['child', 'parent', 'teacher']),
   nickname: z.string().max(50).optional(),
 })
@@ -26,11 +27,25 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { inviteCode, role, nickname } = JoinNetworkSchema.parse(body)
 
-    // Normalize code (remove dashes, uppercase)
+    // Normalize code (remove dashes, uppercase) - only accept XXX-XXX format (6 chars)
     const normalizedCode = inviteCode.toUpperCase().replace(/[^A-Z0-9]/g, '')
-    const formattedCode = normalizedCode.length === 8
-      ? `${normalizedCode.slice(0, 4)}-${normalizedCode.slice(4)}`
-      : inviteCode.toUpperCase()
+
+    if (normalizedCode.length !== 6) {
+      return NextResponse.json(
+        { error: 'Ungültiges Code-Format. Bitte verwende das Format XXX-XXX.' },
+        { status: 400 }
+      )
+    }
+
+    const formattedCode = `${normalizedCode.slice(0, 3)}-${normalizedCode.slice(3)}`
+
+    // Validate code format
+    if (!isValidNetworkInviteCode(formattedCode)) {
+      return NextResponse.json(
+        { error: 'Ungültiges Code-Format. Bitte verwende das Format XXX-XXX.' },
+        { status: 400 }
+      )
+    }
 
     // Find network by invite code
     const network = await serverDb.query.networks.findFirst({
