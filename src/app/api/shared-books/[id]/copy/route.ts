@@ -148,23 +148,25 @@ export async function POST(
       let newSectionLocalId: string | null = null
 
       if (hasChapter && hasSection) {
-        newChapterId = chapterIdMap.get(vocab.chapterId as string) || null
-        newSectionId = sectionIdMap.get(vocab.sectionId as string) || null
+        const mappedChapterId = chapterIdMap.get(vocab.chapterId as string) || null
+        const mappedSectionId = sectionIdMap.get(vocab.sectionId as string) || null
 
         // Skip items that don't have valid mappings (shouldn't happen normally)
-        if (!newChapterId || !newSectionId) {
+        if (!mappedChapterId || !mappedSectionId) {
           console.warn(`Skipping vocabulary item ${vocab.id} - missing chapter or section mapping`)
           continue
         }
 
         const newChapter = await serverDb.query.chapters.findFirst({
-          where: (c, { eq }) => eq(c.id, newChapterId),
+          where: (c, { eq }) => eq(c.id, mappedChapterId),
         })
         const newSection = await serverDb.query.sections.findFirst({
-          where: (s, { eq }) => eq(s.id, newSectionId),
+          where: (s, { eq }) => eq(s.id, mappedSectionId),
         })
         newChapterLocalId = newChapter?.localId || null
         newSectionLocalId = newSection?.localId || null
+        newChapterId = mappedChapterId
+        newSectionId = mappedSectionId
       }
 
       await serverDb.insert(schema.vocabularyItems).values({
