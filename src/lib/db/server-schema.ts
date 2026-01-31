@@ -140,17 +140,15 @@ export const vocabularyItems = pgTable(
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
     sectionId: uuid('section_id')
-      .references(() => sections.id, { onDelete: 'cascade' })
-      .notNull(),
+      .references(() => sections.id, { onDelete: 'cascade' }),
     chapterId: uuid('chapter_id')
-      .references(() => chapters.id, { onDelete: 'cascade' })
-      .notNull(),
+      .references(() => chapters.id, { onDelete: 'cascade' }),
     bookId: uuid('book_id')
       .references(() => books.id, { onDelete: 'cascade' })
       .notNull(),
     localId: varchar('local_id', { length: 36 }).notNull(),
-    localSectionId: varchar('local_section_id', { length: 36 }).notNull(),
-    localChapterId: varchar('local_chapter_id', { length: 36 }).notNull(),
+    localSectionId: varchar('local_section_id', { length: 36 }),
+    localChapterId: varchar('local_chapter_id', { length: 36 }),
     localBookId: varchar('local_book_id', { length: 36 }).notNull(),
     sourceText: varchar('source_text', { length: 200 }).notNull(),
     targetText: varchar('target_text', { length: 200 }).notNull(),

@@ -75,8 +75,8 @@ export async function GET(request: Request) {
       })),
       vocabularyItems: vocabularyItems.map((v) => ({
         localId: v.localId,
-        localSectionId: v.localSectionId,
-        localChapterId: v.localChapterId,
+        localSectionId: v.localSectionId ?? null,
+        localChapterId: v.localChapterId ?? null,
         localBookId: v.localBookId,
         sourceText: v.sourceText,
         targetText: v.targetText,

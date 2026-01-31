@@ -20,8 +20,8 @@ export interface ServerData {
   vocabularyItems: Array<
     VocabularyItem & {
       localId: string
-      localSectionId: string
-      localChapterId: string
+      localSectionId: string | null
+      localChapterId: string | null
       localBookId: string
     }
   >
@@ -228,8 +228,8 @@ async function applyVocabularyItems(items: ServerData['vocabularyItems']): Promi
     if (!existing) {
       await db.vocabularyItems.add({
         id: item.localId,
-        sectionId: item.localSectionId,
-        chapterId: item.localChapterId,
+        sectionId: item.localSectionId ?? null,
+        chapterId: item.localChapterId ?? null,
         bookId: item.localBookId,
         sourceText: item.sourceText,
         targetText: item.targetText,

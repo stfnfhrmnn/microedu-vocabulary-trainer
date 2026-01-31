@@ -25,6 +25,7 @@ interface UserSessionState {
 
   // Actions
   createProfile: (name?: string, avatar?: AvatarEmoji) => UserProfile
+  upsertProfile: (profile: { id: string; name?: string; avatar?: string }) => UserProfile
   switchProfile: (id: string) => void
   updateProfile: (id: string, updates: Partial<Pick<UserProfile, 'name' | 'avatar'>>) => void
   deleteProfile: (id: string) => void
@@ -34,6 +35,13 @@ interface UserSessionState {
 function getRandomAvatar(): AvatarEmoji {
   const index = Math.floor(Math.random() * AVATAR_OPTIONS.length)
   return AVATAR_OPTIONS[index]
+}
+
+function resolveAvatar(avatar?: string): AvatarEmoji {
+  if (avatar && (AVATAR_OPTIONS as readonly string[]).includes(avatar)) {
+    return avatar as AvatarEmoji
+  }
+  return getRandomAvatar()
 }
 
 export const useUserSession = create<UserSessionState>()(
@@ -53,6 +61,43 @@ export const useUserSession = create<UserSessionState>()(
         set((state) => ({
           profiles: [...state.profiles, newProfile],
           currentUserId: newProfile.id,
+        }))
+
+        return newProfile
+      },
+
+      upsertProfile: (profile) => {
+        const normalizedName = profile.name?.trim() || 'Benutzer'
+        const normalizedAvatar = resolveAvatar(profile.avatar)
+        const existingIndex = get().profiles.findIndex((p) => p.id === profile.id)
+
+        if (existingIndex >= 0) {
+          set((state) => ({
+            profiles: state.profiles.map((p) =>
+              p.id === profile.id
+                ? { ...p, name: normalizedName, avatar: normalizedAvatar }
+                : p
+            ),
+            currentUserId: profile.id,
+          }))
+
+          return {
+            ...get().profiles[existingIndex],
+            name: normalizedName,
+            avatar: normalizedAvatar,
+          }
+        }
+
+        const newProfile: UserProfile = {
+          id: profile.id,
+          name: normalizedName,
+          avatar: normalizedAvatar,
+          createdAt: Date.now(),
+        }
+
+        set((state) => ({
+          profiles: [...state.profiles, newProfile],
+          currentUserId: profile.id,
         }))
 
         return newProfile

@@ -67,7 +67,7 @@ The current system has a solid technical foundation but suffers from **invisible
 The system supports:
 - **Network types:** Class, Study Group, Family
 - **Roles:** Child, Parent, Teacher, Admin
-- **Invite codes:** XXXX-XXXX format
+- **Invite codes:** XXX-XXX format
 - **Nicknames:** Privacy-preserving display names
 - **Shared books:** Copy-based sharing model
 - **Leaderboards:** Per-network competition

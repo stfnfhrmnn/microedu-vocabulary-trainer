@@ -5,11 +5,15 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { setAuthToken, fullSync } from '@/lib/sync/sync-service'
 import { setRegistered } from '@/lib/sync/sync-queue'
 import { useSyncStore } from '@/stores/sync'
+import { useUserSession } from '@/stores/user-session'
+import { useOnboarding } from '@/stores/onboarding'
 
 function TransferForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { setRegistered: setSyncRegistered } = useSyncStore()
+  const { upsertProfile } = useUserSession()
+  const { completeOnboarding } = useOnboarding()
 
   const [pin, setPin] = useState(['', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
@@ -86,6 +90,12 @@ function TransferForm() {
       setAuthToken(data.token)
       await setRegistered(data.user.id, true)
       setSyncRegistered(true, data.user.id)
+      upsertProfile({
+        id: data.user.userCode,
+        name: data.user.name,
+        avatar: data.user.avatar,
+      })
+      completeOnboarding()
 
       // Full sync from server
       setSuccess(true)

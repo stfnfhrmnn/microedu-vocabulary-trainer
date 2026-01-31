@@ -7,6 +7,7 @@
 
 import { db } from '@/lib/db/db'
 import { generateId } from '@/lib/utils/id'
+import { generateNetworkInviteCode, isValidNetworkInviteCode } from '@/lib/utils/user-id'
 import type {
   Network,
   NetworkMember,
@@ -26,17 +27,11 @@ import type {
 // Invite Code Generation
 // ============================================================================
 
-/**
- * Generate a unique invite code in XXXX-XXXX format
- */
-function generateNetworkInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Avoid confusing chars
-  let code = ''
-  for (let i = 0; i < 8; i++) {
-    if (i === 4) code += '-'
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return code
+function formatInviteCode(code: string): string | null {
+  const cleaned = code.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  if (cleaned.length !== 6) return null
+  const formatted = `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`
+  return isValidNetworkInviteCode(formatted) ? formatted : null
 }
 
 // ============================================================================
@@ -75,15 +70,12 @@ export async function createNetwork(
  * Get network by invite code
  */
 export async function getNetworkByInviteCode(code: string): Promise<Network | undefined> {
-  const normalizedCode = code.toUpperCase().replace(/[^A-Z0-9]/g, '')
-  // Search with and without dash
-  const withDash = normalizedCode.length === 8
-    ? `${normalizedCode.slice(0, 4)}-${normalizedCode.slice(4)}`
-    : code.toUpperCase()
+  const formatted = formatInviteCode(code)
+  if (!formatted) return undefined
 
   return db.networks
     .where('inviteCode')
-    .equals(withDash)
+    .equals(formatted)
     .first()
 }
 

@@ -17,6 +17,10 @@ A kid-friendly, offline-capable PWA for learning foreign language vocabulary —
 | **Networks** | Compete with classmates, share books with study groups |
 | **Offline-First** | Works without internet, syncs when connected |
 
+## Project Learnings
+
+See `docs/PROJECT_LESSONS.md` for a generic lessons-learned write-up and Vercel/Neon best practices.
+
 ## Supported Languages
 
 - French
@@ -59,7 +63,7 @@ Networks let students compete with classmates while keeping their learning data 
 ┌─────────────────────────────────────────────────────────────┐
 │                     CLASS NETWORK                           │
 │                   "Klasse 5b Französisch"                   │
-│                    Code: ABCD-EFGH                          │
+│                    Code: ABC-DEF                            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │   COMPETITORS (ranked)           SUPPORTERS (not ranked)   │
@@ -91,7 +95,7 @@ Networks let students compete with classmates while keeping their learning data 
    - **Study Group** — For informal learning groups
    - **Family** — For family members
 5. Select your role (Teacher/Parent)
-6. Share the generated invite code (e.g., `ABCD-EFGH`)
+6. Share the generated invite code (e.g., `ABC-DEF`)
 
 The creator automatically becomes the network admin.
 
@@ -250,14 +254,16 @@ npm install
 cp .env.example .env.local
 # Add your DATABASE_URL and JWT_SECRET
 
-# Run database migrations
-npm run db:push
+# Run database migrations (local dev)
+npm run db:migrate
 
 # Start development server
 npm run dev
 
 # Production build
 npm run build && npm start
+
+# Vercel: migrations run automatically on production deploys
 ```
 
 ### Project Structure

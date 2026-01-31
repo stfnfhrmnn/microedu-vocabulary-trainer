@@ -281,36 +281,61 @@ async function processVocabularyChange(
         and(eq(schema.vocabularyItems.userId, userId), eq(schema.vocabularyItems.localId, localId))
       )
   } else if (data) {
-    // Find server IDs for section, chapter, and book
-    const section = await serverDb.query.sections.findFirst({
-      where: (sections, { eq, and, isNull }) =>
-        and(
-          eq(sections.userId, userId),
-          eq(sections.localId, data.sectionId as string),
-          isNull(sections.deletedAt)
-        ),
-    })
+    const localSectionId = (data.sectionId as string | null) ?? null
+    const localChapterId = (data.chapterId as string | null) ?? null
+    const localBookId = data.bookId as string
 
-    const chapter = await serverDb.query.chapters.findFirst({
-      where: (chapters, { eq, and, isNull }) =>
-        and(
-          eq(chapters.userId, userId),
-          eq(chapters.localId, data.chapterId as string),
-          isNull(chapters.deletedAt)
-        ),
-    })
+    if (!localBookId) {
+      throw new Error('Book ID missing')
+    }
 
+    // Book is always required
     const book = await serverDb.query.books.findFirst({
       where: (books, { eq, and, isNull }) =>
         and(
           eq(books.userId, userId),
-          eq(books.localId, data.bookId as string),
+          eq(books.localId, localBookId),
           isNull(books.deletedAt)
         ),
     })
 
-    if (!section || !chapter || !book) {
-      throw new Error(`Section, chapter, or book not found`)
+    if (!book) {
+      throw new Error(`Book not found: ${localBookId}`)
+    }
+
+    // Section + chapter are optional together (unsorted vocab)
+    if ((localSectionId && !localChapterId) || (!localSectionId && localChapterId)) {
+      throw new Error('Section and chapter must both be provided or both be null')
+    }
+
+    let sectionId: string | null = null
+    let chapterId: string | null = null
+
+    if (localSectionId && localChapterId) {
+      const section = await serverDb.query.sections.findFirst({
+        where: (sections, { eq, and, isNull }) =>
+          and(
+            eq(sections.userId, userId),
+            eq(sections.localId, localSectionId),
+            isNull(sections.deletedAt)
+          ),
+      })
+
+      const chapter = await serverDb.query.chapters.findFirst({
+        where: (chapters, { eq, and, isNull }) =>
+          and(
+            eq(chapters.userId, userId),
+            eq(chapters.localId, localChapterId),
+            isNull(chapters.deletedAt)
+          ),
+      })
+
+      if (!section || !chapter) {
+        throw new Error('Section or chapter not found')
+      }
+
+      sectionId = section.id
+      chapterId = chapter.id
     }
 
     const existing = await serverDb.query.vocabularyItems.findFirst({
@@ -322,6 +347,12 @@ async function processVocabularyChange(
       await serverDb
         .update(schema.vocabularyItems)
         .set({
+          sectionId,
+          chapterId,
+          bookId: book.id,
+          localSectionId,
+          localChapterId,
+          localBookId,
           sourceText: data.sourceText as string,
           targetText: data.targetText as string,
           notes: data.notes as string | undefined,
@@ -333,13 +364,13 @@ async function processVocabularyChange(
     } else {
       await serverDb.insert(schema.vocabularyItems).values({
         userId,
-        sectionId: section.id,
-        chapterId: chapter.id,
+        sectionId,
+        chapterId,
         bookId: book.id,
         localId,
-        localSectionId: data.sectionId as string,
-        localChapterId: data.chapterId as string,
-        localBookId: data.bookId as string,
+        localSectionId,
+        localChapterId,
+        localBookId,
         sourceText: data.sourceText as string,
         targetText: data.targetText as string,
         notes: data.notes as string | undefined,

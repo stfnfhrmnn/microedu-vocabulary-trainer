@@ -6,6 +6,7 @@
 
 import { db } from '@/lib/db/db'
 import { generateId } from '@/lib/utils/id'
+import { generateNetworkInviteCode, isValidNetworkInviteCode } from '@/lib/utils/user-id'
 import type {
   FamilyGroup,
   FamilyMember,
@@ -19,15 +20,17 @@ import type {
 // ============================================================================
 
 /**
- * Generate a unique 6-character invite code
+ * Generate a unique invite code in XXX-XXX format
  */
 function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Avoid confusing chars
-  let code = ''
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return code
+  return generateNetworkInviteCode()
+}
+
+function formatInviteCode(code: string): string | null {
+  const cleaned = code.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  if (cleaned.length !== 6) return null
+  const formatted = `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`
+  return isValidNetworkInviteCode(formatted) ? formatted : null
 }
 
 // ============================================================================
@@ -63,7 +66,9 @@ export async function createFamilyGroup(
  * Get family group by invite code
  */
 export async function getFamilyGroupByInviteCode(code: string): Promise<FamilyGroup | undefined> {
-  return db.familyGroups.where('inviteCode').equals(code.toUpperCase()).first()
+  const formatted = formatInviteCode(code)
+  if (!formatted) return undefined
+  return db.familyGroups.where('inviteCode').equals(formatted).first()
 }
 
 /**

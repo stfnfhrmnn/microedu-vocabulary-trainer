@@ -4,17 +4,20 @@ import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { useCurrentProfile } from '@/stores/user-session'
+import { useCurrentProfile, useUserSession } from '@/stores/user-session'
 import { useSyncStore } from '@/stores/sync'
 import { setAuthToken, fullSync } from '@/lib/sync/sync-service'
 import { setRegistered, isUserRegistered } from '@/lib/sync/sync-queue'
 import { db } from '@/lib/db/db'
+import { useOnboarding } from '@/stores/onboarding'
 
 type MigrationStep = 'prompt' | 'registering' | 'login' | 'logging-in' | 'success' | 'error'
 
 export function MigrationPrompt() {
   const profile = useCurrentProfile()
   const setSyncRegistered = useSyncStore((s) => s.setRegistered)
+  const { upsertProfile } = useUserSession()
+  const { completeOnboarding } = useOnboarding()
   const [isOpen, setIsOpen] = useState(false)
   const [step, setStep] = useState<MigrationStep>('prompt')
   const [loginCode, setLoginCode] = useState('')
@@ -78,6 +81,12 @@ export function MigrationPrompt() {
       setAuthToken(data.token)
       await setRegistered(data.user.id, true)
       setSyncRegistered(true, data.user.id)
+      upsertProfile({
+        id: data.user.userCode,
+        name: data.user.name,
+        avatar: data.user.avatar,
+      })
+      completeOnboarding()
       setNewUserCode(data.user.userCode)
       setStep('success')
     } catch (err) {
@@ -110,6 +119,12 @@ export function MigrationPrompt() {
       setAuthToken(data.token)
       await setRegistered(data.user.id, true)
       setSyncRegistered(true, data.user.id)
+      upsertProfile({
+        id: data.user.userCode,
+        name: data.user.name,
+        avatar: data.user.avatar,
+      })
+      completeOnboarding()
 
       // Pull all data from server
       const syncResult = await fullSync()

@@ -35,8 +35,8 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
 
   const formatInviteCode = (value: string) => {
     const cleaned = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-    if (cleaned.length > 4) {
-      return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}`
+    if (cleaned.length > 3) {
+      return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}`
     }
     return cleaned
   }
@@ -87,8 +87,8 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
 
   const handleJoinFamily = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (inviteCode.replace(/-/g, '').length !== 8) {
-      setJoinError('Bitte gib einen gültigen Code ein (XXXX-XXXX)')
+    if (inviteCode.replace(/-/g, '').length !== 6) {
+      setJoinError('Bitte gib einen gültigen Code ein (XXX-XXX)')
       return
     }
 
@@ -343,8 +343,8 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
                           setInviteCode(formatInviteCode(e.target.value))
                           setJoinError(null)
                         }}
-                        placeholder="XXXX-XXXX"
-                        maxLength={9}
+                        placeholder="XXX-XXX"
+                        maxLength={7}
                         className="w-full px-4 py-3 text-center text-2xl tracking-widest font-mono border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                         autoFocus
                       />

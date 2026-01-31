@@ -12,6 +12,8 @@
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "node scripts/db-migrate.js",
+    "vercel-build": "node scripts/db-migrate.js && next build",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },

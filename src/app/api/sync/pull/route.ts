@@ -133,8 +133,8 @@ export async function GET(request: Request) {
           ? null
           : {
               id: item.localId,
-              sectionId: item.localSectionId,
-              chapterId: item.localChapterId,
+              sectionId: item.localSectionId ?? null,
+              chapterId: item.localChapterId ?? null,
               bookId: item.localBookId,
               sourceText: item.sourceText,
               targetText: item.targetText,

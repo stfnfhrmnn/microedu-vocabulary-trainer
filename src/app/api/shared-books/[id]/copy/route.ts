@@ -134,22 +134,38 @@ export async function POST(
     })
 
     for (const vocab of vocabItems) {
-      const newChapterId = vocab.chapterId ? chapterIdMap.get(vocab.chapterId) : undefined
-      const newSectionId = vocab.sectionId ? sectionIdMap.get(vocab.sectionId) : undefined
+      const hasChapter = !!vocab.chapterId
+      const hasSection = !!vocab.sectionId
 
-      // Skip items that don't have valid mappings (shouldn't happen normally)
-      if (!newChapterId || !newSectionId) {
-        console.warn(`Skipping vocabulary item ${vocab.id} - missing chapter or section mapping`)
+      if (hasChapter !== hasSection) {
+        console.warn(`Skipping vocabulary item ${vocab.id} - mismatched chapter/section mapping`)
         continue
       }
 
-      // Get local IDs
-      const newChapter = await serverDb.query.chapters.findFirst({
-        where: (c, { eq }) => eq(c.id, newChapterId),
-      })
-      const newSection = await serverDb.query.sections.findFirst({
-        where: (s, { eq }) => eq(s.id, newSectionId),
-      })
+      let newChapterId: string | null = null
+      let newSectionId: string | null = null
+      let newChapterLocalId: string | null = null
+      let newSectionLocalId: string | null = null
+
+      if (hasChapter && hasSection) {
+        newChapterId = chapterIdMap.get(vocab.chapterId as string) || null
+        newSectionId = sectionIdMap.get(vocab.sectionId as string) || null
+
+        // Skip items that don't have valid mappings (shouldn't happen normally)
+        if (!newChapterId || !newSectionId) {
+          console.warn(`Skipping vocabulary item ${vocab.id} - missing chapter or section mapping`)
+          continue
+        }
+
+        const newChapter = await serverDb.query.chapters.findFirst({
+          where: (c, { eq }) => eq(c.id, newChapterId),
+        })
+        const newSection = await serverDb.query.sections.findFirst({
+          where: (s, { eq }) => eq(s.id, newSectionId),
+        })
+        newChapterLocalId = newChapter?.localId || null
+        newSectionLocalId = newSection?.localId || null
+      }
 
       await serverDb.insert(schema.vocabularyItems).values({
         userId: user.userId,
@@ -157,8 +173,8 @@ export async function POST(
         chapterId: newChapterId,
         bookId: newBook.id,
         localId: crypto.randomUUID(),
-        localSectionId: newSection?.localId || '',
-        localChapterId: newChapter?.localId || '',
+        localSectionId: newSectionLocalId,
+        localChapterId: newChapterLocalId,
         localBookId: newBook.localId,
         sourceText: vocab.sourceText,
         targetText: vocab.targetText,

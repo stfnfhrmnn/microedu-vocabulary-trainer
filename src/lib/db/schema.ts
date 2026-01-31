@@ -189,7 +189,7 @@ export interface Network {
   id: string
   name: string
   type: NetworkType
-  inviteCode: string           // XXXX-XXXX format
+  inviteCode: string           // XXX-XXX format
   ownerId: string
   settings: NetworkSettings
   createdAt: Date
