@@ -7,6 +7,7 @@ const path = require('path')
 require('dotenv').config({ path: '.env.local' })
 
 const { neon } = require('@neondatabase/serverless')
+const { execSync } = require('child_process')
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) {
@@ -41,6 +42,13 @@ if (files.length === 0) {
 }
 
 async function run() {
+  const bootstrap = await sql("SELECT to_regclass('public.users') as name")
+  const needsBootstrap = !bootstrap[0]?.name
+  if (needsBootstrap) {
+    console.log('Base schema missing. Bootstrapping with drizzle-kit push...')
+    execSync('npx drizzle-kit push --force', { stdio: 'inherit' })
+  }
+
   await sql(
     'CREATE TABLE IF NOT EXISTS schema_migrations (filename text primary key, applied_at timestamptz not null default now())'
   )

@@ -94,7 +94,7 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-background rounded-2xl shadow-xl overflow-hidden"
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">

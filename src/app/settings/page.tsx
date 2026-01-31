@@ -53,6 +53,13 @@ const googleVoiceOptions = [
 export default function SettingsPage() {
   const settings = useSettings()
   const { available: hasGoogleApi, loading: googleApiLoading } = useGoogleApiStatus()
+  const [googleDebug, setGoogleDebug] = useState<{
+    hasGoogleApiKey: boolean
+    hasNextPublicGoogleApiKey: boolean
+    nodeEnv?: string
+    vercelEnv?: string
+  } | null>(null)
+  const [googleDebugError, setGoogleDebugError] = useState<string | null>(null)
   const [exportMessage, setExportMessage] = useState<string | null>(null)
 
   // Network modals
@@ -108,6 +115,20 @@ export default function SettingsPage() {
     }
   }
 
+  const handleGoogleDebug = async () => {
+    setGoogleDebugError(null)
+    try {
+      const response = await fetch('/api/google/status?debug=1')
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Debug-Anfrage fehlgeschlagen')
+      }
+      setGoogleDebug(data.debug || null)
+    } catch (error) {
+      setGoogleDebugError(error instanceof Error ? error.message : 'Debug-Anfrage fehlgeschlagen')
+    }
+  }
+
   return (
     <PageContainer>
       <Header title="Einstellungen" />
@@ -132,6 +153,28 @@ export default function SettingsPage() {
             </>
           )}
         </div>
+        {!googleApiLoading && (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleGoogleDebug}
+              className="text-xs text-primary-600 hover:text-primary-700"
+            >
+              Google API Diagnose anzeigen
+            </button>
+            {googleDebugError && (
+              <span className="text-xs text-error-600">{googleDebugError}</span>
+            )}
+          </div>
+        )}
+        {googleDebug && (
+          <div className="p-3 bg-gray-100 text-xs rounded-lg font-mono text-gray-700">
+            <div>GOOGLE_API_KEY: {googleDebug.hasGoogleApiKey ? 'gesetzt' : 'fehlt'}</div>
+            <div>NEXT_PUBLIC_GOOGLE_API_KEY: {googleDebug.hasNextPublicGoogleApiKey ? 'gesetzt' : 'fehlt'}</div>
+            {googleDebug.nodeEnv && <div>NODE_ENV: {googleDebug.nodeEnv}</div>}
+            {googleDebug.vercelEnv && <div>VERCEL_ENV: {googleDebug.vercelEnv}</div>}
+          </div>
+        )}
 
         {/* Network Discovery - Gemeinsam lernen */}
         <Card>

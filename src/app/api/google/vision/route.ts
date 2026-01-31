@@ -7,7 +7,7 @@ const VISION_API_URL = 'https://vision.googleapis.com/v1/images:annotate'
  * Keeps API key secure on the server
  */
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.GOOGLE_API_KEY
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY
 
   if (!apiKey) {
     return NextResponse.json(

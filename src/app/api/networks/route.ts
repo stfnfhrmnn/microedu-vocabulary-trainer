@@ -86,7 +86,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request data', details: error.errors }, { status: 400 })
     }
     console.error('Create network error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        details:
+          process.env.NODE_ENV !== 'production' || process.env.DEBUG_API_ERRORS === '1'
+            ? (error as Error).message
+            : undefined,
+      },
+      { status: 500 }
+    )
   }
 }
 
