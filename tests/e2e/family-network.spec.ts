@@ -49,5 +49,10 @@ test('parent can create a family network', async ({ page, request }) => {
 
   await expect(page.getByText('Einladungscode')).toBeVisible()
 
+  await page.getByRole('button', { name: 'Fertig' }).click()
+  await expect(page.getByRole('link', { name: new RegExp(`Familie Test ${unique}`) })).toBeVisible()
+  await page.getByRole('link', { name: new RegExp(`Familie Test ${unique}`) }).click()
+  await expect(page.getByText('Code:')).toBeVisible()
+
   expect(runtimeErrors).toEqual([])
 })

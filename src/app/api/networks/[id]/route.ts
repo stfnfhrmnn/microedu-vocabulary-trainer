@@ -36,7 +36,11 @@ export async function GET(
     // Check membership
     const membership = await serverDb.query.networkMembers.findFirst({
       where: (members, { eq, and }) =>
-        and(eq(members.networkId, id), eq(members.userId, user.userId)),
+        and(
+          eq(members.networkId, id),
+          eq(members.userId, user.userId),
+          eq(members.joinStatus, 'active')
+        ),
     })
 
     if (!membership) {
@@ -52,11 +56,50 @@ export async function GET(
       return NextResponse.json({ error: 'Network not found' }, { status: 404 })
     }
 
-    // Get member count
+    // Get active members
     const members = await serverDb.query.networkMembers.findMany({
       where: (members, { eq, and }) =>
         and(eq(members.networkId, id), eq(members.joinStatus, 'active')),
     })
+
+    const userIds = members.map((member) => member.userId)
+    const users = userIds.length
+      ? await serverDb.query.users.findMany({
+          where: (users, { inArray }) => inArray(users.id, userIds),
+          columns: { id: true, name: true, avatar: true },
+        })
+      : []
+
+    const userMap = new Map(users.map((u) => [u.id, u]))
+
+    const myBlocks = await serverDb.query.userBlocks.findMany({
+      where: (blocks, { eq }) => eq(blocks.blockerId, user.userId),
+    })
+    const blockedByMe = new Set(myBlocks.map((b) => b.blockedId))
+
+    const blocksAgainstMe = await serverDb.query.userBlocks.findMany({
+      where: (blocks, { eq }) => eq(blocks.blockedId, user.userId),
+    })
+    const blockedMe = new Set(blocksAgainstMe.map((b) => b.blockerId))
+
+    const memberList = members
+      .filter((member) => !blockedByMe.has(member.userId) && !blockedMe.has(member.userId))
+      .map((member) => {
+        const userInfo = userMap.get(member.userId)
+        return {
+          userId: member.userId,
+          role: member.role,
+          nickname: member.nickname || userInfo?.name || 'Anonym',
+          avatar: userInfo?.avatar || '👤',
+        }
+      })
+
+    const sharedBooksCount = await serverDb.query.networkSharedBooks
+      .findMany({
+        where: (shared, { eq }) => eq(shared.networkId, id),
+        columns: { id: true },
+      })
+      .then((rows) => rows.length)
 
     return NextResponse.json({
       network: {
@@ -64,6 +107,8 @@ export async function GET(
         memberCount: members.length,
         myRole: membership.role,
         myNickname: membership.nickname,
+        members: memberList,
+        sharedBooksCount,
       },
     })
   } catch (error) {

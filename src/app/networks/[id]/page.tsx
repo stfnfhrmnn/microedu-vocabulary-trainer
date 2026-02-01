@@ -58,7 +58,11 @@ export default function NetworkDetailPage() {
         }
 
         const data = await response.json()
-        setNetwork(data.network)
+        setNetwork({
+          ...data.network,
+          members: data.network?.members ?? [],
+          sharedBooksCount: data.network?.sharedBooksCount ?? 0,
+        })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
       } finally {
