@@ -129,10 +129,11 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
               <form onSubmit={handleSubmit} className="p-4 space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">
+                  <label htmlFor="network-name" className="block text-sm font-medium mb-1.5">
                     Name des Netzwerks
                   </label>
                   <input
+                    id="network-name"
                     type="text"
                     value={name}
                     onChange={(e) => {
