@@ -47,7 +47,7 @@ test('parent can create a family network', async ({ page, request }) => {
   await page.getByLabel('Name des Netzwerks').fill(`Familie Test ${unique}`)
   await page.getByRole('button', { name: 'Netzwerk erstellen' }).click()
 
-  await expect(page.getByText('Einladungscode')).toBeVisible()
+  await expect(page.getByText('Einladungscode', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Fertig' }).click()
   await expect(page.getByRole('link', { name: new RegExp(`Familie Test ${unique}`) })).toBeVisible()
