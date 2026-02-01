@@ -125,7 +125,7 @@ export async function getSyncMeta(): Promise<SyncMeta> {
   const meta = await syncDb.meta.get(META_ID)
   if (meta) return meta
 
-  await syncDb.meta.add(DEFAULT_META)
+  await syncDb.meta.put(DEFAULT_META)
   return DEFAULT_META
 }
 
@@ -137,7 +137,7 @@ export async function updateSyncMeta(updates: Partial<SyncMeta>): Promise<void> 
   if (existing) {
     await syncDb.meta.update(META_ID, updates)
   } else {
-    await syncDb.meta.add({ ...DEFAULT_META, ...updates })
+    await syncDb.meta.put({ ...DEFAULT_META, ...updates })
   }
 }
 
