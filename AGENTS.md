@@ -189,6 +189,7 @@ The OCR system uses a **pluggable provider architecture** to support multiple ba
 - Integration tests for OCR pipeline
 - E2E tests for critical user flows (add vocab, practice session)
 - Manual testing on actual textbook photos
+- Run `npm run build` after any substantial change (routing, data flow, or new UI logic) to catch type/build errors early.
 
 ## Security Considerations
 
