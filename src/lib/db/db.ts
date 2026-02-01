@@ -529,7 +529,7 @@ export async function getSettings(): Promise<UserSettings> {
   const settings = await db.userSettings.get('settings')
   if (settings) return settings
 
-  await db.userSettings.add(DEFAULT_SETTINGS)
+  await db.userSettings.put(DEFAULT_SETTINGS)
   return DEFAULT_SETTINGS
 }
 
@@ -538,7 +538,7 @@ export async function updateSettings(data: Partial<UserSettings>): Promise<void>
   if (existing) {
     await db.userSettings.update('settings', data)
   } else {
-    await db.userSettings.add({ ...DEFAULT_SETTINGS, ...data })
+    await db.userSettings.put({ ...DEFAULT_SETTINGS, ...data })
   }
 }
 
