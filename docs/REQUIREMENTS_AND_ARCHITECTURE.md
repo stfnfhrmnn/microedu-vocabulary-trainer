@@ -130,6 +130,15 @@ A mobile-friendly vocabulary learning app that:
 - Shows correct answer if wrong
 - Option to mark own answer as correct if meaning was right
 
+#### US-2.5: Practice Beyond Daily Goal
+> As a student, I want to keep practicing after my due words or daily goal are completed so that I can study more when I want.
+
+**Acceptance Criteria:**
+- Home screen offers a clear "free practice" action even when due words are 0
+- Student can choose to practice all words (not only due words)
+- Student can restart practice from the summary screen ("Nochmal üben")
+- Student can return to setup and pick a different section/mode for a new session
+
 ### Epic 3: Progress Tracking
 
 #### US-3.1: View Learning Progress
@@ -403,6 +412,7 @@ A mobile-friendly vocabulary learning app that:
 | FR-3.7 | System shall allow practicing specific sections | Must |
 | FR-3.8 | System shall allow practicing in both language directions | Must |
 | FR-3.9 | System shall implement fuzzy matching for typed answers | Should |
+| FR-3.10 | System shall allow learners to continue practicing beyond due words/daily goals via free-practice and restart flows | Should |
 
 ### FR-4: Progress & Statistics
 
@@ -1854,3 +1864,5 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 1.2 | 2026-01-26 | Update | Added Profile & Network System section documenting user profiles, network types, roles, and authentication flow |
 | 2.0 | 2026-02-08 | Update | Major update: Added user stories for all implemented features (Epics 5-9: Voice, Gamification, Cloud Sync, Safety, Book Sharing); Added functional requirements FR-5 through FR-9; Updated architecture diagram to reflect current server/client/sync topology; Replaced implementation phases with completed/in-progress/planned status; Added Sync Conflict Detection & Resolution design; Added Parent Dashboard UX design |
 | 2.1 | 2026-02-14 | Update | Added simplified book ownership/access model, expanded Epic 9 user stories for owner/parent/read-only flows, clarified account vs network code formats, and documented bulk language swap plus voice-assisted manual entry requirements |
+| 2.2 | 2026-02-14 | Update | Added US-2.5 and FR-3.10 to explicitly cover practice beyond daily goals (free-practice and restart flows) |
+| 2.3 | 2026-02-14 | Update | Added detailed implementation plan for all open story gaps in `docs/OPEN_STORIES_IMPLEMENTATION_PLAN.md` |
