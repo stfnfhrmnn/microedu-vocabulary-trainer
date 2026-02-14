@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Trophy, Users, BookOpen, Shield, Crown } from 'lucide-react'
 import type { Network, UserRole } from '@/lib/db/schema'
+import { CodeFormatHint } from './CodeFormatHint'
 
 interface NetworkMemberSummary {
   userId: string
@@ -79,9 +80,12 @@ export function NetworkOverview({
           <p className="text-sm text-muted-foreground">{getTypeLabel(network.type)}</p>
 
           {/* Invite Code Badge */}
-          <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-background/80 backdrop-blur rounded-full border">
-            <span className="text-xs text-muted-foreground">Code:</span>
-            <span className="font-mono font-bold tracking-wider">{network.inviteCode}</span>
+          <div className="mt-3">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-background/80 backdrop-blur rounded-full border">
+              <span className="text-xs text-muted-foreground">Code:</span>
+              <span className="font-mono font-bold tracking-wider">{network.inviteCode}</span>
+            </div>
+            <CodeFormatHint context="network" className="mt-1 text-center" />
           </div>
         </div>
 

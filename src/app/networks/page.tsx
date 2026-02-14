@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Users, Plus, ChevronRight, Loader2 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -17,6 +18,8 @@ interface NetworkWithRole extends Network {
   myRole?: UserRole
   memberCount?: number
 }
+
+type LoadErrorKind = 'auth' | 'offline' | 'server' | 'unknown'
 
 const getTypeEmoji = (type: string) => {
   switch (type) {
@@ -77,19 +80,31 @@ function NetworkCard({ network }: { network: NetworkWithRole }) {
 }
 
 export default function NetworksPage() {
+  const router = useRouter()
   const [networks, setNetworks] = useState<NetworkWithRole[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorKind, setErrorKind] = useState<LoadErrorKind>('unknown')
   const [showJoinModal, setShowJoinModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   const fetchNetworks = async () => {
+    let nextErrorKind: LoadErrorKind = 'unknown'
     try {
+      setError(null)
+      setErrorKind('unknown')
+
+      if (typeof window !== 'undefined' && !window.navigator.onLine) {
+        nextErrorKind = 'offline'
+        setErrorKind(nextErrorKind)
+        throw new Error('Du bist offline. Netzwerke benötigen eine Internetverbindung.')
+      }
+
       const token = localStorage.getItem('sync-auth-token')
       if (!token) {
-        setNetworks([])
-        setIsLoading(false)
-        return
+        nextErrorKind = 'auth'
+        setErrorKind(nextErrorKind)
+        throw new Error('Bitte melde dich an, um Netzwerke zu laden.')
       }
 
       const response = await fetch('/api/networks', {
@@ -99,12 +114,23 @@ export default function NetworksPage() {
       })
 
       if (!response.ok) {
+        if (response.status === 401) {
+          nextErrorKind = 'auth'
+          setErrorKind(nextErrorKind)
+          throw new Error('Sitzung abgelaufen. Bitte melde dich erneut an.')
+        }
+        nextErrorKind = 'server'
+        setErrorKind(nextErrorKind)
         throw new Error('Fehler beim Laden der Netzwerke')
       }
 
       const data = await response.json()
       setNetworks(data.networks || [])
     } catch (err) {
+      if (nextErrorKind === 'unknown' && typeof window !== 'undefined' && !window.navigator.onLine) {
+        nextErrorKind = 'offline'
+        setErrorKind(nextErrorKind)
+      }
       setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
     } finally {
       setIsLoading(false)
@@ -151,9 +177,21 @@ export default function NetworksPage() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-error-500 mb-4">{error}</p>
-            <Button variant="secondary" onClick={fetchNetworks}>
-              Erneut versuchen
-            </Button>
+            {errorKind === 'offline' && (
+              <p className="text-sm text-gray-500 mb-4">
+                Sobald du wieder online bist, kannst du deine Netzwerke laden.
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Button variant="secondary" onClick={fetchNetworks}>
+                Erneut versuchen
+              </Button>
+              {errorKind === 'auth' && (
+                <Button variant="outline" onClick={() => router.push('/login')}>
+                  Zum Login
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       ) : networks.length === 0 ? (

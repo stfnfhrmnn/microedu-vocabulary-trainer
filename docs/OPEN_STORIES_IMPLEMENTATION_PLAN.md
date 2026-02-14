@@ -39,6 +39,9 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 - `2026-02-14` Slice 6 shipped (`in progress`):
   - Family setup handoff copy now shows explicit parent→child join steps
   - Child join path text aligned to current menu labels
+- `2026-02-14` Slice 7 shipped (`in progress`):
+  - Network list page now has actionable auth/offline/server error recovery
+  - Account/network code hints added in migration and network overview surfaces
 
 ## Open Story Backlog
 
@@ -52,8 +55,8 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 | `US-9.3` | Partial | Governance exceptions unclear | Admin/teacher exception rules documented and enforced |
 | `US-9.4` / `US-9.6` | Partial | Parent contribution loop only implicit via copy | Explicit "copy and adapt" contribution flow |
 | `US-9.5` | Partial | Deterministic defaults implemented; network-linked child mapping still open | Deterministic learner selection defaults and switching |
-| `US-4.4` (new) | Missing | "Fehler beim Laden" retry/recovery story missing | Actionable load failure UI with retry/offline behavior |
-| `US-7.4` (new) | Missing | Code confusion prevention not formalized | Consistent 6-char vs 8-char code guidance in all relevant forms |
+| `US-4.4` (new) | Partial | Recovery implemented on detail + list pages; E2E coverage still open | Actionable load failure UI with retry/offline behavior |
+| `US-7.4` (new) | Partial | Guidance now broad; remaining validation pass for all edge screens needed | Consistent 6-char vs 8-char code guidance in all relevant forms |
 | `US-8.4` (new) | Partial | Decision helper now shown, still needs E2E coverage | Lightweight decision helper (family/class/study_group) |
 | `US-5.6` (new) | Missing | TTS quality controls not formalized | User-facing voice quality settings + preview/test |
 | `US-5.7` (new) | Partial | TTS+STT override implemented, confirmation UX/test coverage still open | Force/confirm language for pronunciation + speech recognition |

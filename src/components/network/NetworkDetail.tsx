@@ -6,6 +6,7 @@ import { ArrowLeft, Settings, Copy, Check, RefreshCw, Trophy, Users, BookOpen, S
 import { Leaderboard } from '@/components/competition/Leaderboard'
 import { SharedBooksGallery } from '@/components/sharing/SharedBooksGallery'
 import { MemberList } from './MemberList'
+import { CodeFormatHint } from './CodeFormatHint'
 import type { Network, UserRole } from '@/lib/db/schema'
 
 type TabType = 'leaderboard' | 'members' | 'books'
@@ -263,6 +264,7 @@ export function NetworkDetail({ networkId, currentUserId, onBack }: NetworkDetai
             <Share2 className="h-5 w-5" />
           </button>
         </div>
+        <CodeFormatHint context="network" className="mt-2" />
       </div>
 
       {/* Tabs */}

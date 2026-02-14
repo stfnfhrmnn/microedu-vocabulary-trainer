@@ -10,6 +10,7 @@ import { setAuthToken, fullSync } from '@/lib/sync/sync-service'
 import { setRegistered, isUserRegistered } from '@/lib/sync/sync-queue'
 import { db } from '@/lib/db/db'
 import { useOnboarding } from '@/stores/onboarding'
+import { CodeFormatHint } from '@/components/network/CodeFormatHint'
 
 type MigrationStep = 'prompt' | 'registering' | 'login' | 'logging-in' | 'success' | 'error'
 
@@ -231,6 +232,7 @@ export function MigrationPrompt() {
               maxLength={9}
               className="font-mono text-center text-lg tracking-wider"
             />
+            <CodeFormatHint context="account" className="mt-1" />
           </div>
           <div className="flex gap-2">
             <Button
@@ -303,6 +305,7 @@ export function MigrationPrompt() {
           <p className="text-sm text-gray-500">
             Speichere diesen Code, um deine Vokabeln auf anderen Geräten zu öffnen.
           </p>
+          <CodeFormatHint context="account" className="text-center" />
           <Button onClick={() => setIsOpen(false)} variant="primary" className="w-full">
             Fertig
           </Button>
