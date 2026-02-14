@@ -19,6 +19,7 @@ import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
 import { getUnifiedTTSService } from '@/lib/services/unified-tts'
 import { getSpeechRecognitionService } from '@/lib/services/speech-recognition'
 import { getGroupConversationService } from '@/lib/services/group-conversation'
+import { toast } from '@/stores/toast'
 import type { Language } from '@/lib/db/schema'
 
 interface GroupVoiceSessionViewProps {
@@ -95,6 +96,7 @@ export function GroupVoiceSessionView({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const encouragementTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const helpOfferTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastLanguageWarningRef = useRef<string | null>(null)
 
   // Configure services
   useEffect(() => {
@@ -175,6 +177,13 @@ export function GroupVoiceSessionView({
       immersionLevel === 'beginner' ? 'german' : targetLanguage || 'german'
     const effectiveListenLang =
       sttLanguageOverride === 'auto' ? listenLang : sttLanguageOverride
+    if (effectiveListenLang !== listenLang) {
+      const warning = `Eingabe-Sprache überschrieben (${listenLang} → ${effectiveListenLang}).`
+      if (lastLanguageWarningRef.current !== warning) {
+        lastLanguageWarningRef.current = warning
+        toast.info(warning, 3500)
+      }
+    }
 
     sttService.current.start(
       effectiveListenLang,

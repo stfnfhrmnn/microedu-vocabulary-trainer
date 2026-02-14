@@ -1881,3 +1881,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 2.10 | 2026-02-14 | Update | Added direct difficult-word practice entry from dashboard and scope deep-link handling in practice setup |
 | 2.11 | 2026-02-14 | Update | Added shared-book copy-and-practice shortcuts and practice setup book-prefilter deep-link support (`bookId`) |
 | 2.12 | 2026-02-14 | Update | Added explicit owner labels in primary library list and book/chapter detail views to improve ownership clarity |
+| 2.13 | 2026-02-14 | Update | Added STT language-override mismatch warning behavior in voice and group-voice sessions for clearer language assurance feedback |

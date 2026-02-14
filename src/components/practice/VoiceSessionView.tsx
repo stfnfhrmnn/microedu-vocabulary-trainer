@@ -12,6 +12,7 @@ import { getSpeechRecognitionService } from '@/lib/services/speech-recognition'
 import { getVoiceAnalyzerService } from '@/lib/services/voice-analyzer'
 import { extractAnswer } from '@/lib/learning/answer-extractor'
 import { combinedMatch } from '@/lib/learning/phonetic-match'
+import { toast } from '@/stores/toast'
 import {
   generateIntroScript,
   generateQuestionScript,
@@ -79,6 +80,7 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
   const sttService = useRef(getSpeechRecognitionService())
   const analyzerService = useRef(getVoiceAnalyzerService())
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastLanguageWarningRef = useRef<string | null>(null)
   const [interimTranscript, setInterimTranscript] = useState('')
   const [usingAI, setUsingAI] = useState(false)
 
@@ -168,6 +170,13 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
     const answerLang = currentAnswerLanguage === 'german' ? 'german' : currentAnswerLanguage
     const effectiveAnswerLang =
       sttLanguageOverride === 'auto' ? answerLang : sttLanguageOverride
+    if (effectiveAnswerLang !== answerLang) {
+      const warning = `Eingabe-Sprache überschrieben (${answerLang} → ${effectiveAnswerLang}).`
+      if (lastLanguageWarningRef.current !== warning) {
+        lastLanguageWarningRef.current = warning
+        toast.info(warning, 3500)
+      }
+    }
 
     sttService.current.start(
       effectiveAnswerLang,

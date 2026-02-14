@@ -51,6 +51,8 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
   - Practice setup can prefilter sections by `bookId` deep-link
 - `2026-02-14` Slice 10 shipped (`in progress`):
   - Library book cards and book/chapter views now show owner label
+- `2026-02-14` Slice 11 shipped (`in progress`):
+  - Voice and group voice now surface STT language-override mismatch warnings
 
 ## Open Story Backlog
 
@@ -69,7 +71,7 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 | `US-7.4` (new) | Partial | Guidance now broad; remaining validation pass for all edge screens needed | Consistent 6-char vs 8-char code guidance in all relevant forms |
 | `US-8.4` (new) | Partial | Decision helper now shown, still needs E2E coverage | Lightweight decision helper (family/class/study_group) |
 | `US-5.6` (new) | Missing | TTS quality controls not formalized | User-facing voice quality settings + preview/test |
-| `US-5.7` (new) | Partial | TTS+STT override implemented, confirmation UX/test coverage still open | Force/confirm language for pronunciation + speech recognition |
+| `US-5.7` (new) | Partial | Overrides + mismatch warnings implemented; explicit confirm step and tests still open | Force/confirm language for pronunciation + speech recognition |
 
 ## Implementation Milestones
 
