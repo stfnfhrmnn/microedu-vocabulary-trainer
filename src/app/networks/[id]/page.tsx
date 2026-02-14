@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -25,6 +25,8 @@ interface NetworkDetail extends Network {
   sharedBooksCount: number
 }
 
+type LoadErrorKind = 'auth' | 'forbidden' | 'notFound' | 'offline' | 'server' | 'unknown'
+
 export default function NetworkDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -34,67 +36,112 @@ export default function NetworkDetailPage() {
   const [network, setNetwork] = useState<NetworkDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorKind, setErrorKind] = useState<LoadErrorKind>('unknown')
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [isOffline, setIsOffline] = useState(false)
 
   useEffect(() => {
-    if (!networkId) return
+    if (typeof window === 'undefined') return
 
-    const fetchNetwork = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const token = localStorage.getItem('sync-auth-token')
-        if (!token) {
-          setError('Bitte melde dich an')
-          setIsLoading(false)
-          return
-        }
-
-        const response = await fetch(`/api/networks/${encodeURIComponent(networkId)}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (!response.ok) {
-          let apiError: string | undefined
-          try {
-            const data = await response.json()
-            apiError = typeof data?.error === 'string' ? data.error : undefined
-          } catch {
-            // Ignore JSON parsing errors for non-JSON API responses
-          }
-
-          if (response.status === 401) {
-            throw new Error('Bitte melde dich erneut an')
-          }
-
-          if (response.status === 403) {
-            throw new Error(apiError || 'Du bist kein Mitglied dieses Netzwerks')
-          }
-
-          if (response.status === 404) {
-            throw new Error(apiError || 'Netzwerk nicht gefunden')
-          }
-
-          throw new Error(apiError || 'Fehler beim Laden')
-        }
-
-        const data = await response.json()
-        setNetwork({
-          ...data.network,
-          members: data.network?.members ?? [],
-          sharedBooksCount: data.network?.sharedBooksCount ?? 0,
-        })
-        setError(null)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
-      } finally {
-        setIsLoading(false)
-      }
+    const updateOnlineState = () => {
+      setIsOffline(!window.navigator.onLine)
     }
 
-    fetchNetwork()
+    updateOnlineState()
+    window.addEventListener('online', updateOnlineState)
+    window.addEventListener('offline', updateOnlineState)
+
+    return () => {
+      window.removeEventListener('online', updateOnlineState)
+      window.removeEventListener('offline', updateOnlineState)
+    }
+  }, [])
+
+  const fetchNetwork = useCallback(async () => {
+    if (!networkId) return
+
+    setIsLoading(true)
+    setError(null)
+    setErrorKind('unknown')
+    let nextErrorKind: LoadErrorKind = 'unknown'
+
+    try {
+      if (typeof window !== 'undefined' && !window.navigator.onLine) {
+        nextErrorKind = 'offline'
+        setErrorKind(nextErrorKind)
+        throw new Error('Du bist offline. Bitte prüfe deine Internetverbindung.')
+      }
+
+      const token = localStorage.getItem('sync-auth-token')
+      if (!token) {
+        nextErrorKind = 'auth'
+        setErrorKind(nextErrorKind)
+        throw new Error('Bitte melde dich an')
+      }
+
+      const response = await fetch(`/api/networks/${encodeURIComponent(networkId)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        let apiError: string | undefined
+        try {
+          const data = await response.json()
+          apiError = typeof data?.error === 'string' ? data.error : undefined
+        } catch {
+          // Ignore JSON parsing errors for non-JSON API responses
+        }
+
+        if (response.status === 401) {
+          nextErrorKind = 'auth'
+          setErrorKind(nextErrorKind)
+          throw new Error(apiError || 'Bitte melde dich erneut an')
+        }
+
+        if (response.status === 403) {
+          nextErrorKind = 'forbidden'
+          setErrorKind(nextErrorKind)
+          throw new Error(apiError || 'Du bist kein Mitglied dieses Netzwerks')
+        }
+
+        if (response.status === 404) {
+          nextErrorKind = 'notFound'
+          setErrorKind(nextErrorKind)
+          throw new Error(apiError || 'Netzwerk nicht gefunden')
+        }
+
+        nextErrorKind = 'server'
+        setErrorKind(nextErrorKind)
+        throw new Error(apiError || 'Fehler beim Laden')
+      }
+
+      const data = await response.json()
+      setNetwork({
+        ...data.network,
+        members: data.network?.members ?? [],
+        sharedBooksCount: data.network?.sharedBooksCount ?? 0,
+      })
+      setError(null)
+    } catch (err) {
+      if (nextErrorKind === 'unknown' && typeof window !== 'undefined' && !window.navigator.onLine) {
+        nextErrorKind = 'offline'
+        setErrorKind(nextErrorKind)
+      }
+      setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
+    } finally {
+      setIsLoading(false)
+    }
   }, [networkId])
+
+  useEffect(() => {
+    fetchNetwork()
+  }, [fetchNetwork, refreshKey])
+
+  const handleRetry = () => {
+    setRefreshKey((value) => value + 1)
+  }
 
   if (isLoading) {
     return (
@@ -114,9 +161,24 @@ export default function NetworkDetailPage() {
         <Card>
           <CardContent className="text-center py-8">
             <p className="text-error-500 mb-4">{error || 'Netzwerk nicht gefunden'}</p>
-            <Button variant="secondary" onClick={() => router.push('/networks')}>
-              Zurück zur Übersicht
-            </Button>
+            {(isOffline || errorKind === 'offline') && (
+              <p className="text-sm text-gray-500 mb-4">
+                Offline-Modus: Netzwerkdetails benötigen eine Verbindung.
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Button variant="secondary" onClick={handleRetry}>
+                Erneut versuchen
+              </Button>
+              {errorKind === 'auth' && (
+                <Button variant="outline" onClick={() => router.push('/login')}>
+                  Zum Login
+                </Button>
+              )}
+              <Button variant="ghost" onClick={() => router.push('/networks')}>
+                Zurück zur Übersicht
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </PageContainer>

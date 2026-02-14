@@ -930,6 +930,7 @@ function AddVocabularyForm() {
                   <VoiceInputButton
                     language="german"
                     onTranscript={handleSourceTranscript}
+                    showUnavailableHint
                   />
                 </div>
               </div>
@@ -963,6 +964,7 @@ function AddVocabularyForm() {
                   <VoiceInputButton
                     language={selection?.bookLanguage || 'german'}
                     onTranscript={handleTargetTranscript}
+                    showUnavailableHint
                   />
                 </div>
                 {languageMismatchWarning && (

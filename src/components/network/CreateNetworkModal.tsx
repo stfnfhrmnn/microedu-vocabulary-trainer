@@ -6,6 +6,7 @@ import { X, Plus, Loader2, Copy, Check } from 'lucide-react'
 import type { Network, NetworkType, UserRole } from '@/lib/db/schema'
 import { useSyncStatus } from '@/stores/sync'
 import { CloudSyncRequired } from './CloudSyncRequired'
+import { CodeFormatHint } from './CodeFormatHint'
 
 interface CreateNetworkModalProps {
   isOpen: boolean
@@ -197,7 +198,12 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => setRole(option.value as UserRole)}
+                        onClick={() => {
+                          setRole(option.value as UserRole)
+                          if (option.value === 'parent') {
+                            setType('family')
+                          }
+                        }}
                         className={`w-full p-3 rounded-xl border-2 transition-all flex items-start gap-3 text-left ${
                           role === option.value
                             ? 'border-primary bg-primary/10'
@@ -212,6 +218,11 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
                       </button>
                     ))}
                   </div>
+                  {role === 'parent' && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Für Eltern ist <strong>Familie</strong> meistens die richtige Netzwerkart.
+                    </p>
+                  )}
                 </div>
 
                 {/* Error */}
@@ -270,9 +281,12 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
                   </div>
                 </div>
 
-                <p className="text-center text-sm text-muted-foreground">
-                  Andere können mit diesem Netzwerkcode beitreten (Format: XXX-XXX).
-                </p>
+                <div className="text-center space-y-1">
+                  <p className="text-sm text-muted-foreground">
+                    Andere können mit diesem Netzwerkcode beitreten.
+                  </p>
+                  <CodeFormatHint context="network" className="text-center" />
+                </div>
 
                 {/* Done Button */}
                 <button

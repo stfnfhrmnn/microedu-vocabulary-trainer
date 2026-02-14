@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, Bookmark, Plus, X, Trash2 } from 'lucide-react'
@@ -38,6 +38,7 @@ export default function PracticePage() {
   const {
     defaultExerciseType,
     defaultDirection,
+    lastPracticeConfig,
     practicePresets,
     setLastPracticeConfig,
     addPracticePreset,
@@ -52,6 +53,9 @@ export default function PracticePage() {
   const [settingsExpanded, setSettingsExpanded] = useState(false)
   const [showSavePreset, setShowSavePreset] = useState(false)
   const [presetName, setPresetName] = useState('')
+  const [shouldAutoStart, setShouldAutoStart] = useState(false)
+  const hasAppliedEntryConfig = useRef(false)
+  const hasAutoStarted = useRef(false)
 
   // Get vocabulary for selected sections
   const { vocabulary: allVocabulary, isLoading: vocabLoading } =
@@ -68,11 +72,36 @@ export default function PracticePage() {
     }
   }, [sections, selectedSectionIds.length])
 
-  // Support explicit entry modes from dashboard links
+  const applyPracticeConfig = useCallback((config: {
+    exerciseType: ExerciseType
+    direction: PracticeDirection
+    dueOnly: boolean
+    sectionIds: string[]
+  }) => {
+    setExerciseType(config.exerciseType)
+    setDirection(config.direction)
+    setDueOnly(config.dueOnly)
+
+    const validSectionIds = config.sectionIds.filter((id) => sections.some((s) => s.id === id))
+    if (validSectionIds.length > 0) {
+      setSelectedSectionIds(validSectionIds)
+    }
+  }, [sections])
+
+  // Support explicit entry modes from dashboard and summary links.
+  // Apply once per page open so user interaction is never overwritten.
   useEffect(() => {
+    if (hasAppliedEntryConfig.current || sections.length === 0) return
+    hasAppliedEntryConfig.current = true
+
     const params = new URLSearchParams(window.location.search)
     const mode = params.get('mode')
     const requestedExerciseType = params.get('exerciseType')
+    const shouldResume = params.get('resume') === '1'
+
+    if (lastPracticeConfig) {
+      applyPracticeConfig(lastPracticeConfig)
+    }
 
     if (mode === 'free') {
       setDueOnly(false)
@@ -87,7 +116,13 @@ export default function PracticePage() {
       setExerciseType(requestedExerciseType as ExerciseType)
       setSettingsExpanded(true)
     }
-  }, [])
+
+    if (shouldResume) {
+      setShouldAutoStart(true)
+      setSectionsExpanded(true)
+      setSettingsExpanded(true)
+    }
+  }, [sections.length, lastPracticeConfig, applyPracticeConfig])
 
   const toggleSection = (sectionId: string) => {
     setSelectedSectionIds((prev) =>
@@ -105,7 +140,7 @@ export default function PracticePage() {
     setSelectedSectionIds([])
   }
 
-  const handleStart = () => {
+  const handleStart = useCallback(() => {
     if (wordCount === 0) return
 
     // Save this configuration for quick start
@@ -132,7 +167,46 @@ export default function PracticePage() {
     })
 
     router.push('/practice/session')
-  }
+  }, [
+    wordCount,
+    exerciseType,
+    direction,
+    dueOnly,
+    selectedSectionIds,
+    sections,
+    setLastPracticeConfig,
+    startSession,
+    wordsToStudy,
+    router,
+  ])
+
+  // Resume flow from summary:
+  // if no due words remain, automatically continue with all words.
+  useEffect(() => {
+    if (!shouldAutoStart || hasAutoStarted.current || sectionsLoading || vocabLoading) return
+    if (selectedSectionIds.length === 0) return
+
+    if (wordCount === 0) {
+      if (dueOnly && allVocabulary.length > 0) {
+        setDueOnly(false)
+        return
+      }
+      setShouldAutoStart(false)
+      return
+    }
+
+    hasAutoStarted.current = true
+    handleStart()
+  }, [
+    shouldAutoStart,
+    sectionsLoading,
+    vocabLoading,
+    selectedSectionIds.length,
+    wordCount,
+    dueOnly,
+    allVocabulary.length,
+    handleStart,
+  ])
 
   const handleSavePreset = () => {
     if (!presetName.trim()) return
@@ -152,16 +226,22 @@ export default function PracticePage() {
   }
 
   const handleLoadPreset = (preset: PracticePreset) => {
-    setExerciseType(preset.exerciseType)
-    setDirection(preset.direction)
-    setDueOnly(preset.dueOnly)
     if (preset.sectionIds === 'all') {
-      setSelectedSectionIds(sections.map(s => s.id))
-    } else {
-      // Only select sections that still exist
-      const validIds = preset.sectionIds.filter(id => sections.some(s => s.id === id))
-      setSelectedSectionIds(validIds)
+      applyPracticeConfig({
+        exerciseType: preset.exerciseType,
+        direction: preset.direction,
+        dueOnly: preset.dueOnly,
+        sectionIds: sections.map((s) => s.id),
+      })
+      return
     }
+
+    applyPracticeConfig({
+      exerciseType: preset.exerciseType,
+      direction: preset.direction,
+      dueOnly: preset.dueOnly,
+      sectionIds: preset.sectionIds,
+    })
   }
 
   // Get current settings summary for collapsed view

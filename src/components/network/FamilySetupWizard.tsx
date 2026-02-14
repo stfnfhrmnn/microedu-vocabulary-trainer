@@ -6,6 +6,7 @@ import { X, Loader2, Copy, Check, ArrowLeft, Users, UserPlus } from 'lucide-reac
 import type { Network, UserRole } from '@/lib/db/schema'
 import { useSyncStatus } from '@/stores/sync'
 import { CloudSyncRequired } from './CloudSyncRequired'
+import { CodeFormatHint } from './CodeFormatHint'
 
 interface FamilySetupWizardProps {
   isOpen: boolean
@@ -348,10 +349,7 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
                         className="w-full px-4 py-3 text-center text-2xl tracking-widest font-mono border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                         autoFocus
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Netzwerkcode: <span className="font-mono">XXX-XXX</span>. Nicht der Geräte-Code{' '}
-                        <span className="font-mono">XXXX-XXXX</span>.
-                      </p>
+                      <CodeFormatHint context="network" className="mt-1" />
                     </div>
 
                     <div>

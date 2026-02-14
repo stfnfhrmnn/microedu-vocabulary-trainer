@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { CodeFormatHint } from '@/components/network/CodeFormatHint'
 import { Smartphone, Home, KeyRound, Loader2 } from 'lucide-react'
 import { setAuthToken, fullSync } from '@/lib/sync/sync-service'
 import { setRegistered } from '@/lib/sync/sync-queue'
@@ -169,9 +170,12 @@ function LoginContent() {
                   )}
                 </Button>
               </form>
-              <p className="text-xs text-gray-500 mt-2">
-                Nutze deinen persönlichen Code, wenn du keinen Übertragungslink hast.
-              </p>
+              <div className="space-y-1 mt-2">
+                <p className="text-xs text-gray-500">
+                  Nutze deinen persönlichen Code, wenn du keinen Übertragungslink hast.
+                </p>
+                <CodeFormatHint context="account" />
+              </div>
             </div>
           </div>
         </div>

@@ -193,7 +193,22 @@ export default function PracticeSummaryPage() {
 
   const handlePracticeAgain = () => {
     reset()
-    router.push(practiceBasePath)
+    if (quizMode === 'parent') {
+      router.push(practiceBasePath)
+      return
+    }
+
+    router.push('/practice?resume=1')
+  }
+
+  const handleChooseNewExercise = () => {
+    reset()
+    if (quizMode === 'parent') {
+      router.push(practiceBasePath)
+      return
+    }
+
+    router.push('/practice?mode=free')
   }
 
   const handleGoHome = () => {
@@ -366,7 +381,12 @@ export default function PracticeSummaryPage() {
           <Button variant="primary" fullWidth onClick={handlePracticeAgain}>
             Nochmal üben
           </Button>
-          <Button variant="secondary" fullWidth onClick={handleGoHome}>
+          {quizMode !== 'parent' && (
+            <Button variant="secondary" fullWidth onClick={handleChooseNewExercise}>
+              Neue Übung wählen
+            </Button>
+          )}
+          <Button variant={quizMode === 'parent' ? 'secondary' : 'ghost'} fullWidth onClick={handleGoHome}>
             Zur Startseite
           </Button>
         </motion.div>

@@ -11,6 +11,7 @@ interface Props {
   onTranscript: (text: string) => void
   onListeningChange?: (isListening: boolean) => void
   disabled?: boolean
+  showUnavailableHint?: boolean
   className?: string
 }
 
@@ -19,6 +20,7 @@ export function VoiceInputButton({
   onTranscript,
   onListeningChange,
   disabled,
+  showUnavailableHint = false,
   className,
 }: Props) {
   const {
@@ -54,6 +56,13 @@ export function VoiceInputButton({
   }
 
   if (!isAvailable) {
+    if (showUnavailableHint) {
+      return (
+        <p className={cn('text-xs text-muted-foreground', className)}>
+          Spracheingabe ist auf diesem Gerät/Browser nicht verfügbar.
+        </p>
+      )
+    }
     return null
   }
 

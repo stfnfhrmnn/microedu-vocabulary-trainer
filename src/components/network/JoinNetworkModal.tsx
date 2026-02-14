@@ -6,6 +6,7 @@ import { X, Users, Loader2 } from 'lucide-react'
 import type { Network, UserRole } from '@/lib/db/schema'
 import { useSyncStatus } from '@/stores/sync'
 import { CloudSyncRequired } from './CloudSyncRequired'
+import { CodeFormatHint } from './CodeFormatHint'
 
 interface JoinNetworkModalProps {
   isOpen: boolean
@@ -129,10 +130,7 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
                   className="w-full px-4 py-3 text-center text-2xl tracking-widest font-mono border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
                   autoFocus
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Netzwerkcode: <span className="font-mono">XXX-XXX</span>. Nicht der Geräte-Code{' '}
-                  <span className="font-mono">XXXX-XXXX</span>.
-                </p>
+                <CodeFormatHint context="network" className="mt-1" />
               </div>
 
               {/* Role Selection */}
