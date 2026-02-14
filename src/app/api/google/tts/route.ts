@@ -6,7 +6,7 @@ const TTS_API_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize'
 const TTSRequestSchema = z.object({
   text: z.string().min(1).max(5000),
   languageCode: z.string(),
-  voiceName: z.string(),
+  voiceName: z.string().optional(),
   speakingRate: z.number().min(0.25).max(4.0).optional().default(1.0),
   pitch: z.number().min(-20).max(20).optional().default(0),
   volumeGainDb: z.number().min(-96).max(16).optional().default(0),
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         input: { text },
         voice: {
           languageCode,
-          name: voiceName,
+          ...(voiceName ? { name: voiceName } : {}),
         },
         audioConfig: {
           audioEncoding: 'MP3',

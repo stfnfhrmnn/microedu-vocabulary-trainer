@@ -28,14 +28,19 @@ interface NetworkDetail extends Network {
 export default function NetworkDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const networkId = params.id as string
+  const networkParam = params.id
+  const networkId = Array.isArray(networkParam) ? networkParam[0] : networkParam
 
   const [network, setNetwork] = useState<NetworkDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!networkId) return
+
     const fetchNetwork = async () => {
+      setIsLoading(true)
+      setError(null)
       try {
         const token = localStorage.getItem('sync-auth-token')
         if (!token) {
@@ -44,17 +49,34 @@ export default function NetworkDetailPage() {
           return
         }
 
-        const response = await fetch(`/api/networks/${networkId}`, {
+        const response = await fetch(`/api/networks/${encodeURIComponent(networkId)}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
 
         if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Netzwerk nicht gefunden')
+          let apiError: string | undefined
+          try {
+            const data = await response.json()
+            apiError = typeof data?.error === 'string' ? data.error : undefined
+          } catch {
+            // Ignore JSON parsing errors for non-JSON API responses
           }
-          throw new Error('Fehler beim Laden')
+
+          if (response.status === 401) {
+            throw new Error('Bitte melde dich erneut an')
+          }
+
+          if (response.status === 403) {
+            throw new Error(apiError || 'Du bist kein Mitglied dieses Netzwerks')
+          }
+
+          if (response.status === 404) {
+            throw new Error(apiError || 'Netzwerk nicht gefunden')
+          }
+
+          throw new Error(apiError || 'Fehler beim Laden')
         }
 
         const data = await response.json()
@@ -63,6 +85,7 @@ export default function NetworkDetailPage() {
           members: data.network?.members ?? [],
           sharedBooksCount: data.network?.sharedBooksCount ?? 0,
         })
+        setError(null)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
       } finally {

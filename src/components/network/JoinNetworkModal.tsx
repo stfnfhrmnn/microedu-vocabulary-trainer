@@ -118,7 +118,7 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
               {/* Invite Code */}
               <div>
                 <label className="block text-sm font-medium mb-1.5">
-                  Einladungscode
+                  Einladungscode (6-stellig)
                 </label>
                 <input
                   type="text"
@@ -129,6 +129,10 @@ export function JoinNetworkModal({ isOpen, onClose, onJoined }: JoinNetworkModal
                   className="w-full px-4 py-3 text-center text-2xl tracking-widest font-mono border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
                   autoFocus
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Netzwerkcode: <span className="font-mono">XXX-XXX</span>. Nicht der Geräte-Code{' '}
+                  <span className="font-mono">XXXX-XXXX</span>.
+                </p>
               </div>
 
               {/* Role Selection */}

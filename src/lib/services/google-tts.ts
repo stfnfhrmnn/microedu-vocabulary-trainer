@@ -7,21 +7,35 @@
 
 import type { Language } from '@/lib/db/schema'
 
-// Language to Google TTS voice mapping
-// Using WaveNet voices for best quality
-const VOICE_MAP: Record<Language | 'german', { languageCode: string; name: string }> = {
-  german: { languageCode: 'de-DE', name: 'de-DE-Wavenet-C' },
-  french: { languageCode: 'fr-FR', name: 'fr-FR-Wavenet-C' },
-  spanish: { languageCode: 'es-ES', name: 'es-ES-Wavenet-B' },
-  latin: { languageCode: 'it-IT', name: 'it-IT-Wavenet-C' }, // Use Italian as Latin proxy
+interface GoogleVoiceConfig {
+  languageCode: string
+  premiumVoices: string[]
+  standardVoices: string[]
 }
 
-// Fallback to Standard voices if WaveNet unavailable
-const STANDARD_VOICE_MAP: Record<Language | 'german', { languageCode: string; name: string }> = {
-  german: { languageCode: 'de-DE', name: 'de-DE-Standard-A' },
-  french: { languageCode: 'fr-FR', name: 'fr-FR-Standard-A' },
-  spanish: { languageCode: 'es-ES', name: 'es-ES-Standard-A' },
-  latin: { languageCode: 'it-IT', name: 'it-IT-Standard-A' },
+// Ordered by quality preference; service tries each and falls back automatically.
+const GOOGLE_VOICE_CONFIG: Record<Language | 'german', GoogleVoiceConfig> = {
+  german: {
+    languageCode: 'de-DE',
+    premiumVoices: ['de-DE-Neural2-C', 'de-DE-Wavenet-C', 'de-DE-Wavenet-D'],
+    standardVoices: ['de-DE-Standard-C', 'de-DE-Standard-A'],
+  },
+  french: {
+    languageCode: 'fr-FR',
+    premiumVoices: ['fr-FR-Neural2-C', 'fr-FR-Wavenet-C', 'fr-FR-Wavenet-D'],
+    standardVoices: ['fr-FR-Standard-C', 'fr-FR-Standard-A'],
+  },
+  spanish: {
+    languageCode: 'es-ES',
+    premiumVoices: ['es-ES-Neural2-B', 'es-ES-Wavenet-B', 'es-ES-Wavenet-C'],
+    standardVoices: ['es-ES-Standard-B', 'es-ES-Standard-A'],
+  },
+  // Latin has no native Google voice; Italian is a practical pronunciation fallback.
+  latin: {
+    languageCode: 'it-IT',
+    premiumVoices: ['it-IT-Neural2-C', 'it-IT-Wavenet-C', 'it-IT-Wavenet-A'],
+    standardVoices: ['it-IT-Standard-C', 'it-IT-Standard-A'],
+  },
 }
 
 export interface GoogleTTSOptions {
@@ -45,36 +59,67 @@ export async function synthesizeSpeechGoogle(
   language: Language | 'german',
   options: GoogleTTSOptions = {}
 ): Promise<GoogleTTSResult> {
-  const voiceMap = options.useWaveNet !== false ? VOICE_MAP : STANDARD_VOICE_MAP
-  const voice = voiceMap[language]
+  const voiceConfig = GOOGLE_VOICE_CONFIG[language]
+  const voiceCandidates =
+    options.useWaveNet === false ? voiceConfig.standardVoices : voiceConfig.premiumVoices
 
   try {
-    // Use server-side proxy instead of direct API call
-    const response = await fetch('/api/google/tts', {
+    const basePayload = {
+      text,
+      languageCode: voiceConfig.languageCode,
+      speakingRate: options.speakingRate ?? 1.0,
+      pitch: options.pitch ?? 0,
+      volumeGainDb: options.volumeGainDb ?? 0,
+    }
+
+    let lastError = 'Google TTS failed'
+
+    // First try explicit high-quality voice candidates.
+    for (const voiceName of voiceCandidates) {
+      const response = await fetch('/api/google/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...basePayload,
+          voiceName,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        return {
+          success: true,
+          audioContent: data.audioContent,
+        }
+      }
+
+      const errorData = await response.json().catch(() => ({}))
+      lastError = errorData.error || `HTTP ${response.status}`
+    }
+
+    // Final fallback: let Google choose a default voice for the language.
+    const fallbackResponse = await fetch('/api/google/tts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        text,
-        languageCode: voice.languageCode,
-        voiceName: voice.name,
-        speakingRate: options.speakingRate ?? 1.0,
-        pitch: options.pitch ?? 0,
-        volumeGainDb: options.volumeGainDb ?? 0,
-      }),
+      body: JSON.stringify(basePayload),
     })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      const errorMessage = errorData.error || `HTTP ${response.status}`
-      return { success: false, error: errorMessage }
+    if (fallbackResponse.ok) {
+      const data = await fallbackResponse.json()
+      return {
+        success: true,
+        audioContent: data.audioContent,
+      }
     }
 
-    const data = await response.json()
+    const fallbackErrorData = await fallbackResponse.json().catch(() => ({}))
     return {
-      success: true,
-      audioContent: data.audioContent,
+      success: false,
+      error: fallbackErrorData.error || lastError,
     }
   } catch (error) {
     return {
@@ -153,7 +198,14 @@ export class GoogleTTSService {
     }
 
     // Check cache
-    const cacheKey = `${language}:${text}:${options.speakingRate || 1}`
+    const cacheKey = [
+      language,
+      options.useWaveNet === false ? 'standard' : 'premium',
+      options.speakingRate ?? 1,
+      options.pitch ?? 0,
+      options.volumeGainDb ?? 0,
+      text,
+    ].join(':')
     let audioContent = this.audioCache.get(cacheKey)
 
     if (!audioContent) {

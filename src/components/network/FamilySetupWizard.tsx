@@ -334,7 +334,7 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
                   <form onSubmit={handleJoinFamily} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Einladungscode von deinen Eltern
+                        Einladungscode von deinen Eltern (6-stellig)
                       </label>
                       <input
                         type="text"
@@ -348,6 +348,10 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
                         className="w-full px-4 py-3 text-center text-2xl tracking-widest font-mono border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                         autoFocus
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Netzwerkcode: <span className="font-mono">XXX-XXX</span>. Nicht der Geräte-Code{' '}
+                        <span className="font-mono">XXXX-XXXX</span>.
+                      </p>
                     </div>
 
                     <div>
@@ -375,7 +379,7 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
 
                     <button
                       type="submit"
-                      disabled={isJoining || inviteCode.replace(/-/g, '').length !== 8}
+                      disabled={isJoining || inviteCode.replace(/-/g, '').length !== 6}
                       className="w-full py-3 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {isJoining ? (
@@ -411,7 +415,7 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
 
                   <div className="bg-gray-50 rounded-xl p-4">
                     <div className="text-center">
-                      <p className="text-xs text-gray-500 mb-2">Einladungscode</p>
+                      <p className="text-xs text-gray-500 mb-2">Einladungscode (6-stellig)</p>
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-3xl font-mono tracking-widest font-bold text-gray-900">
                           {createdNetwork.inviteCode}
@@ -435,7 +439,9 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
                       <strong>Nächster Schritt:</strong><br />
                       Deine Kinder geben diesen Code im Vokabeltrainer ein unter:
                       <br />
-                      <span className="font-mono text-xs">Profil → Einstellungen → Familie beitreten</span>
+                      <span className="font-mono text-xs">
+                        Einstellungen → Gemeinsam lernen → Familie einrichten → Ich bin das Kind
+                      </span>
                     </p>
                   </div>
 

@@ -25,6 +25,7 @@ import { useOnboarding } from '@/stores/onboarding'
 import { useGamification, useTodayProgress } from '@/stores/gamification'
 import { usePracticeSession } from '@/stores/practice-session'
 import { useSettings } from '@/stores/settings'
+import type { ExerciseType, PracticeDirection } from '@/lib/db/schema'
 
 export default function HomePage() {
   const router = useRouter()
@@ -44,32 +45,23 @@ export default function HomePage() {
   const startSession = usePracticeSession((state) => state.startSession)
   const { lastPracticeConfig, setLastPracticeConfig, defaultExerciseType, defaultDirection } = useSettings()
 
-  const handleQuickStart = () => {
+  const startDueSession = (exerciseType: ExerciseType, direction: PracticeDirection) => {
     if (dueWords.length === 0) return
 
-    // Use last config or sensible defaults
-    const config = lastPracticeConfig || {
-      exerciseType: defaultExerciseType,
-      direction: defaultDirection,
-      dueOnly: true,
-      sectionIds: allSectionIds,
-    }
-
-    // Get target language from first section
-    const firstSection = sections.find(s => config.sectionIds.includes(s.id) || config.sectionIds.length === 0)
+    // Get target language from first selected section
+    const firstSection = sections.find((s) => allSectionIds.includes(s.id))
     const targetLanguage = firstSection?.book?.language
 
-    // Save this config for next time
     setLastPracticeConfig({
-      exerciseType: config.exerciseType,
-      direction: config.direction,
+      exerciseType,
+      direction,
       dueOnly: true,
       sectionIds: allSectionIds,
     })
 
     startSession({
-      exerciseType: config.exerciseType,
-      direction: config.direction,
+      exerciseType,
+      direction,
       sectionIds: allSectionIds,
       targetLanguage,
       items: dueWords.map((v) => ({
@@ -79,6 +71,19 @@ export default function HomePage() {
     })
 
     router.push('/practice/session')
+  }
+
+  const handleQuickStart = () => {
+    const config = lastPracticeConfig || {
+      exerciseType: defaultExerciseType,
+      direction: defaultDirection,
+    }
+
+    startDueSession(config.exerciseType, config.direction)
+  }
+
+  const handleTypedDueStart = () => {
+    startDueSession('typed', defaultDirection)
   }
 
   useEffect(() => {
@@ -147,27 +152,43 @@ export default function HomePage() {
               <span className="text-primary-200 text-lg">Vokabeln</span>
             </div>
             {dueCount > 0 && (
-              <div className="flex gap-2 mt-4">
+              <div className="grid grid-cols-2 gap-2 mt-4">
                 <Button
                   variant="secondary"
-                  className="flex-1"
+                  className="col-span-1"
                   onClick={handleQuickStart}
                 >
                   <Zap className="w-4 h-4 mr-2" />
                   Schnell starten
                 </Button>
-                <Link href="/practice" className="flex-1">
+
+                <Button
+                  variant="outline"
+                  className="col-span-1 border-white/30 text-white hover:bg-white/10"
+                  onClick={handleTypedDueStart}
+                >
+                  ⌨️ Mit Eingabe
+                </Button>
+
+                <Link href="/practice?mode=free" className="col-span-2">
                   <Button variant="outline" fullWidth className="border-white/30 text-white hover:bg-white/10">
                     <Settings2 className="w-4 h-4 mr-2" />
-                    Einrichten
+                    Frei üben (Abschnitte wählen)
                   </Button>
                 </Link>
               </div>
             )}
             {dueCount === 0 && totalCount > 0 && (
-              <p className="text-primary-100 text-sm mt-3">
-                Super! Alles wiederholt
-              </p>
+              <div className="mt-3 space-y-3">
+                <p className="text-primary-100 text-sm">
+                  Super! Alles wiederholt
+                </p>
+                <Link href="/practice?mode=free">
+                  <Button variant="outline" fullWidth className="border-white/30 text-white hover:bg-white/10">
+                    Trotzdem frei üben
+                  </Button>
+                </Link>
+              </div>
             )}
             {totalCount === 0 && (
               <p className="text-primary-100 text-sm mt-3">

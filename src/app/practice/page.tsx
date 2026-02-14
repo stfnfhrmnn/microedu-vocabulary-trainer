@@ -29,6 +29,8 @@ const directions: { id: PracticeDirection; label: string; short: string }[] = [
   { id: 'mixed', label: 'Gemischt', short: 'Mix' },
 ]
 
+const validExerciseTypes: ExerciseType[] = ['flashcard', 'multipleChoice', 'typed']
+
 export default function PracticePage() {
   const router = useRouter()
   const { sections, isLoading: sectionsLoading } = useAllSections()
@@ -65,6 +67,27 @@ export default function PracticePage() {
       setSelectedSectionIds(sections.map((s) => s.id))
     }
   }, [sections, selectedSectionIds.length])
+
+  // Support explicit entry modes from dashboard links
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const mode = params.get('mode')
+    const requestedExerciseType = params.get('exerciseType')
+
+    if (mode === 'free') {
+      setDueOnly(false)
+      setSectionsExpanded(true)
+      setSettingsExpanded(true)
+    }
+
+    if (
+      requestedExerciseType &&
+      validExerciseTypes.includes(requestedExerciseType as ExerciseType)
+    ) {
+      setExerciseType(requestedExerciseType as ExerciseType)
+      setSettingsExpanded(true)
+    }
+  }, [])
 
   const toggleSection = (sectionId: string) => {
     setSelectedSectionIds((prev) =>

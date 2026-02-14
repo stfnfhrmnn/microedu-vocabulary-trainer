@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
+import { VoiceInputButton } from '@/components/practice/VoiceInputButton'
 import { useAllSections, useBooks } from '@/lib/db/hooks/useBooks'
 import { createVocabularyItem, createSection, createBook, createChapter } from '@/lib/db/db'
 import { getLangCode, SOURCE_LANG_CODE } from '@/lib/utils/language-codes'
@@ -259,6 +260,21 @@ function AddVocabularyForm() {
     setTargetText('')
     setNotes('')
   }
+
+  const appendTranscript = useCallback((current: string, transcript: string) => {
+    const cleanedTranscript = transcript.trim()
+    if (!cleanedTranscript) return current
+    if (!current.trim()) return cleanedTranscript
+    return `${current.trim()} ${cleanedTranscript}`
+  }, [])
+
+  const handleSourceTranscript = useCallback((transcript: string) => {
+    setSourceText((prev) => appendTranscript(prev, transcript))
+  }, [appendTranscript])
+
+  const handleTargetTranscript = useCallback((transcript: string) => {
+    setTargetText((prev) => appendTranscript(prev, transcript))
+  }, [appendTranscript])
 
   const handleSelectSection = (sectionId: string) => {
     const section = sections.find(s => s.id === sectionId)
@@ -899,17 +915,24 @@ function AddVocabularyForm() {
 
           <Card className="mb-4">
             <CardContent className="space-y-4">
-
-              <Input
-                ref={sourceInputRef}
-                label="Deutsch"
-                placeholder="z.B. das Haus"
-                value={sourceText}
-                onChange={(e) => setSourceText(e.target.value)}
-                autoFocus
-                spellCheck
-                lang={SOURCE_LANG_CODE}
-              />
+              <div className="space-y-2">
+                <Input
+                  ref={sourceInputRef}
+                  label="Deutsch"
+                  placeholder="z.B. das Haus"
+                  value={sourceText}
+                  onChange={(e) => setSourceText(e.target.value)}
+                  autoFocus
+                  spellCheck
+                  lang={SOURCE_LANG_CODE}
+                />
+                <div className="flex justify-end">
+                  <VoiceInputButton
+                    language="german"
+                    onTranscript={handleSourceTranscript}
+                  />
+                </div>
+              </div>
 
               <div>
                 <Input
@@ -936,6 +959,12 @@ function AddVocabularyForm() {
                   spellCheck
                   lang={getLangCode(selection?.bookLanguage)}
                 />
+                <div className="flex justify-end mt-2">
+                  <VoiceInputButton
+                    language={selection?.bookLanguage || 'german'}
+                    onTranscript={handleTargetTranscript}
+                  />
+                </div>
                 {languageMismatchWarning && (
                   <p className="mt-1.5 text-xs text-amber-600 flex items-center gap-1">
                     <span className="text-amber-500">⚠️</span>

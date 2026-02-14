@@ -75,6 +75,24 @@ A mobile-friendly vocabulary learning app that:
 - Can see how many words are in each section
 - Can mark sections as "covered in class"
 
+#### US-1.4: Bulk Language Fix for Vocabulary
+> As a student or parent, I want to fix wrongly reversed source/target pairs in bulk so that cleanup is fast and safe.
+
+**Acceptance Criteria:**
+- Can select multiple vocabulary items from library views
+- Can apply one action to swap source and target text for all selected items
+- App asks for confirmation before changing all selected items
+- Updated entries remain editable individually afterward
+
+#### US-1.5: Voice-Assisted Vocabulary Entry
+> As a student, I want to dictate vocabulary into the input fields so that adding words is faster on mobile.
+
+**Acceptance Criteria:**
+- Source and target input fields each provide a microphone option
+- Speech recognition uses the expected language for each field
+- Recognized text is inserted into the input field and can be edited before save
+- Manual typing remains available as fallback
+
 ### Epic 2: Learning/Practice
 
 #### US-2.1: Flashcard Practice
@@ -131,16 +149,211 @@ A mobile-friendly vocabulary learning app that:
 - Can see words due this week
 - Notification (optional) when words are due
 
-### Epic 4: Parent/Guardian Features (Post-MVP)
+### Epic 4: Parent/Guardian Features
 
-#### US-4.1: Progress Reports
-> As a parent, I want to see my child's learning progress so that I can support their studies.
+#### US-4.1: Family Network
+> As a parent, I want to create a family network so that I can see my children's learning activity.
 
 **Acceptance Criteria:**
-- Summary view of practice sessions
-- Words learned over time graph
-- Difficult words list
-- Time spent practicing
+- Can create a family network and receive an invite code
+- Children join the family using the invite code
+- Parent sees children's XP, streak, and accuracy in a leaderboard
+- Parent is listed as "supporter" (unranked) in the family leaderboard
+
+#### US-4.2: Parent-Led Quiz
+> As a parent, I want to quiz my child verbally without needing to look at a screen so that we can practice together.
+
+**Acceptance Criteria:**
+- Screen-free voice mode where the app reads questions aloud
+- Child answers verbally; app evaluates via speech recognition + AI
+- Parent can focus on interaction, not on the device
+- Session summary shown at the end
+
+#### US-4.3: Parent Dashboard *(planned)*
+> As a parent, I want a dedicated view of each child's progress so that I can support them specifically where they struggle.
+
+**Acceptance Criteria:**
+- Child-centric cards showing: words mastered this week, accuracy, streak, XP
+- Weak words list per child (words frequently answered wrong)
+- Weekly trend: improving, stable, or declining
+- Per-book progress breakdown
+- Privacy controls: child can opt in/out of sharing weak words
+
+### Epic 5: Voice & Speech Practice
+
+#### US-5.1: Voice Practice
+> As a student, I want to practice vocabulary by speaking so that I improve pronunciation and recall.
+
+**Acceptance Criteria:**
+- App reads the question aloud (via TTS)
+- Student speaks the answer
+- AI analyzes the spoken answer for correctness (via Gemini)
+- Feedback shown: correct, almost correct, or incorrect with the right answer
+- Affects spaced repetition scheduling
+
+#### US-5.2: Group Voice Session
+> As a student, I want to practice with friends in a voice session so that studying is more social.
+
+**Acceptance Criteria:**
+- Multi-user voice session with shared question pool
+- Each participant answers in turn
+- Results compared at the end
+
+### Epic 6: Gamification & Motivation
+
+#### US-6.1: XP and Levels
+> As a student, I want to earn experience points so that I feel rewarded for studying.
+
+**Acceptance Criteria:**
+- XP awarded for correct answers (bonus for streaks, accuracy, difficulty)
+- Level progression with increasing XP thresholds
+- Level-up celebration animation
+- XP visible on home screen and in network leaderboards
+
+#### US-6.2: Achievement Badges
+> As a student, I want to unlock achievements so that I have goals to work toward.
+
+**Acceptance Criteria:**
+- Achievements across categories: consistency, volume, accuracy, special
+- Popup notification when a new achievement is unlocked
+- Achievements page showing all badges (earned and locked)
+- At least 18 distinct achievements
+
+#### US-6.3: Daily Streak
+> As a student, I want to track my daily practice streak so that I stay motivated to practice every day.
+
+**Acceptance Criteria:**
+- Streak increments for each day with at least one practice session
+- Streak visible on home screen
+- Streak milestone celebrations (7, 14, 30 days)
+- Streak displayed in network leaderboards
+
+### Epic 7: Cloud Sync & Multi-Device
+
+#### US-7.1: Cloud Registration
+> As a student, I want to register for cloud sync so that my data is backed up and accessible from other devices.
+
+**Acceptance Criteria:**
+- Unique user code (XXXX-XXXX) generated at registration
+- Code awareness prompt ensures user saves their code
+- All local data synced to server after registration
+- Sync happens transparently in the background
+
+#### US-7.2: Device Transfer
+> As a student, I want to transfer my account to a new device so that I don't lose my progress.
+
+**Acceptance Criteria:**
+- Request a one-time transfer token + 4-digit PIN
+- Enter token + PIN on new device to pull all data
+- Token expires after 15 minutes
+- Previous unused tokens are invalidated
+
+#### US-7.3: Offline-First Sync
+> As a student, I want to study offline and have my progress sync when I'm back online.
+
+**Acceptance Criteria:**
+- All changes queued locally when offline
+- Changes pushed to server automatically when connectivity returns
+- Server changes pulled to local device
+- Sync status indicator visible to user
+- Sync failures never block the learning flow
+
+### Epic 8: Safety & Moderation
+
+#### US-8.1: User Blocking
+> As a student, I want to block another user so that I don't see their content or activity.
+
+**Acceptance Criteria:**
+- Can block any user from network member list
+- Blocked user's activity hidden from leaderboards
+- Can view and manage blocked users list
+- Can unblock previously blocked users
+
+#### US-8.2: Content Reporting
+> As a user, I want to report inappropriate content or behavior so that the community stays safe.
+
+**Acceptance Criteria:**
+- Can report a user or a shared book
+- Report includes type (inappropriate content, spam, bullying, other)
+- Optional description field
+- Report submitted to server for moderation
+
+#### US-8.3: Content Protection
+> As a student, I want a safeguard against accidentally deleting well-practiced vocabulary so that I don't lose progress.
+
+**Acceptance Criteria:**
+- Items with 0-9 reviews: deleted immediately
+- Items with 10-49 reviews: confirmation dialog required
+- Items with 50+ reviews: must type "LÖSCHEN" to confirm
+- Deletion request tracked for audit
+
+### Epic 9: Book Sharing
+
+#### Simple Access Rules (MVP)
+
+1. Every book has exactly one owner and the owner is visible.
+2. Only the owner can edit book content, sharing settings, or delete the book.
+3. In family networks, parents automatically see their children’s books as read-only.
+4. Read-only users can run practice sessions but cannot change vocabulary content.
+5. Any read-only book can be copied into the user’s own library; copies get a new owner.
+6. Owner can revoke network sharing at any time.
+
+#### US-9.1: Share Books in Networks
+> As a teacher, I want to share vocabulary books with my class so that students don't need to enter vocabulary manually.
+
+**Acceptance Criteria:**
+- Can share any book to a network the user belongs to
+- Network members can see shared books in a gallery
+- Members can copy a shared book to their own library
+- Copy count tracked for the sharer
+- Original attribution preserved on copies
+
+#### US-9.2: Visible Book Ownership
+> As a user, I want to see who owns a book so that editing responsibility is clear.
+
+**Acceptance Criteria:**
+- Book list and book detail show owner name (and avatar if available)
+- Owner label is shown consistently for personal and shared books
+
+#### US-9.3: Owner-Only Editing
+> As a book owner, I want exclusive edit rights so that the source book stays consistent.
+
+**Acceptance Criteria:**
+- Only owner can edit book metadata, chapter/section structure, and vocabulary content
+- Non-owners only see read-only actions (view, practice, copy)
+- Delete and sharing controls are hidden/disabled for non-owners
+
+#### US-9.4: Parent Access to Child Books
+> As a parent in a family network, I want automatic read-only access to my child’s books so that I can support practice without setup overhead.
+
+**Acceptance Criteria:**
+- Parent can see child books by default after family link exists
+- Child books are clearly marked read-only in parent account
+- Parent cannot modify child-owned content directly
+
+#### US-9.5: Parent-Led Practice from Parent Account
+> As a parent, I want to start practice from my account using my child’s books so that we can practice together.
+
+**Acceptance Criteria:**
+- Parent can start a practice session from child-owned read-only books
+- Session allows choosing the learner context (for example, child profile)
+- Practice results are stored for the selected learner, not the parent
+
+#### US-9.6: Copy Shared or Family-Visible Books
+> As a student or parent, I want to copy a read-only book so that I can customize my own version.
+
+**Acceptance Criteria:**
+- `Copy to my library` is available on read-only books
+- Copied book gets the copier as owner
+- Changes to the copy do not affect the original
+
+#### US-9.7: Revoke Sharing
+> As a book owner, I want to stop sharing quickly so that outdated or incorrect content can be withdrawn.
+
+**Acceptance Criteria:**
+- Owner can revoke network sharing in one action
+- Revocation removes read-only access for non-owners in that network
+- Existing private copies owned by others remain intact
 
 ---
 
@@ -163,6 +376,8 @@ A mobile-friendly vocabulary learning app that:
 | FR-1.7d | OCR shall automatically fall back to Tesseract when offline | Should |
 | FR-1.8 | System shall allow adding example sentences to vocabulary | Could |
 | FR-1.9 | System shall allow adding pronunciation hints | Could |
+| FR-1.10 | System shall support bulk swapping source/target text for selected vocabulary entries | Should |
+| FR-1.11 | System shall support microphone dictation in manual vocabulary input fields | Should |
 
 ### FR-2: Textbook Structure
 
@@ -199,6 +414,66 @@ A mobile-friendly vocabulary learning app that:
 | FR-4.4 | System shall track time spent practicing | Could |
 | FR-4.5 | System shall show progress per section | Must |
 | FR-4.6 | System shall export progress data | Could |
+
+### FR-5: Voice & Speech
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-5.1 | System shall provide text-to-speech for vocabulary (Web Speech API + Google Cloud TTS) | Must |
+| FR-5.2 | System shall accept spoken answers via speech recognition | Must |
+| FR-5.3 | System shall analyze spoken answers for correctness using AI (Gemini) | Should |
+| FR-5.4 | System shall provide a screen-free parent quiz mode | Should |
+| FR-5.5 | System shall support group voice practice sessions | Could |
+
+### FR-6: Gamification
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-6.1 | System shall award XP for practice sessions with bonuses for streaks/accuracy | Must |
+| FR-6.2 | System shall track user level based on cumulative XP | Must |
+| FR-6.3 | System shall track daily practice streak | Must |
+| FR-6.4 | System shall define and award achievement badges | Must |
+| FR-6.5 | System shall display celebratory animations for milestones | Should |
+| FR-6.6 | System shall provide sound effects and haptic feedback | Should |
+
+### FR-7: Cloud Sync & Multi-Device
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-7.1 | System shall sync local changes to server in background | Must |
+| FR-7.2 | System shall pull server changes to local device | Must |
+| FR-7.3 | System shall support full sync for new device setup | Must |
+| FR-7.4 | System shall queue changes while offline and sync when online | Must |
+| FR-7.5 | System shall support device-to-device account transfer via token + PIN | Must |
+| FR-7.6 | System shall detect sync conflicts and preserve both versions | Should |
+| FR-7.7 | System shall never lose data during sync (soft deletes, idempotent operations) | Must |
+
+### FR-8: Networks & Competition
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-8.1 | System shall support creating networks (family, class, study group) | Must |
+| FR-8.2 | System shall support joining networks via invite code | Must |
+| FR-8.3 | System shall support role-based access (child, parent, teacher, admin) | Must |
+| FR-8.4 | System shall display leaderboards (daily, weekly, monthly, all-time) | Must |
+| FR-8.5 | System shall allow sharing books within networks | Must |
+| FR-8.6 | System shall allow copying shared books to own library | Must |
+| FR-8.7 | System shall separate supporters (parents/teachers) from competitors in leaderboards | Should |
+| FR-8.8 | System shall store and display a single visible owner for each book | Must |
+| FR-8.9 | System shall restrict editing, deletion, and share-setting changes to the book owner | Must |
+| FR-8.10 | System shall provide automatic read-only parent visibility of child-owned books within family networks | Should |
+| FR-8.11 | System shall allow read-only users to run practice sessions from visible books without edit rights | Should |
+| FR-8.12 | System shall allow users to copy read-only books into their own editable library | Must |
+| FR-8.13 | System shall allow owners to revoke network sharing at any time | Must |
+
+### FR-9: Safety & Moderation
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| FR-9.1 | System shall allow blocking users | Must |
+| FR-9.2 | System shall allow reporting users or content | Must |
+| FR-9.3 | System shall implement tiered deletion protection based on review count | Must |
+| FR-9.4 | System shall allow members to hide from leaderboards (visibility toggle) | Should |
 
 ---
 
@@ -402,50 +677,77 @@ interface ReviewAttempt {
 
 ### High-Level Architecture
 
-The architecture is **offline-first** - the app works fully without network after initial load.
+The architecture is **offline-first** — the app works fully without network after initial load. Cloud sync and social features are opt-in enhancements.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     Client (PWA) - OFFLINE-FIRST                     │
 │                                                                      │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────────┐  │
-│  │   React UI  │  │  State Mgmt │  │  Service Worker              │  │
-│  │  Components │  │   (Zustand) │  │  (Offline + Asset Caching)   │  │
+│  │   React UI  │  │  Zustand    │  │  Service Worker (Serwist)    │  │
+│  │  (Next.js   │  │  Stores     │  │  - Asset caching             │  │
+│  │   App       │  │  (12 stores)│  │  - Background sync           │  │
+│  │   Router)   │  │             │  │  - Offline support            │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────────────┘  │
-│                           │                                          │
-│  ┌────────────────────────┴──────────────────────────────────────┐  │
-│  │                  IndexedDB (Primary Storage)                   │  │
-│  │   - Vocabulary data        - Learning progress                │  │
-│  │   - Book structure         - Review sessions                  │  │
-│  │   - Captured images        - User settings                    │  │
-│  └────────────────────────────────────────────────────────────────┘ │
-│                           │                                          │
-│  ┌────────────────────────┴──────────────────────────────────────┐  │
-│  │              OCR Service (Pluggable Providers)                 │  │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐ │  │
-│  │  │ Tesseract.js │  │ Gemini       │  │ Cloud Vision/OpenAI  │ │  │
-│  │  │ (Default,    │  │ (Optional,   │  │ (Optional,           │ │  │
-│  │  │  Offline)    │  │  Cloud)      │  │  Cloud)              │ │  │
-│  │  └──────────────┘  └──────────────┘  └──────────────────────┘ │  │
-│  └────────────────────────────────────────────────────────────────┘ │
+│         │                │                       │                    │
+│  ┌──────┴────────────────┴───────────────────────┴──────────────┐   │
+│  │              Dexie (IndexedDB) — Primary Data Store           │   │
+│  │  - Books, Chapters, Sections, VocabularyItems                 │   │
+│  │  - LearningProgress (SM-2 state)                              │   │
+│  │  - Sync change queue (pending changes)                        │   │
+│  │  - User settings, gamification, achievements                  │   │
+│  │  - Networks, competition stats, shared books                  │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│         │                                                            │
+│  ┌──────┴──────────────────────────────────────────────────────┐    │
+│  │                    Sync Layer                                │    │
+│  │  - Change queue → push to server                             │    │
+│  │  - Pull server changes → apply to IndexedDB                  │    │
+│  │  - Full sync for new devices                                 │    │
+│  │  - Background sync via Service Worker                        │    │
+│  └──────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
                               │
-                              │ HTTPS (Only when using cloud OCR
-                              │        or optional sync features)
+                              │ HTTPS (when online)
                               ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│              External Services (OPTIONAL - not required)             │
+│                     Server (Next.js API Routes on Vercel)             │
 │                                                                      │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
-│  │  Google Gemini   │  │  Cloud Vision    │  │  OpenAI Vision   │   │
-│  │  API             │  │  API             │  │  API             │   │
+│  │  Auth (JWT)      │  │  Sync API        │  │  Network API     │   │
+│  │  - Register      │  │  - Push changes  │  │  - CRUD          │   │
+│  │  - Login         │  │  - Pull changes  │  │  - Leaderboards  │   │
+│  │  - Transfer      │  │  - Full sync     │  │  - Shared books  │   │
 │  └──────────────────┘  └──────────────────┘  └──────────────────┘   │
-│                                                                      │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  Future: Cloud Sync Backend (PostgreSQL, Auth)               │   │
-│  │  - Cross-device sync       - Family sharing                  │   │
-│  │  - Backup/restore          - Parent dashboard                │   │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
+│  │  Safety API      │  │  Stats API       │  │  Google Proxy    │   │
+│  │  - Block/Report  │  │  - Submit stats  │  │  - TTS           │   │
+│  │  - Deletion req  │  │                  │  │  - Vision OCR    │   │
+│  └──────────────────┘  └──────────────────┘  │  - Gemini AI     │   │
+│                                               └──────────────────┘   │
+│  ┌──────────────────────────────────────────────────────────────┐    │
+│  │  Middleware: CSRF protection, Rate limiting, Zod validation  │    │
 │  └──────────────────────────────────────────────────────────────┘   │
+│                              │                                       │
+│                              ▼                                       │
+│  ┌──────────────────────────────────────────────────────────────┐    │
+│  │  PostgreSQL (Neon Serverless) — Server Data Store             │    │
+│  │  - Users, user data (JSONB)                                   │    │
+│  │  - All learning content (mirrored from client)                │    │
+│  │  - Networks, members, competition stats                       │    │
+│  │  - Safety: blocks, reports, deletion requests                 │    │
+│  │  - Soft deletes (deletedAt) for data preservation             │    │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Server-side API key
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     Google Cloud APIs (Optional)                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
+│  │ Cloud TTS    │  │ Cloud Vision │  │ Gemini (Generative Lang) │   │
+│  │ Pronunciation│  │ OCR          │  │ Voice analysis, OCR      │   │
+│  └──────────────┘  └──────────────┘  └──────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -454,12 +756,18 @@ The architecture is **offline-first** - the app works fully without network afte
 | Feature | Offline Support | Notes |
 |---------|-----------------|-------|
 | View vocabulary | Full | All data in IndexedDB |
-| Add vocabulary (manual) | Full | Stored locally |
-| Practice/flashcards | Full | All logic client-side |
-| Progress tracking | Full | Stored locally |
+| Add vocabulary (manual) | Full | Stored locally, queued for sync |
+| Practice (all modes) | Full | All logic client-side |
+| Progress tracking | Full | SM-2 state in IndexedDB |
+| Gamification (XP, streaks) | Full | Calculated locally |
 | OCR (Tesseract) | Full | Client-side processing |
-| OCR (Cloud providers) | Requires network | Falls back to Tesseract |
-| Cloud sync | Requires network | Future feature, queues offline changes |
+| OCR (Cloud Vision/Gemini) | Requires network | Falls back to Tesseract |
+| Voice TTS (Web Speech) | Full | Browser-native |
+| Voice TTS (Google Cloud) | Requires network | Falls back to Web Speech |
+| Speech recognition | Full | Browser-native Web Speech API |
+| Cloud sync | Requires network | Changes queued offline, pushed when online |
+| Networks/Leaderboards | Requires network | Cached locally for viewing |
+| Book sharing | Requires network | Copy stored locally after download |
 
 ### Component Architecture
 
@@ -858,87 +1166,114 @@ class VocabDatabase extends Dexie {
 
 ## Implementation Phases
 
-### Phase 1: Foundation (MVP Core)
+### Phase 1: Foundation (MVP Core) — *Completed*
 
-**Duration estimate**: First milestone
+- [x] Project setup (Next.js 15, TypeScript, Tailwind CSS)
+- [x] Dexie IndexedDB schema and CRUD operations
+- [x] Home screen with bottom navigation
+- [x] Book/Chapter/Section management (hierarchical)
+- [x] Manual vocabulary entry form
+- [x] Vocabulary list view
+- [x] Basic flashcard exercise
 
-**Goals**:
-- Basic app shell with navigation
-- Manual vocabulary entry
-- Book/Chapter/Section management
-- Basic flashcard practice
-- Local storage with IndexedDB
+### Phase 2: Learning Engine — *Completed*
 
-**Deliverables**:
-- [ ] Project setup (Next.js, TypeScript, Tailwind)
-- [ ] Database schema and Dexie setup
-- [ ] Home screen with navigation
-- [ ] Book management (create, list, edit)
-- [ ] Chapter/Section management
-- [ ] Manual vocabulary entry form
-- [ ] Vocabulary list view
-- [ ] Basic flashcard exercise (no spaced repetition yet)
+- [x] SM-2 spaced repetition algorithm
+- [x] Learning progress tracking per vocabulary item
+- [x] Due words calculation and display
+- [x] Practice session setup (select sections, mode, direction)
+- [x] Multiple choice exercise with plausible distractors
+- [x] Typed answer exercise with fuzzy matching (Levenshtein, accent-aware)
+- [x] Session summary screen with stats
 
-### Phase 2: Learning Engine
+### Phase 3: Photo Import & OCR — *Completed*
 
-**Goals**:
-- Implement SM-2 spaced repetition
-- Add learning progress tracking
-- Section-based practice filtering
-- Multiple exercise types
+- [x] Camera/gallery access
+- [x] Tesseract.js integration (offline OCR)
+- [x] Google Cloud Vision integration (optional, higher accuracy)
+- [x] Pluggable OCR provider architecture
+- [x] Text extraction and vocabulary candidate parsing
+- [x] Review/edit UI for extracted words
+- [x] Automatic offline fallback to Tesseract
 
-**Deliverables**:
-- [ ] SM-2 algorithm implementation
-- [ ] Learning progress tracking
-- [ ] Due words calculation
-- [ ] Practice session setup (select sections)
-- [ ] Multiple choice exercise
-- [ ] Typed answer exercise
-- [ ] Session summary screen
+### Phase 4: PWA & Offline-First — *Completed*
 
-### Phase 3: Photo Import
+- [x] Service worker setup (Serwist)
+- [x] PWA manifest with icons
+- [x] Full offline capability
+- [x] Progress dashboard
+- [x] Safe area insets for notched devices
+- [x] 48px touch targets
+- [x] Mobile testing (Chromium, Mobile Chrome, Mobile Safari)
 
-**Goals**:
-- Camera integration
-- OCR processing
-- Vocabulary extraction and review UI
+### Phase 5: Cloud Sync & Multi-Device — *Completed*
 
-**Deliverables**:
-- [ ] Camera/gallery access
-- [ ] Tesseract.js integration
-- [ ] Text extraction pipeline
-- [ ] Vocabulary candidate parsing
-- [ ] Review/edit UI for extracted words
-- [ ] Image storage
+- [x] PostgreSQL backend (Neon serverless) with Drizzle ORM
+- [x] JWT-based authentication (code-based, no email/password)
+- [x] Push/pull incremental sync
+- [x] Full sync for new device setup
+- [x] Offline change queue with background sync
+- [x] Device-to-device account transfer (token + PIN)
+- [x] CSRF protection and rate limiting
+- [x] Security headers
 
-### Phase 4: Polish & PWA
+### Phase 6: Gamification & Engagement — *Completed*
 
-**Goals**:
-- Installable PWA
-- Offline support
-- Progress visualization
-- Performance optimization
+- [x] XP system with bonuses (streak, accuracy, difficulty)
+- [x] Level progression with celebration animations
+- [x] Daily streak tracking
+- [x] 18 achievement badges across 4 categories
+- [x] Achievement popup notifications
+- [x] Sound effects and haptic feedback
+- [x] Confetti animations for milestones
+- [x] Onboarding wizard for new users
 
-**Deliverables**:
-- [ ] Service worker setup
-- [ ] PWA manifest
-- [ ] Offline mode testing
-- [ ] Progress dashboard
-- [ ] Streak tracking
-- [ ] Difficult words view
-- [ ] Performance audit and fixes
-- [ ] Mobile testing and fixes
+### Phase 7: Voice & Speech — *Completed*
 
-### Phase 5: Future Enhancements (Post-MVP)
+- [x] Text-to-speech (Web Speech API + Google Cloud TTS)
+- [x] Speech recognition for spoken answers
+- [x] AI-powered answer analysis (Gemini)
+- [x] Voice practice mode
+- [x] Screen-free parent quiz mode
+- [x] Group voice session
+- [x] Unified TTS provider abstraction
 
-- Cloud sync and backup
-- Parent dashboard
-- Audio pronunciation (TTS)
-- Listening exercises
-- Speaking exercises with speech recognition
-- Gamification (achievements, points)
-- Multiple user profiles
-- Export/import vocabulary sets
+### Phase 8: Networks & Social — *Completed*
+
+- [x] Network creation (family, class, study group)
+- [x] Invite code system (join via XXX-XXX code)
+- [x] Role-based membership (child, parent, teacher, admin)
+- [x] Leaderboards (daily, weekly, monthly, all-time)
+- [x] Book sharing within networks
+- [x] Book copying with attribution
+- [x] Competition stats aggregation
+- [x] User blocking and content reporting
+- [x] Tiered content deletion protection
+- [x] Family setup wizard
+- [x] Internationalization (German + English)
+
+### Phase 9: Hardening & Quality — *In Progress*
+
+- [x] Unit tests for core algorithms (SM-2, fuzzy match, XP, achievements)
+- [x] Integration tests for database operations
+- [x] E2E tests for family network flow
+- [ ] API route integration tests
+- [ ] Additional E2E test flows (onboarding, practice, OCR)
+- [ ] CI/CD pipeline (lint + test + build on PR)
+- [ ] Error tracking service (Sentry)
+- [ ] Structured logging / observability
+- [ ] Test coverage reporting
+
+### Phase 10: Future Enhancements — *Planned*
+
+- [ ] Parent dashboard (child-centric progress cards, weak words, trends)
+- [ ] Sync conflict detection and resolution UI
+- [ ] GDPR data export endpoint
+- [ ] Push notifications for due words / streak reminders
+- [ ] Content Security Policy header
+- [ ] API versioning
+- [ ] Re-engagement flow for returning users
+- [ ] Dark mode
 
 ---
 
@@ -1038,6 +1373,14 @@ Roles are **per-network**, meaning the same user can have different roles in dif
 | `teacher` | Manage class roster, share books, view all students | Teachers |
 | `admin` | Full network management (auto-assigned to creator) | Network creator |
 
+### Book Access Model
+
+| Context | Visibility | Can Practice | Can Edit | Can Copy |
+|---------|------------|--------------|----------|----------|
+| Owner account | Full | Yes | Yes | N/A |
+| Family parent (child-owned book) | Auto-visible | Yes | No | Yes |
+| Class/study group member (shared book) | Visible when shared | Yes | No | Yes |
+
 ### Authentication Flow
 
 The app uses a **code-based authentication** system (no email/password):
@@ -1045,6 +1388,13 @@ The app uses a **code-based authentication** system (no email/password):
 1. **Local-only phase**: User creates profile with name/avatar, gets unique XXXX-XXXX code
 2. **Cloud registration**: When cloud features are enabled, the code becomes the login credential
 3. **Multi-device**: User enters their code on new devices to access synced data
+
+### Code Types (to reduce confusion)
+
+| Code | Format | Purpose | Example |
+|------|--------|---------|---------|
+| Account code | `XXXX-XXXX` (8 chars) | Same user account on another device (login/restore) | `AB12-XY34` |
+| Network invite code | `XXX-XXX` (6 chars) | Join a family/class/study-group with a different account | `A1B-2C3` |
 
 ```
 First Launch → Name/Avatar Prompt → Local Profile Created
@@ -1079,6 +1429,381 @@ First Launch → Name/Avatar Prompt → Local Profile Created
 | Family setup | `FamilySetupWizard` | `src/components/network/FamilySetupWizard.tsx` |
 | Network management | Networks page | `src/app/networks/page.tsx` |
 | Code awareness | `CodeAwarenessPrompt` | `src/components/profile/CodeAwarenessPrompt.tsx` |
+
+---
+
+## Sync Conflict Detection & Resolution
+
+### Problem Statement
+
+The current sync implementation uses **implicit last-write-wins** — when two devices edit the same record offline, the last push to the server silently overwrites the other. There is no conflict detection, no version tracking, and no user-facing feedback when data is lost.
+
+This is acceptable for low-conflict data (e.g., creating new vocabulary), but problematic for:
+- **Vocabulary edits** (student fixes a word on phone, parent fixes same word on tablet)
+- **Learning progress** (student practices on two devices with different results)
+- **Delete vs. edit races** (one device deletes a book while another adds vocabulary to it)
+
+### Current Sync Flow (Simplified)
+
+```
+Device A (offline)          Server              Device B (offline)
+    │                         │                        │
+    │── edit vocab "apple" ──>│                        │
+    │   (push)                │                        │
+    │                         │<── edit vocab "apple" ─│
+    │                         │    (push — OVERWRITES) │
+    │                         │                        │
+    │<── pull ────────────────│                        │
+    │   (gets B's version,                             │
+    │    A's edit LOST)                                │
+```
+
+### Proposed Design: Version-Based Conflict Detection
+
+#### 1. Add version tracking to server records
+
+Each syncable record gets a `version` column (monotonically incrementing integer):
+
+```typescript
+// Server schema additions
+version: integer('version').notNull().default(1),
+```
+
+On every server-side update, `version` is incremented:
+```sql
+UPDATE vocabulary_items SET ..., version = version + 1 WHERE ...
+```
+
+#### 2. Client sends `expectedVersion` with updates
+
+The sync change record is extended:
+
+```typescript
+interface SyncChange {
+  // ... existing fields
+  expectedVersion?: number  // Version the client last saw (for updates only)
+}
+```
+
+When the client edits a record that has been pulled from the server, it includes the `version` it currently has. New records (creates) don't need a version.
+
+#### 3. Server detects conflicts on push
+
+```
+Push handler logic:
+
+IF operation == 'update':
+  currentVersion = SELECT version FROM table WHERE localId = ? AND userId = ?
+
+  IF change.expectedVersion IS NULL:
+    // Legacy client or first sync — accept (last-write-wins fallback)
+    UPDATE ... SET version = version + 1
+
+  ELSE IF change.expectedVersion == currentVersion:
+    // No conflict — client had the latest version
+    UPDATE ... SET version = version + 1
+
+  ELSE IF change.expectedVersion < currentVersion:
+    // CONFLICT — record was modified since client last pulled
+    → Return conflict instead of applying change
+```
+
+#### 4. Conflict response format
+
+```typescript
+interface PushResponse {
+  success: boolean
+  processed: number
+  conflicts: ConflictRecord[]   // NEW
+  errors: ErrorRecord[]
+}
+
+interface ConflictRecord {
+  changeId: string              // Client's change ID
+  table: string
+  localId: string
+  clientVersion: number         // What the client had
+  serverVersion: number         // What the server has now
+  serverData: Record<string, unknown>  // Current server state
+  clientData: Record<string, unknown>  // What the client tried to write
+}
+```
+
+#### 5. Client-side conflict resolution
+
+Conflicts are stored locally and surfaced to the user:
+
+```typescript
+// New IndexedDB table
+interface SyncConflict {
+  id: string
+  table: string
+  localId: string
+  clientData: Record<string, unknown>
+  serverData: Record<string, unknown>
+  detectedAt: number
+  resolvedAt?: number
+  resolution?: 'keep-mine' | 'keep-theirs' | 'merged'
+}
+```
+
+**Resolution strategies by data type:**
+
+| Data Type | Default Strategy | User Intervention |
+|-----------|-----------------|-------------------|
+| Vocabulary text edits | Show diff, let user pick | Yes — modal with both versions |
+| Learning progress | Merge: keep highest repetitions, latest review date | No — automatic |
+| Book/chapter metadata | Last-write-wins with notification | Optional |
+| Deletes vs. edits | Preserve the edit, notify about attempted delete | Yes — confirmation |
+
+#### 6. Conflict resolution UI
+
+For vocabulary conflicts (the most user-visible case):
+
+```
+┌────────────────────────────────────────────┐
+│  ⚠️  Sync Conflict                         │
+│                                            │
+│  "apple" was edited on two devices:        │
+│                                            │
+│  ┌──────────────────────────────────────┐  │
+│  │ This device:    "la pomme (f.)"      │  │
+│  │ Other device:   "la pomme (fem.)"    │  │
+│  └──────────────────────────────────────┘  │
+│                                            │
+│  ┌──────────┐  ┌──────────┐               │
+│  │ Keep Mine │  │Keep Other│               │
+│  └──────────┘  └──────────┘               │
+│                                            │
+└────────────────────────────────────────────┘
+```
+
+For learning progress (automatic merge):
+```
+Merge rule:
+  easeFactor    = average of both
+  interval      = max of both
+  repetitions   = max of both
+  totalReviews  = sum of both (deduplicated by date)
+  correctReviews = sum of both (deduplicated by date)
+  nextReviewDate = recalculate from merged state
+```
+
+#### 7. Migration path
+
+The version column can be added without breaking existing clients:
+- Server adds `version` column with default `1`
+- Old clients send no `expectedVersion` → server accepts (last-write-wins fallback)
+- New clients start sending `expectedVersion` → server detects conflicts
+- Gradual rollout with no breaking changes
+
+#### 8. Implementation scope
+
+| Component | Changes |
+|-----------|---------|
+| `server-schema.ts` | Add `version` column to all syncable tables |
+| `push/route.ts` | Add version check before updates, return conflicts |
+| `sync-queue.ts` | Store `expectedVersion` in change records |
+| `apply-changes.ts` | Track record versions locally after pull |
+| `sync-service.ts` | Handle conflict responses, store in conflict table |
+| New: `SyncConflictModal` | UI for resolving vocabulary conflicts |
+| New: `conflict-resolver.ts` | Auto-merge logic for learning progress |
+| `db.ts` | Add `syncConflicts` table to Dexie schema |
+
+---
+
+## Parent Dashboard Design
+
+### Problem Statement
+
+Parents can join family networks and see a leaderboard, but the experience is network-centric, not child-centric. A parent with two children sees a ranked list — not a dashboard showing each child's progress, struggles, and trends. The data to power a richer parent experience already exists in competition stats, learning progress, and network membership, but is not surfaced.
+
+### Current Parent Experience
+
+```
+Parent opens app → Networks → Family Network → Leaderboard tab
+                                              → Members tab
+                                              → Books tab
+```
+
+**What parents see today:**
+- Leaderboard with children ranked by XP (parent shown as unranked "supporter")
+- Per-child: XP, accuracy %, streak days, words mastered (in leaderboard row)
+- Member list with visibility toggles
+- Shared books gallery
+
+**What parents DON'T see:**
+- Which words a child struggles with
+- Whether a child is improving or declining over time
+- Per-book/chapter progress breakdown
+- How often a child practices (session count)
+- Comparison across time periods (this week vs. last week)
+
+### Proposed Design
+
+#### Route: `/networks/[id]/dashboard`
+
+A new tab "Dashboard" in the network detail view, visible only to `parent`, `teacher`, and `admin` roles. This tab replaces the leaderboard as the default view for supporters.
+
+#### Data Sources (already available)
+
+| Data | Source | Currently Used? |
+|------|--------|----------------|
+| Words reviewed per period | `competitionStats.wordsReviewed` | In leaderboard only |
+| Words mastered per period | `competitionStats.wordsMastered` | Icon in leaderboard |
+| Accuracy percentage | `competitionStats.accuracyPercentage` | Tiny text in leaderboard |
+| Streak days | `competitionStats.streakDays` | In leaderboard |
+| XP earned | `competitionStats.xpEarned` | In leaderboard |
+| Sessions completed | `competitionStats.sessionsCompleted` | NOT displayed |
+| Weak words | `learningProgress` where `correctReviews/totalReviews < 0.5` | NOT shared |
+| Per-book progress | `vocabularyItems` + `learningProgress` by book | NOT aggregated |
+
+#### New API Endpoint
+
+```
+GET /api/networks/[id]/children/[userId]/progress
+```
+
+Returns aggregated progress data for a specific child, accessible only by parent/teacher/admin role members. Respects the child's privacy settings (`shareProgress`, `shareStreak`, `shareWeakWords` from `ProgressShareSettings`).
+
+```typescript
+interface ChildProgress {
+  userId: string
+  name: string
+  avatar: string
+
+  // Current stats
+  currentStreak: number
+  totalWordsLearned: number
+  totalWordsMastered: number  // interval >= 21 days
+
+  // This week vs. last week
+  thisWeek: PeriodStats
+  lastWeek: PeriodStats
+  trend: 'improving' | 'stable' | 'declining'
+
+  // Per-book breakdown
+  books: BookProgress[]
+
+  // Weak words (if child has opted in)
+  weakWords?: WeakWord[]
+}
+
+interface PeriodStats {
+  wordsReviewed: number
+  wordsMastered: number
+  accuracy: number
+  sessionsCompleted: number
+  xpEarned: number
+}
+
+interface BookProgress {
+  bookId: string
+  bookName: string
+  language: string
+  totalWords: number
+  wordsMastered: number
+  percentComplete: number
+}
+
+interface WeakWord {
+  sourceText: string
+  targetText: string
+  accuracy: number        // correctReviews / totalReviews
+  totalAttempts: number
+  bookName: string
+}
+```
+
+#### UI Components
+
+##### ChildProgressCard
+
+One card per child in the family, showing at-a-glance status:
+
+```
+┌────────────────────────────────────────────┐
+│  🦊 Max                                    │
+│                                            │
+│  🔥 12-day streak    ⭐ Level 8 (2,450 XP) │
+│                                            │
+│  This week                                 │
+│  ┌────────────────────────────────────┐    │
+│  │  42 words reviewed   92% accuracy  │    │
+│  │  8 words mastered    5 sessions    │    │
+│  └────────────────────────────────────┘    │
+│                                            │
+│  📈 Improving vs. last week (+15 words)    │
+│                                            │
+│  [View Details]                            │
+└────────────────────────────────────────────┘
+```
+
+##### ChildDetailView
+
+Expanded view when parent taps "View Details":
+
+```
+┌────────────────────────────────────────────┐
+│  ← Max's Progress                          │
+│                                            │
+│  ── Books ──────────────────────────────── │
+│                                            │
+│  📕 Découvertes 2                          │
+│  ████████████░░░░░░░░  58% (87/150 words) │
+│                                            │
+│  📗 Latein Grundwortschatz                 │
+│  ██████░░░░░░░░░░░░░░  32% (48/150 words) │
+│                                            │
+│  ── Weak Words ─────────────────────────── │
+│  (Words Max finds difficult)               │
+│                                            │
+│  la bibliothèque → die Bibliothek   30%    │
+│  le professeur → der Lehrer         40%    │
+│  la géographie → die Erdkunde       45%    │
+│                                            │
+│  ── Weekly Activity ────────────────────── │
+│  Mo  Tu  We  Th  Fr  Sa  Su               │
+│  ██  ██  ██  ░░  ██  ██  ░░               │
+│  12  18  8       15  9                     │
+│                                            │
+└────────────────────────────────────────────┘
+```
+
+#### Privacy Controls
+
+Children's data sharing is opt-in, controlled by `ProgressShareSettings`:
+
+| Setting | Default | What it controls |
+|---------|---------|-----------------|
+| `shareProgress` | `true` | XP, streak, words mastered, accuracy visible to parents |
+| `shareStreak` | `true` | Streak visible in parent dashboard |
+| `shareWeakWords` | `false` | Weak words list visible to parents |
+
+The child can toggle these in Settings → Privacy. If `shareWeakWords` is off, the parent dashboard shows a message: *"Max hasn't enabled sharing difficult words. Ask them to turn it on in Settings → Privacy."*
+
+#### Implementation Scope
+
+| Component | Type | Description |
+|-----------|------|-------------|
+| `GET /api/networks/[id]/children/[userId]/progress` | API route | Aggregates child data with privacy checks |
+| `ChildProgressCard.tsx` | Component | Summary card per child |
+| `ChildDetailView.tsx` | Component | Expanded per-child progress view |
+| `WeakWordsList.tsx` | Component | Weak words with accuracy indicators |
+| `BookProgressBar.tsx` | Component | Per-book mastery progress bar |
+| `WeeklyActivityGrid.tsx` | Component | Daily activity heatmap |
+| `ParentDashboard.tsx` | Component | Container for all child cards |
+| `PrivacySettings.tsx` | Update | Surface `shareWeakWords` toggle for children |
+| `NetworkDetail.tsx` | Update | Add "Dashboard" tab for parent/teacher roles |
+
+#### Design Principles
+
+1. **Child-centric, not metric-centric** — lead with the child's name and avatar, not numbers
+2. **Encouraging tone** — show "improving" trends prominently; don't highlight failures
+3. **Respect privacy** — weak words are opt-in; never expose individual answers or session transcripts
+4. **Actionable** — if a child struggles with specific words, a parent can suggest extra practice or help
+5. **Lightweight** — aggregated stats only; no real-time tracking or surveillance features
+6. **Age-appropriate** — designed for parents of ~12-year-olds, not helicopter monitoring
 
 ---
 
@@ -1127,3 +1852,5 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 1.0 | 2026-01-20 | Initial | Initial requirements and architecture |
 | 1.1 | 2026-01-20 | Update | Added pluggable OCR provider architecture (Gemini, Cloud Vision, OpenAI, Tesseract); Reinforced offline-first design; Added offline capability matrix |
 | 1.2 | 2026-01-26 | Update | Added Profile & Network System section documenting user profiles, network types, roles, and authentication flow |
+| 2.0 | 2026-02-08 | Update | Major update: Added user stories for all implemented features (Epics 5-9: Voice, Gamification, Cloud Sync, Safety, Book Sharing); Added functional requirements FR-5 through FR-9; Updated architecture diagram to reflect current server/client/sync topology; Replaced implementation phases with completed/in-progress/planned status; Added Sync Conflict Detection & Resolution design; Added Parent Dashboard UX design |
+| 2.1 | 2026-02-14 | Update | Added simplified book ownership/access model, expanded Epic 9 user stories for owner/parent/read-only flows, clarified account vs network code formats, and documented bulk language swap plus voice-assisted manual entry requirements |

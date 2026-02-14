@@ -2,198 +2,389 @@
 
 ## Project Overview
 
-This is a vocabulary learning application designed for a 12-year-old student at a German Gymnasium learning their second foreign language. The application helps track, practice, and master vocabulary from school textbooks.
+A Progressive Web App (PWA) for vocabulary learning, designed primarily for students at German Gymnasien learning their second foreign language. The app is offline-first, uses spaced repetition (SM-2), supports voice-based practice with AI analysis, and includes social/competitive features through networks (family, class, study group).
 
-## Target User
+## Target Users
 
-- **Primary user**: 12-year-old student
-- **School type**: Gymnasium in Hamburg, Germany
-- **Use case**: Learning second foreign language vocabulary (typically French, Spanish, or Latin)
+- **Primary**: 12-year-old student at a Gymnasium in Hamburg, Germany
+- **Secondary**: Parents wanting to track their child's learning progress
+- **Tertiary**: Teachers managing classroom vocabulary assignments
 
 ## Core Principles
 
 ### Simplicity First
-- The UI must be intuitive enough for a 12-year-old to use without parental assistance
+- UI must be intuitive enough for a 12-year-old without parental assistance
 - Keep interactions minimal and focused
 - Avoid overwhelming with options
 
-### Mobile-First Design
-- Primary interaction will be via mobile phone (for photo capture of textbook pages)
+### Mobile-First PWA
+- Primary interaction via mobile phone (photo capture, voice practice)
 - All features must work well on mobile devices
-- Consider PWA for cross-platform compatibility without app store hassles
-
-### Pedagogically Sound
-- Follow spaced repetition principles for effective learning
-- Track learning progress per vocabulary item
-- Allow focus on specific textbook sections for targeted studying
-
-### Privacy-Conscious
-- This is a child's learning data - handle with care
-- Prefer local-first storage where possible
-- Minimize data sent to external services
+- Installable as PWA — no app store required
 
 ### Offline-First
 - App MUST work fully offline after initial load
-- All vocabulary data stored locally in IndexedDB
+- All vocabulary data stored locally in IndexedDB (Dexie)
 - Learning sessions work without network connectivity
-- OCR can fall back to client-side processing (Tesseract.js)
-- Cloud sync is optional enhancement, never required
+- OCR falls back to client-side Tesseract.js when offline
+- Cloud sync is an optional enhancement, never required
 
-## Tech Stack Guidance
+### Pedagogically Sound
+- SM-2 spaced repetition for effective long-term retention
+- Multiple practice modes (flashcard, multiple choice, typed, voice)
+- Gamification (XP, streaks, achievements) to sustain motivation
 
-### Recommended Stack
-- **Frontend**: React with TypeScript, Tailwind CSS
-- **Backend**: Node.js with Express or Next.js API routes
-- **Database**: SQLite for simplicity (local-first) or PostgreSQL for cloud deployment
-- **OCR**: Google Cloud Vision API or Tesseract.js for vocabulary extraction from photos
-- **Deployment**: Vercel or Railway for simple deployment
+### Privacy-Conscious
+- This is a child's learning data — handle with care
+- Local-first storage; cloud sync is opt-in
+- Minimize data sent to external services
+- GDPR compliance required (German minor)
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Framework** | Next.js 15 (App Router, Turbopack) |
+| **UI** | React 19, TypeScript 5.7, Tailwind CSS 3.4 |
+| **Animations** | Framer Motion 12 |
+| **Component variants** | class-variance-authority (CVA) |
+| **State management** | Zustand 5 (persisted stores) |
+| **Client database** | Dexie 4 (IndexedDB) |
+| **Server database** | PostgreSQL via Neon (serverless) |
+| **ORM** | Drizzle ORM 0.38 |
+| **Validation** | Zod 3.24 |
+| **Auth** | JWT via jose (HS256, 14-day expiry) |
+| **i18n** | next-intl 4.8 (German + English) |
+| **PWA** | Serwist 9.5 (service worker) |
+| **Icons** | lucide-react |
+| **OCR** | Tesseract.js (offline) + Google Cloud Vision (optional) |
+| **TTS** | Web Speech API + Google Cloud TTS (optional) |
+| **AI** | Google Gemini API (voice analysis, OCR) |
+| **Testing** | Vitest 3 (unit/integration), Playwright 1.50 (E2E) |
+| **Deployment** | Vercel (serverless) |
 
 ### Code Style
 - TypeScript strict mode enabled
 - Functional components with React hooks
-- Use Zod for runtime validation
-- Keep components small and focused
-- Write tests for business logic (spaced repetition algorithm, vocabulary matching)
+- Zod for runtime validation on all API inputs
+- No semicolons, single quotes, 2-space indent, 100-char line width (Prettier)
+- Path alias: `@/` maps to `src/`
 
 ## Project Structure
 
 ```
 /
-├── apps/
-│   └── web/                 # Main web application (Next.js)
-│       ├── app/             # Next.js app router
-│       ├── components/      # React components
-│       └── lib/             # Shared utilities
-├── packages/
-│   ├── core/                # Core business logic
-│   │   ├── vocabulary/      # Vocabulary management
-│   │   ├── learning/        # Spaced repetition, exercises
-│   │   └── ingestion/       # OCR orchestration and text processing
-│   │       ├── ocr-provider.ts      # OCR provider interface
-│   │       ├── tesseract-provider.ts # Tesseract.js (offline)
-│   │       ├── gemini-provider.ts    # Google Gemini
-│   │       ├── vision-provider.ts    # Google Cloud Vision
-│   │       └── openai-provider.ts    # OpenAI GPT-4 Vision
-│   └── database/            # Database schema and queries
-├── docs/                    # Documentation
-└── tests/                   # Integration tests
+├── src/
+│   ├── app/                        # Next.js App Router
+│   │   ├── layout.tsx              # Root layout (i18n, providers, fonts)
+│   │   ├── page.tsx                # Home / dashboard
+│   │   ├── achievements/           # Achievements page
+│   │   ├── add/                    # Add vocabulary (manual)
+│   │   │   └── scan/               # OCR photo scanning
+│   │   ├── library/                # Book library
+│   │   │   └── [...slug]/          # Dynamic book/chapter/section navigation
+│   │   ├── login/                  # Code-based login
+│   │   ├── networks/               # Network list
+│   │   │   └── [id]/               # Individual network detail
+│   │   ├── onboarding/             # First-time setup wizard
+│   │   ├── practice/               # Practice mode selection
+│   │   │   ├── group/              # Group voice session
+│   │   │   ├── parent-quiz/        # Screen-free parent quiz mode
+│   │   │   ├── session/            # Active practice session
+│   │   │   ├── summary/            # Session results
+│   │   │   └── voice/              # Voice practice
+│   │   ├── progress/               # Learning statistics
+│   │   ├── settings/               # User preferences
+│   │   ├── transfer/               # Device-to-device account transfer
+│   │   └── api/                    # API routes (REST)
+│   │       ├── auth/               # Register, login, device transfer
+│   │       ├── sync/               # Push, pull, full sync
+│   │       ├── networks/           # Network CRUD, members, leaderboard
+│   │       ├── shared-books/       # Book sharing
+│   │       ├── stats/              # Competition stats submission
+│   │       ├── blocks/             # User blocking
+│   │       ├── reports/            # Content reporting
+│   │       ├── deletion-requests/  # Protected content deletion
+│   │       ├── google/             # Proxy for Google Cloud APIs (TTS, Vision, Gemini)
+│   │       └── users/              # User lookup
+│   │
+│   ├── components/                 # React components (feature-organized)
+│   │   ├── ui/                     # Reusable primitives (Button, Input, Modal, Card, etc.)
+│   │   ├── layout/                 # Header, BottomNav, PageContainer
+│   │   ├── practice/               # FlashCard, MultipleChoice, TypedAnswer, VoiceSession
+│   │   ├── library/                # Book browser, vocabulary lists
+│   │   ├── network/                # Network creation, joining, member management
+│   │   ├── competition/            # Leaderboard displays
+│   │   ├── gamification/           # XP, levels, streaks, achievements UI
+│   │   ├── onboarding/             # Profile setup, welcome slides
+│   │   ├── ocr/                    # Photo scanning interface
+│   │   ├── profile/                # User settings, code awareness
+│   │   ├── safety/                 # Blocking, reporting UIs
+│   │   ├── sharing/                # Book sharing controls
+│   │   ├── progress/               # Statistics views
+│   │   ├── recommendations/        # Study suggestions
+│   │   ├── vocabulary/             # Vocabulary item displays
+│   │   ├── feedback/               # Toast, offline banner
+│   │   ├── error/                  # Error boundaries
+│   │   ├── migration/              # Device transfer UI
+│   │   ├── providers/              # Context providers (sync, global)
+│   │   ├── user/                   # User identity UI
+│   │   └── widgets/                # Reusable widget components
+│   │
+│   ├── stores/                     # Zustand state stores
+│   │   ├── user-session.ts         # User profiles, auth state
+│   │   ├── practice-session.ts     # Active practice session
+│   │   ├── voice-session.ts        # Voice practice state
+│   │   ├── group-voice-session.ts  # Multi-user voice sessions
+│   │   ├── gamification.ts         # XP, levels, streaks
+│   │   ├── achievements.ts         # Badge/achievement state
+│   │   ├── competition.ts          # Leaderboard data
+│   │   ├── settings.ts             # User preferences
+│   │   ├── network.ts              # Current network context
+│   │   ├── sync.ts                 # Sync status
+│   │   ├── onboarding.ts           # First-time user flow
+│   │   └── toast.ts                # Notification queue
+│   │
+│   ├── hooks/                      # Custom React hooks
+│   │   ├── usePractice.ts          # Main practice logic
+│   │   ├── useAsyncAction.ts       # Generic async with loading/error/toast
+│   │   ├── useTTS.ts               # Text-to-speech
+│   │   ├── useSpeechRecognition.ts # Voice input
+│   │   ├── useOCR.ts               # Image processing
+│   │   ├── useCamera.ts            # Camera access
+│   │   ├── useNetwork.ts           # Network operations
+│   │   ├── useFamilySharing.ts     # Family network features
+│   │   ├── useCompetitionSync.ts   # Leaderboard sync
+│   │   ├── useOnline.ts            # Connectivity detection
+│   │   ├── useSound.ts             # Audio playback
+│   │   ├── useHaptics.ts           # Vibration feedback
+│   │   ├── useReducedMotion.ts     # Motion preference
+│   │   ├── useAnalytics.ts         # Event tracking
+│   │   ├── useGoogleApiStatus.ts   # Google API availability
+│   │   ├── useImageProcessing.ts   # Image optimization
+│   │   └── useStudyRecommendations.ts
+│   │
+│   ├── lib/                        # Core business logic & utilities
+│   │   ├── db/
+│   │   │   ├── db.ts               # Dexie database class + CRUD operations
+│   │   │   ├── schema.ts           # TypeScript types + Zod validation schemas
+│   │   │   ├── server-schema.ts    # Drizzle ORM server schema (PostgreSQL)
+│   │   │   └── postgres.ts         # Neon database connection
+│   │   ├── sync/
+│   │   │   ├── sync-service.ts     # Push/pull/full sync orchestration
+│   │   │   ├── sync-queue.ts       # Change queue (IndexedDB)
+│   │   │   ├── apply-changes.ts    # Apply server changes to local DB
+│   │   │   └── useSync.ts          # Sync React hook
+│   │   ├── learning/
+│   │   │   ├── sm2.ts              # SM-2 spaced repetition algorithm
+│   │   │   ├── fuzzy-match.ts      # Levenshtein-based answer matching
+│   │   │   ├── phonetic-match.ts   # Phonetic similarity
+│   │   │   ├── answer-extractor.ts # Parse answers from voice input
+│   │   │   └── study-recommendations.ts
+│   │   ├── services/
+│   │   │   ├── network-service.ts  # Network CRUD, leaderboards
+│   │   │   ├── family-sharing.ts   # Family network features
+│   │   │   ├── voice-tutor.ts      # Voice practice orchestration
+│   │   │   ├── voice-analyzer.ts   # AI-powered answer analysis
+│   │   │   ├── group-conversation.ts
+│   │   │   ├── unified-tts.ts      # TTS provider abstraction
+│   │   │   ├── google-tts.ts       # Google Cloud TTS
+│   │   │   ├── text-to-speech.ts   # Web Speech API TTS
+│   │   │   ├── speech-recognition.ts
+│   │   │   ├── content-protection.ts
+│   │   │   ├── duplicate-detection.ts
+│   │   │   ├── image-processing.ts
+│   │   │   └── analytics.ts
+│   │   ├── gamification/
+│   │   │   ├── xp.ts               # XP calculation + levels
+│   │   │   └── achievements.ts     # Achievement definitions + checking
+│   │   ├── ocr/
+│   │   │   ├── ocr-service.ts      # OCR provider orchestration
+│   │   │   ├── parser.ts           # Text → vocabulary candidate parsing
+│   │   │   ├── name-extractor.ts
+│   │   │   └── types.ts
+│   │   ├── auth/
+│   │   │   └── jwt.ts              # JWT sign/verify (jose)
+│   │   ├── api/
+│   │   │   ├── csrf.ts             # CSRF/CORS protection middleware
+│   │   │   ├── rate-limit.ts       # Rate limiting
+│   │   │   └── pagination.ts
+│   │   ├── audio/
+│   │   │   └── sounds.ts           # Sound effects
+│   │   ├── haptics/
+│   │   │   └── haptics.ts          # Vibration API wrapper
+│   │   └── utils/
+│   │       ├── cn.ts               # Tailwind class merge (clsx + twMerge)
+│   │       ├── id.ts               # UUID generation
+│   │       ├── user-id.ts          # XXXX-XXXX user code generation
+│   │       ├── messages.ts         # Encouraging feedback messages
+│   │       ├── language-codes.ts   # ISO language code mappings
+│   │       ├── accent-helpers.ts   # Diacritic processing
+│   │       ├── date.ts             # Date formatting
+│   │       └── validation.ts       # Shared validation helpers
+│   │
+│   ├── i18n/                       # Internationalization config
+│   └── styles/
+│       └── globals.css             # Tailwind directives, safe areas, animations
+│
+├── messages/                       # i18n translation files
+│   ├── de.json                     # German (default)
+│   └── en.json                     # English
+│
+├── drizzle/                        # Generated database migrations (SQL)
+├── tests/
+│   ├── setup.ts                    # Global test setup (mocks)
+│   ├── unit/                       # Vitest unit tests
+│   ├── integration/                # Vitest integration tests
+│   └── e2e/                        # Playwright E2E tests
+│
+├── scripts/
+│   └── db-migrate.js               # Migration runner for deployments
+│
+├── docs/                           # Documentation
+│   ├── REQUIREMENTS_AND_ARCHITECTURE.md
+│   ├── PROJECT_LESSONS.md
+│   ├── UX-UI-IMPROVEMENT-PLAN.md
+│   └── GOOGLE_CLOUD_SETUP.md
+│
+├── public/                         # Static assets (icons, manifest)
+│
+└── Config files:
+    ├── package.json
+    ├── tsconfig.json               # strict: true
+    ├── next.config.js              # Security headers, PWA config
+    ├── tailwind.config.js          # Custom theme (colors, touch targets)
+    ├── drizzle.config.ts           # Drizzle ORM config
+    ├── vitest.config.ts
+    ├── playwright.config.ts        # Chromium, Mobile Chrome, Mobile Safari
+    ├── postcss.config.js
+    └── .prettierrc                 # No semi, single quotes, 100 width
 ```
 
 ## Key Domain Concepts
 
 ### Vocabulary Item
-A single word or phrase to learn, consisting of:
-- Source language text (German)
-- Target language text (foreign language)
-- Optional: pronunciation, example sentence, grammatical info
-- Metadata: book, chapter, section, page number, date added
+A single word or phrase to learn:
+- Source text (German) and target text (foreign language)
+- Optional: notes, hints (per-language), word type, gender, examples, conjugations, image
+- Belongs to a book, optionally to a chapter and section
 
-### Learning Progress
+### Learning Progress (SM-2)
 Per vocabulary item per user:
-- Familiarity level (0-5 scale, similar to Anki)
-- Last review date
-- Next review date (calculated via spaced repetition)
-- Number of correct/incorrect attempts
+- `easeFactor` (default 2.5, min 1.3), `interval` (days), `repetitions` (consecutive correct)
+- `nextReviewDate`, `totalReviews`, `correctReviews`, `lastReviewDate`
 
-### Textbook Source
-Metadata about where vocabulary comes from:
-- Book title and edition
-- Chapter/Unit number
-- Section/Lesson within chapter
-- Page range
+### Textbook Structure
+Hierarchical: Book → Chapter → Section
+- Books have a language and cover color
+- Sections can be marked "covered in class"
+- Vocabulary can be assigned at book, chapter, or section level
 
-### Exercise Types (MVP)
-1. **Flashcard**: Show one side, reveal other
-2. **Multiple Choice**: Pick correct translation from options
-3. **Type Answer**: Type the translation (with fuzzy matching for typos)
+### Exercise Types
+1. **Flashcard** — show one side, tap to reveal, self-rate
+2. **Multiple Choice** — 4 options, instant feedback
+3. **Typed Answer** — type translation, fuzzy matching with configurable strictness
+4. **Voice Practice** — speak answer, AI analysis via Gemini
+5. **Parent Quiz** — screen-free voice mode for parent-led practice
+6. **Group Voice** — multi-user voice session
+
+### Networks
+Social groups for competition and sharing:
+- Types: `family`, `class`, `study_group`
+- Roles (per-network): `child`, `parent`, `teacher`, `admin`
+- Features: leaderboards (daily/weekly/monthly/all-time), shared books, invite codes
+
+### Data Sync
+Offline-first with optional cloud sync:
+- Local: Dexie (IndexedDB) is the source of truth
+- Server: PostgreSQL (Neon) for cross-device sync and network features
+- Changes queued locally, pushed/pulled in background
+- Full sync available for new device setup
 
 ## Development Guidelines
 
 ### When Adding Features
-1. Always consider the 12-year-old user - would they understand this?
+1. Always consider the 12-year-old user — would they understand this?
 2. Keep the learning flow uninterrupted
 3. Celebrate successes, be encouraging on mistakes
-4. Test on mobile devices
+4. Test on mobile devices (PWA)
+5. Ensure offline functionality is preserved
 
 ### When Working with OCR/Ingestion
-1. Textbook formats vary - build for flexibility
+1. Textbook formats vary — build for flexibility
 2. Always allow manual correction of OCR results
-3. Save original images for debugging/reprocessing
-4. Handle multiple columns, vocabulary boxes, etc.
-5. **Use pluggable provider pattern** - all OCR providers implement `OCRProvider` interface
-6. Default to offline-capable Tesseract.js; cloud providers are optional upgrades
-7. Never hard-code a specific provider - use dependency injection
+3. Use pluggable provider pattern — all providers implement `OCRProvider` interface
+4. Default to offline-capable Tesseract.js; cloud providers are optional
 
-### When Working with Learning Algorithm
-1. Start simple (Leitner system or SM-2)
-2. Make algorithm parameters configurable for tuning
-3. Log learning sessions for analysis
-4. Never lose learning progress data
+### When Working with the Learning Algorithm
+1. SM-2 is implemented — modify parameters, don't replace the algorithm
+2. Never lose learning progress data
+3. Test scheduling edge cases (long breaks, rapid reviews)
 
-## MVP Scope
+### When Working with Sync
+1. Local database is the source of truth — server is secondary
+2. All writes go to IndexedDB first, then queue for sync
+3. Sync failures must not block the user
+4. Test offline → online transitions
 
-The MVP focuses exclusively on:
-1. Manual vocabulary entry (with photo-assisted OCR as stretch goal)
-2. Basic flashcard practice
-3. Progress tracking
-4. Section-based filtering
+### When Working with the API
+1. All inputs validated with Zod schemas (in `src/lib/db/schema.ts`)
+2. All routes check JWT auth via `getUserFromRequest()`
+3. CSRF protection on all state-changing requests
+4. Return consistent JSON: `{ success, data }` or `{ error, details }`
 
-NOT in MVP:
-- Listening exercises
-- Speaking exercises
-- Multi-user/family features
-- Gamification beyond basic progress
-- Social features
-
-## Commands for Development
+## Commands
 
 ```bash
 # Development
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run test         # Run tests
-npm run lint         # Lint code
+npm run dev              # Start dev server (Turbopack)
+npm run build            # Production build
+npm run lint             # ESLint (via Next.js)
+npm run format           # Prettier auto-format
+
+# Testing
+npm test                 # Vitest unit/integration tests
+npm run test:ui          # Vitest with browser UI
+npm run test:e2e         # Playwright E2E tests
 
 # Database
-npm run db:migrate   # Run migrations
-npm run db:seed      # Seed test data
-npm run db:studio    # Open database GUI
+npm run db:generate      # Generate migrations from schema changes
+npm run db:migrate       # Run pending migrations
+npm run db:push          # Force push schema to DB (dev only)
+npm run db:studio        # Open Drizzle Studio (visual DB explorer)
+
+# Deployment
+npm run vercel-build     # Vercel production build (runs migrations + next build)
 ```
 
 ## External Services
 
-### OCR (for vocabulary ingestion)
-The OCR system uses a **pluggable provider architecture** to support multiple backends:
+### Google Cloud APIs (optional, server-proxied)
+All accessed through `/api/google/*` routes with server-side `GOOGLE_API_KEY`:
+- **Cloud Text-to-Speech** — high-quality pronunciation
+- **Cloud Vision** — OCR for vocabulary extraction
+- **Gemini (Generative Language)** — AI-powered voice answer analysis, structured OCR
 
-| Provider | Type | Pros | Cons |
-|----------|------|------|------|
-| Tesseract.js | Client-side | Free, offline, no API keys | Lower accuracy, larger bundle |
-| Google Gemini | Cloud API | Excellent accuracy, understands context, can extract structured vocab | Requires API key, needs internet |
-| Google Cloud Vision | Cloud API | High accuracy, multi-language | Cost per request, needs internet |
-| OpenAI GPT-4 Vision | Cloud API | Context-aware extraction | Higher cost, needs internet |
-
-**Strategy**:
-- Default to Tesseract.js (works offline, free)
-- Allow user to configure cloud provider for better accuracy
-- Cloud providers accessed via pluggable adapter pattern
-- All providers implement same `OCRProvider` interface
-
-### Text-to-Speech (future)
-- Web Speech API (free, built into browsers)
-- Google Cloud Text-to-Speech (higher quality)
+### Environment Variables
+```
+DATABASE_URL     # Neon PostgreSQL connection string
+JWT_SECRET       # Secret for JWT signing (min 32 chars)
+GOOGLE_API_KEY   # Google Cloud API key (optional, server-side only)
+```
 
 ## Testing Strategy
 
-- Unit tests for spaced repetition algorithm
-- Unit tests for vocabulary matching/fuzzy search
-- Integration tests for OCR pipeline
-- E2E tests for critical user flows (add vocab, practice session)
-- Manual testing on actual textbook photos
-- Run `npm run build` after any substantial change (routing, data flow, or new UI logic) to catch type/build errors early.
+- **Unit tests**: SM-2 algorithm, fuzzy matching, XP calculation, achievements, user ID generation, OCR parsing
+- **Integration tests**: Database CRUD with cascade deletes, duplicate detection
+- **E2E tests**: Family network flows (Playwright on Chromium + mobile viewports)
+- Run `npm run build` after any substantial change to catch type errors early
 
-## Security Considerations
+## Security
 
-- No authentication required for MVP (single-user, local device)
-- If adding cloud sync: use proper auth, encrypt data at rest
-- OCR images may contain copyrighted textbook content - don't store longer than necessary
-- Follow GDPR guidelines (German user, child's data)
+- JWT auth with XXXX-XXXX user codes (no email/password)
+- CSRF protection on all state-changing API requests
+- Rate limiting on auth endpoints
+- Security headers: X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy
+- Drizzle ORM parameterized queries (no raw SQL)
+- Soft deletes for learning data (never permanently lose progress)
+- Content protection: tiered deletion confirmation based on review count

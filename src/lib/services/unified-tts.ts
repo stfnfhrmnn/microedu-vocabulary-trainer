@@ -91,10 +91,14 @@ export class UnifiedTTSService {
    * Check if the current provider is available
    */
   isAvailable(): boolean {
+    const webAvailable = this.webTTS.isAvailable()
+
     if (this.provider === 'google-cloud') {
-      return this.googleTTS.isAvailable()
+      // Google is preferred, but Web Speech remains a valid fallback.
+      return this.googleTTS.isAvailable() || webAvailable
     }
-    return this.webTTS.isAvailable()
+
+    return webAvailable
   }
 
   /**

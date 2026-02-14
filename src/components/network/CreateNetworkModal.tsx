@@ -251,7 +251,7 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
                 {/* Invite Code */}
                 <div className="bg-secondary rounded-xl p-4">
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Einladungscode</p>
+                    <p className="text-sm text-muted-foreground mb-2">Einladungscode (6-stellig)</p>
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-3xl font-mono tracking-widest font-bold">
                         {createdNetwork?.inviteCode}
@@ -271,7 +271,7 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
                 </div>
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Andere können mit diesem Code beitreten
+                  Andere können mit diesem Netzwerkcode beitreten (Format: XXX-XXX).
                 </p>
 
                 {/* Done Button */}

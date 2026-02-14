@@ -21,6 +21,8 @@ const UpdateNetworkSchema = z.object({
   }).optional(),
 })
 
+const NetworkIdSchema = z.string().uuid()
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -31,7 +33,12 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id: rawId } = await params
+    const parsedId = NetworkIdSchema.safeParse(rawId)
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Invalid network id' }, { status: 400 })
+    }
+    const id = parsedId.data
 
     // Check membership
     const membership = await serverDb.query.networkMembers.findFirst({
@@ -127,7 +134,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id: rawId } = await params
+    const parsedId = NetworkIdSchema.safeParse(rawId)
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Invalid network id' }, { status: 400 })
+    }
+    const id = parsedId.data
     const body = await request.json()
     const updates = UpdateNetworkSchema.parse(body)
 
@@ -168,7 +180,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id: rawId } = await params
+    const parsedId = NetworkIdSchema.safeParse(rawId)
+    if (!parsedId.success) {
+      return NextResponse.json({ error: 'Invalid network id' }, { status: 400 })
+    }
+    const id = parsedId.data
 
     // Check owner
     const network = await serverDb.query.networks.findFirst({

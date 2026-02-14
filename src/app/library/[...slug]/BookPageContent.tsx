@@ -1,10 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronRight, ChevronDown, MoreHorizontal, Plus, Trash2, Edit2, Camera, Image } from 'lucide-react'
+import {
+  ChevronRight,
+  ChevronDown,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+  Edit2,
+  Camera,
+  Image,
+  Languages,
+} from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -16,7 +26,13 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { CreateFromImageModal } from '@/components/library/CreateFromImageModal'
 import { useBook, useChapters } from '@/lib/db/hooks/useBooks'
 import { useVocabularyByChapter, useBookLevelVocabulary } from '@/lib/db/hooks/useVocabulary'
-import { createChapter, deleteBook, updateBook, deleteVocabularyItem } from '@/lib/db/db'
+import {
+  createChapter,
+  deleteBook,
+  updateBook,
+  deleteVocabularyItem,
+  swapVocabularyLanguages,
+} from '@/lib/db/db'
 import type { Chapter } from '@/lib/db/schema'
 
 // Breadcrumb component
@@ -66,11 +82,73 @@ function UnsortedVocabularyCard({ bookId }: { bookId: string }) {
   const { vocabulary, isLoading } = useBookLevelVocabulary(bookId)
   const [isExpanded, setIsExpanded] = useState(false)
   const [deletingVocabId, setDeletingVocabId] = useState<string | null>(null)
+  const [isSelectMode, setIsSelectMode] = useState(false)
+  const [selectedVocabularyIds, setSelectedVocabularyIds] = useState<Set<string>>(new Set())
+  const [swapScope, setSwapScope] = useState<'all' | 'selected' | null>(null)
+  const [isSwapping, setIsSwapping] = useState(false)
+
+  useEffect(() => {
+    if (!isExpanded) {
+      setIsSelectMode(false)
+      setSelectedVocabularyIds(new Set())
+      return
+    }
+
+    setSelectedVocabularyIds((prev) => {
+      const validIds = new Set(vocabulary.map((item) => item.id))
+      return new Set([...prev].filter((id) => validIds.has(id)))
+    })
+  }, [isExpanded, vocabulary])
 
   const handleDelete = async () => {
     if (!deletingVocabId) return
     await deleteVocabularyItem(deletingVocabId)
     setDeletingVocabId(null)
+  }
+
+  const toggleSelectVocabulary = (id: string) => {
+    setSelectedVocabularyIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const selectedCount = selectedVocabularyIds.size
+  const allSelected = vocabulary.length > 0 && selectedCount === vocabulary.length
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedVocabularyIds(new Set())
+      return
+    }
+    setSelectedVocabularyIds(new Set(vocabulary.map((item) => item.id)))
+  }
+
+  const handleSwap = async () => {
+    if (!swapScope) return
+
+    const idsToSwap =
+      swapScope === 'all' ? vocabulary.map((item) => item.id) : [...selectedVocabularyIds]
+
+    if (idsToSwap.length === 0) {
+      setSwapScope(null)
+      return
+    }
+
+    setIsSwapping(true)
+    try {
+      await swapVocabularyLanguages(idsToSwap)
+      setSelectedVocabularyIds(new Set())
+      setIsSelectMode(false)
+      setSwapScope(null)
+    } finally {
+      setIsSwapping(false)
+    }
   }
 
   return (
@@ -109,13 +187,92 @@ function UnsortedVocabularyCard({ bookId }: { bookId: string }) {
               transition={{ duration: 0.2 }}
               className="overflow-hidden border-t border-gray-100"
             >
+              {vocabulary.length > 0 && (
+                <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2">
+                  <div className="text-xs text-gray-600">
+                    {isSelectMode ? `${selectedCount} ausgewählt` : 'Bulk-Bearbeitung'}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {isSelectMode ? (
+                      <>
+                        <Button type="button" variant="ghost" size="sm" onClick={toggleSelectAll}>
+                          {allSelected ? 'Keine' : 'Alle'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={selectedCount === 0 || isSwapping}
+                          onClick={() => setSwapScope('selected')}
+                        >
+                          <Languages className="w-3.5 h-3.5 mr-1" />
+                          Tauschen
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setIsSelectMode(false)
+                            setSelectedVocabularyIds(new Set())
+                          }}
+                        >
+                          Fertig
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsSelectMode(true)}
+                        >
+                          Auswählen
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={isSwapping}
+                          onClick={() => setSwapScope('all')}
+                        >
+                          <Languages className="w-3.5 h-3.5 mr-1" />
+                          Alle tauschen
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {vocabulary.length > 0 ? (
                 <div className="divide-y divide-gray-100">
                   {vocabulary.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                      className={`flex items-center justify-between px-4 py-3 ${
+                        isSelectMode ? 'cursor-pointer' : ''
+                      } ${
+                        selectedVocabularyIds.has(item.id) ? 'bg-primary-50' : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => {
+                        if (isSelectMode) {
+                          toggleSelectVocabulary(item.id)
+                        }
+                      }}
                     >
+                      {isSelectMode && (
+                        <div className="pr-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedVocabularyIds.has(item.id)}
+                            onChange={() => toggleSelectVocabulary(item.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0 mr-3">
                         <p className="font-medium text-gray-900">{item.sourceText}</p>
                         <p className="text-sm text-gray-500">{item.targetText}</p>
@@ -123,15 +280,17 @@ function UnsortedVocabularyCard({ bookId }: { bookId: string }) {
                           <p className="text-xs text-gray-400 mt-0.5">{item.notes}</p>
                         )}
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setDeletingVocabId(item.id)
-                        }}
-                        className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {!isSelectMode && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeletingVocabId(item.id)
+                          }}
+                          className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 rounded-lg"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -160,6 +319,28 @@ function UnsortedVocabularyCard({ bookId }: { bookId: string }) {
             </Button>
             <Button variant="danger" fullWidth onClick={handleDelete}>
               Löschen
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={!!swapScope}
+        onClose={() => setSwapScope(null)}
+        title="Sprache tauschen?"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            {swapScope === 'all'
+              ? `Deutsch/Fremdsprache für alle ${vocabulary.length} unsortierten Vokabeln tauschen?`
+              : `Deutsch/Fremdsprache für ${selectedCount} ausgewählte Vokabeln tauschen?`}
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" fullWidth onClick={() => setSwapScope(null)}>
+              Abbrechen
+            </Button>
+            <Button variant="primary" fullWidth loading={isSwapping} onClick={handleSwap}>
+              Tauschen
             </Button>
           </div>
         </div>

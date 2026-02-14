@@ -417,6 +417,38 @@ export async function updateVocabularyItem(id: string, data: Partial<CreateVocab
   }
 }
 
+export async function swapVocabularyLanguages(vocabularyIds: string[]): Promise<number> {
+  const uniqueIds = [...new Set(vocabularyIds)].filter(Boolean)
+  if (uniqueIds.length === 0) return 0
+
+  const now = new Date()
+
+  const swappedItems = await db.transaction('rw', [db.vocabularyItems], async () => {
+    const items = await db.vocabularyItems.where('id').anyOf(uniqueIds).toArray()
+
+    for (const item of items) {
+      await db.vocabularyItems.update(item.id, {
+        sourceText: item.targetText,
+        targetText: item.sourceText,
+        updatedAt: now,
+      })
+    }
+
+    return db.vocabularyItems.where('id').anyOf(uniqueIds).toArray()
+  })
+
+  for (const item of swappedItems) {
+    await safeQueueChange(
+      'vocabularyItems',
+      'update',
+      item.id,
+      item as unknown as Record<string, unknown>
+    )
+  }
+
+  return swappedItems.length
+}
+
 export async function deleteVocabularyItem(id: string): Promise<void> {
   await db.transaction('rw', [db.vocabularyItems, db.learningProgress], async () => {
     await db.learningProgress.where('vocabularyId').equals(id).delete()
