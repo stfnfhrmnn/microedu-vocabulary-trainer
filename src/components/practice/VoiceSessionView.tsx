@@ -62,8 +62,15 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
   const progress = useVoiceSessionProgress()
 
   // Get settings for TTS and AI analysis
-  const { ttsProvider, useAIAnalysis, ttsRate, ttsPitch, googleVoiceType, ttsLanguageOverride } =
-    useSettings()
+  const {
+    ttsProvider,
+    useAIAnalysis,
+    ttsRate,
+    ttsPitch,
+    googleVoiceType,
+    ttsLanguageOverride,
+    sttLanguageOverride,
+  } = useSettings()
   const { available: hasGoogleApi } = useGoogleApiStatus()
   const [error, setError] = useState<string | null>(null)
 
@@ -159,9 +166,11 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
     setListeningStartTime(Date.now())
 
     const answerLang = currentAnswerLanguage === 'german' ? 'german' : currentAnswerLanguage
+    const effectiveAnswerLang =
+      sttLanguageOverride === 'auto' ? answerLang : sttLanguageOverride
 
     sttService.current.start(
-      answerLang,
+      effectiveAnswerLang,
       (result) => {
         if (result.isFinal) {
           setLastTranscript(result.transcript)
@@ -184,7 +193,14 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
       sttService.current.stop()
       setStatus('processing')
     }, timeout)
-  }, [mode, currentAnswerLanguage, setLastTranscript, setListeningStartTime, setStatus])
+  }, [
+    mode,
+    currentAnswerLanguage,
+    sttLanguageOverride,
+    setLastTranscript,
+    setListeningStartTime,
+    setStatus,
+  ])
 
   /**
    * Process the user's answer

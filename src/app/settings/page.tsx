@@ -379,6 +379,18 @@ export default function SettingsPage() {
                 helperText="Automatisch nutzt die Sprache des aktuellen Inhalts. Manuelle Wahl überschreibt dies."
               />
 
+              <Select
+                label="Eingabe-Sprache (STT)"
+                options={ttsLanguageOptions}
+                value={settings.sttLanguageOverride}
+                onChange={(e) =>
+                  settings.setSTTLanguageOverride(
+                    e.target.value as typeof settings.sttLanguageOverride
+                  )
+                }
+                helperText="Automatisch nutzt die Antwortsprache. Bei Erkennungsproblemen manuell festlegen."
+              />
+
               <div>
                 <Button
                   variant="secondary"

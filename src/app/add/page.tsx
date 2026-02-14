@@ -50,7 +50,13 @@ function AddVocabularyForm() {
   const searchParams = useSearchParams()
   const urlSectionId = searchParams.get('sectionId')
   const urlBookId = searchParams.get('bookId')
-  const { lastUsedSectionId, setLastUsedSectionId, recentSectionIds, addRecentSection } = useSettings()
+  const {
+    lastUsedSectionId,
+    setLastUsedSectionId,
+    recentSectionIds,
+    addRecentSection,
+    sttLanguageOverride,
+  } = useSettings()
 
   const { sections, isLoading: sectionsLoading } = useAllSections()
   const { books, isLoading: booksLoading } = useBooks()
@@ -275,6 +281,11 @@ function AddVocabularyForm() {
   const handleTargetTranscript = useCallback((transcript: string) => {
     setTargetText((prev) => appendTranscript(prev, transcript))
   }, [appendTranscript])
+
+  const effectiveTargetInputLanguage =
+    sttLanguageOverride === 'auto'
+      ? selection?.bookLanguage || 'german'
+      : sttLanguageOverride
 
   const handleSelectSection = (sectionId: string) => {
     const section = sections.find(s => s.id === sectionId)
@@ -962,7 +973,7 @@ function AddVocabularyForm() {
                 />
                 <div className="flex justify-end mt-2">
                   <VoiceInputButton
-                    language={selection?.bookLanguage || 'german'}
+                    language={effectiveTargetInputLanguage}
                     onTranscript={handleTargetTranscript}
                     showUnavailableHint
                   />

@@ -8,6 +8,7 @@ import type { Locale } from '@/i18n/config'
 export type TTSProvider = 'web-speech' | 'google-cloud'
 export type GoogleVoiceType = 'wavenet' | 'standard'
 export type TTSLanguageOverride = 'auto' | 'german' | 'french' | 'spanish' | 'latin'
+export type STTLanguageOverride = TTSLanguageOverride
 export type PracticeWordScope = 'due' | 'all' | 'difficult'
 
 // Practice preset configuration
@@ -46,6 +47,7 @@ interface SettingsState {
   ttsPitch: number        // 0.5 to 2.0 (1.0 = normal) - Web Speech only
   googleVoiceType: GoogleVoiceType  // WaveNet (better) or Standard
   ttsLanguageOverride: TTSLanguageOverride
+  sttLanguageOverride: STTLanguageOverride
 
   // App settings
   locale: Locale
@@ -74,6 +76,7 @@ interface SettingsState {
   setTTSPitch: (pitch: number) => void
   setGoogleVoiceType: (type: GoogleVoiceType) => void
   setTTSLanguageOverride: (override: TTSLanguageOverride) => void
+  setSTTLanguageOverride: (override: STTLanguageOverride) => void
   setLocale: (locale: Locale) => void
   setSoundEnabled: (enabled: boolean) => void
   setHapticEnabled: (enabled: boolean) => void
@@ -99,6 +102,7 @@ export const useSettings = create<SettingsState>()(
       ttsPitch: 1.0,
       googleVoiceType: 'wavenet',
       ttsLanguageOverride: 'auto',
+      sttLanguageOverride: 'auto',
       locale: 'de',
       soundEnabled: true,
       hapticEnabled: true,
@@ -119,6 +123,7 @@ export const useSettings = create<SettingsState>()(
       setTTSPitch: (pitch) => set({ ttsPitch: pitch }),
       setGoogleVoiceType: (type) => set({ googleVoiceType: type }),
       setTTSLanguageOverride: (override) => set({ ttsLanguageOverride: override }),
+      setSTTLanguageOverride: (override) => set({ sttLanguageOverride: override }),
       setLocale: (locale) => set({ locale }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
@@ -153,6 +158,9 @@ export const useSettings = create<SettingsState>()(
         }
         if (!state.ttsLanguageOverride) {
           state.ttsLanguageOverride = 'auto'
+        }
+        if (!state.sttLanguageOverride) {
+          state.sttLanguageOverride = 'auto'
         }
 
         const asBoolean = (value: unknown): boolean | null => {

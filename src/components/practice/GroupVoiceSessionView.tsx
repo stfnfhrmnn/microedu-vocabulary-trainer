@@ -70,7 +70,14 @@ export function GroupVoiceSessionView({
   } = useGroupVoiceSession()
 
   // Settings
-  const { ttsProvider, ttsRate, ttsPitch, googleVoiceType, ttsLanguageOverride } = useSettings()
+  const {
+    ttsProvider,
+    ttsRate,
+    ttsPitch,
+    googleVoiceType,
+    ttsLanguageOverride,
+    sttLanguageOverride,
+  } = useSettings()
   const { available: hasGoogleApi } = useGoogleApiStatus()
 
   // Services
@@ -166,9 +173,11 @@ export function GroupVoiceSessionView({
 
     const listenLang =
       immersionLevel === 'beginner' ? 'german' : targetLanguage || 'german'
+    const effectiveListenLang =
+      sttLanguageOverride === 'auto' ? listenLang : sttLanguageOverride
 
     sttService.current.start(
-      listenLang,
+      effectiveListenLang,
       (result) => {
         if (result.isFinal) {
           setLastTranscript(result.transcript)
@@ -182,7 +191,7 @@ export function GroupVoiceSessionView({
       },
       { interimResults: true, continuous: true }
     )
-  }, [immersionLevel, targetLanguage, setLastTranscript])
+  }, [immersionLevel, targetLanguage, sttLanguageOverride, setLastTranscript])
 
   /**
    * Stop listening

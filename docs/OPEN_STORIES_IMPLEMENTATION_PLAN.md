@@ -29,12 +29,16 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
   - Practice setup adds explicit `fällig / alle / schwierig` scope
   - "Schwierige Vokabeln" mode based on historical answer accuracy
   - Network type decision helper added in create/discovery/settings flows
+- `2026-02-14` Slice 4 shipped (`in progress`):
+  - STT language override added to settings (`auto` + manual language selection)
+  - Voice and group voice sessions honor STT override for recognition
+  - Add-vocabulary microphone input now honors STT override for target field
 
 ## Open Story Backlog
 
 | Story ID | Type | Current Gap | Target Outcome |
 |---|---|---|---|
-| `US-1.5` | Partial | STT happy-path only in spec | Permission-denied/unsupported/error fallback fully specified and implemented |
+| `US-1.5` | Partial | STT fallback UI present; edge-case copy + automated tests still open | Permission-denied/unsupported/error fallback fully specified and implemented |
 | `US-2.2` / `US-2.4` | Partial | UI/flow now explicit; E2E coverage still open | Due-card mode selection + typed entry + difficult-word scope are explicit and regression-tested |
 | `US-2.5` | New | Newly documented, partially implemented | End-to-end flow verified: free practice, restart, new session selection |
 | `US-4.1` | Partial | Invite handoff path ambiguous | Parent create -> child join path clear in UX copy and flow |
@@ -46,7 +50,7 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 | `US-7.4` (new) | Missing | Code confusion prevention not formalized | Consistent 6-char vs 8-char code guidance in all relevant forms |
 | `US-8.4` (new) | Partial | Decision helper now shown, still needs E2E coverage | Lightweight decision helper (family/class/study_group) |
 | `US-5.6` (new) | Missing | TTS quality controls not formalized | User-facing voice quality settings + preview/test |
-| `US-5.7` (new) | Missing | Language assurance story not formalized | Force/confirm language for pronunciation + speech recognition |
+| `US-5.7` (new) | Partial | TTS+STT override implemented, confirmation UX/test coverage still open | Force/confirm language for pronunciation + speech recognition |
 
 ## Implementation Milestones
 
