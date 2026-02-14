@@ -25,7 +25,7 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
   - Parent-quiz learner profile context selection/display
   - Shared book unshare control for owner/admin/teacher
   - Automatic parent visibility of child books in family networks
-- `2026-02-14` Slice 3 shipped (`pending commit`):
+- `2026-02-14` Slice 3 shipped (`a8c943b`):
   - Practice setup adds explicit `fällig / alle / schwierig` scope
   - "Schwierige Vokabeln" mode based on historical answer accuracy
   - Network type decision helper added in create/discovery/settings flows
