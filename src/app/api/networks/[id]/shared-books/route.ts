@@ -117,7 +117,9 @@ export async function GET(
     const copies = await serverDb.query.bookCopies.findMany({
       where: (copies, { eq }) => eq(copies.copiedBy, user.userId),
     })
-    const copiedOriginals = new Set(copies.map((c) => c.originalBookId))
+    const copiedBooksByOriginal = new Map(
+      copies.map((copy) => [copy.originalBookId, copy.copiedBookId])
+    )
 
     // Build response
     const result = sharedBooks
@@ -144,7 +146,8 @@ export async function GET(
           },
           copyCount: shared.copyCount || 0,
           sharedAt: shared.sharedAt,
-          alreadyCopied: copiedOriginals.has(shared.bookId),
+          alreadyCopied: copiedBooksByOriginal.has(shared.bookId),
+          copiedBookId: copiedBooksByOriginal.get(shared.bookId) ?? null,
           isOwner: shared.ownerId === user.userId,
           canUnshare:
             shared.ownerId === user.userId ||

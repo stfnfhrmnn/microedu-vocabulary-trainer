@@ -45,6 +45,10 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 - `2026-02-14` Slice 8 shipped (`in progress`):
   - Dashboard adds direct CTA for difficult-word practice
   - Practice setup supports explicit `scope` deep-link (`due/all/difficult`)
+- `2026-02-14` Slice 9 shipped (`in progress`):
+  - Shared books now support `Kopieren & üben` in one step
+  - Already-copied books expose `Jetzt üben` shortcut
+  - Practice setup can prefilter sections by `bookId` deep-link
 
 ## Open Story Backlog
 
@@ -56,7 +60,7 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 | `US-4.1` | Partial | Handoff copy clarified, end-to-end family E2E coverage still open | Parent create -> child join path clear in UX copy and flow |
 | `US-5.1` | Partial | No explicit language mismatch handling | TTS/STT language assurance, warnings, and manual override |
 | `US-9.3` | Partial | Governance exceptions unclear | Admin/teacher exception rules documented and enforced |
-| `US-9.4` / `US-9.6` | Partial | Parent contribution loop only implicit via copy | Explicit "copy and adapt" contribution flow |
+| `US-9.4` / `US-9.6` | Partial | Copy/adapt/practice loop improved; ownership badges in library still open | Explicit "copy and adapt" contribution flow |
 | `US-9.5` | Partial | Deterministic defaults implemented; network-linked child mapping still open | Deterministic learner selection defaults and switching |
 | `US-4.4` (new) | Partial | Recovery implemented on detail + list pages; E2E coverage still open | Actionable load failure UI with retry/offline behavior |
 | `US-7.4` (new) | Partial | Guidance now broad; remaining validation pass for all edge screens needed | Consistent 6-char vs 8-char code guidance in all relevant forms |

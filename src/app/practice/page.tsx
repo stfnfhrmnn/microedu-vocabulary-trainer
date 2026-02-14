@@ -112,6 +112,7 @@ export default function PracticePage() {
     const mode = params.get('mode')
     const requestedExerciseType = params.get('exerciseType')
     const requestedScope = params.get('scope')
+    const requestedBookId = params.get('bookId')
     const shouldResume = params.get('resume') === '1'
 
     if (lastPracticeConfig) {
@@ -134,6 +135,16 @@ export default function PracticePage() {
     ) {
       setWordScope(requestedScope)
       setSettingsExpanded(true)
+    }
+
+    if (requestedBookId) {
+      const bookSectionIds = sections
+        .filter((section) => section.bookId === requestedBookId)
+        .map((section) => section.id)
+      if (bookSectionIds.length > 0) {
+        setSelectedSectionIds(bookSectionIds)
+        setSectionsExpanded(true)
+      }
     }
 
     if (
