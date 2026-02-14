@@ -26,6 +26,7 @@ import {
   swapVocabularyLanguages,
 } from '@/lib/db/db'
 import { useSettings } from '@/stores/settings'
+import { useCurrentProfile } from '@/stores/user-session'
 import type { Section, VocabularyItem } from '@/lib/db/schema'
 
 // Expandable section with inline vocabulary
@@ -485,6 +486,7 @@ export default function ChapterPageContent({
   chapterId: string
 }) {
   const router = useRouter()
+  const profile = useCurrentProfile()
   const { lastViewedSections, setLastViewedSection } = useSettings()
 
   const { book } = useBook(bookId)
@@ -634,6 +636,9 @@ export default function ChapterPageContent({
       {book && chapter && (
         <Breadcrumb bookId={bookId} bookName={book.name} chapterName={chapter.name} />
       )}
+      <p className="text-xs text-gray-500 mb-3">
+        Besitzer: {profile.avatar} {profile.name}
+      </p>
 
       {isLoading ? (
         <div className="space-y-3">

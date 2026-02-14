@@ -14,6 +14,7 @@ import { Modal, useModal } from '@/components/ui/Modal'
 import { CreateFromImageModal } from '@/components/library/CreateFromImageModal'
 import { useBooks } from '@/lib/db/hooks/useBooks'
 import { useVocabularyByBook } from '@/lib/db/hooks/useVocabulary'
+import { useCurrentProfile } from '@/stores/user-session'
 import type { Language, Book, CreateBook } from '@/lib/db/schema'
 
 const languageOptions = [
@@ -33,6 +34,7 @@ const colorOptions = [
 
 function BookCard({ book }: { book: Book }) {
   const { vocabulary } = useVocabularyByBook(book.id)
+  const profile = useCurrentProfile()
 
   return (
     <Link href={`/library/${book.id}`}>
@@ -49,6 +51,9 @@ function BookCard({ book }: { book: Book }) {
             </p>
             <p className="text-sm text-gray-400 mt-1">
               {vocabulary.length} Vokabeln
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Besitzer: {profile.avatar} {profile.name}
             </p>
           </div>
           <svg

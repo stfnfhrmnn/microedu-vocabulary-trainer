@@ -26,6 +26,7 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { CreateFromImageModal } from '@/components/library/CreateFromImageModal'
 import { useBook, useChapters } from '@/lib/db/hooks/useBooks'
 import { useVocabularyByChapter, useBookLevelVocabulary } from '@/lib/db/hooks/useVocabulary'
+import { useCurrentProfile } from '@/stores/user-session'
 import {
   createChapter,
   deleteBook,
@@ -351,6 +352,7 @@ function UnsortedVocabularyCard({ bookId }: { bookId: string }) {
 
 export default function BookPageContent({ bookId }: { bookId: string }) {
   const router = useRouter()
+  const profile = useCurrentProfile()
 
   const { book, isLoading: bookLoading } = useBook(bookId)
   const { chapters, isLoading: chaptersLoading } = useChapters(bookId)
@@ -438,6 +440,9 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
 
       {/* Breadcrumb */}
       {book && <Breadcrumb bookName={book.name} />}
+      <p className="text-xs text-gray-500 mb-3">
+        Besitzer: {profile.avatar} {profile.name}
+      </p>
 
       {isLoading ? (
         <div className="space-y-3">
