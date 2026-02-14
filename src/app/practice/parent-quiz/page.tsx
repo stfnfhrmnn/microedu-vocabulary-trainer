@@ -12,6 +12,7 @@ import { useSectionDueStats } from '@/lib/db/hooks/useSectionDueStats'
 import { useDueWords } from '@/lib/db/hooks/useDueWords'
 import { usePracticeSession } from '@/stores/practice-session'
 import { useUserSession } from '@/stores/user-session'
+import { useSettings } from '@/stores/settings'
 import { cn } from '@/lib/utils/cn'
 import type { PracticeDirection } from '@/lib/db/schema'
 
@@ -26,25 +27,38 @@ export default function ParentQuizSetupPage() {
   const startSession = usePracticeSession((state) => state.startSession)
   const profiles = useUserSession((state) => state.profiles)
   const currentUserId = useUserSession((state) => state.currentUserId)
+  const lastParentQuizLearnerId = useSettings((state) => state.lastParentQuizLearnerId)
+  const setLastParentQuizLearnerId = useSettings((state) => state.setLastParentQuizLearnerId)
 
   const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([])
   const [direction, setDirection] = useState<PracticeDirection>('sourceToTarget')
   const [showAllSections, setShowAllSections] = useState(false)
   const [learnerProfileId, setLearnerProfileId] = useState<string | null>(null)
 
+  const preferredLearnerProfileId = useMemo(() => {
+    if (lastParentQuizLearnerId && profiles.some((profile) => profile.id === lastParentQuizLearnerId)) {
+      return lastParentQuizLearnerId
+    }
+
+    const firstNonCurrent = profiles.find((profile) => profile.id !== currentUserId)
+    if (firstNonCurrent) return firstNonCurrent.id
+
+    return currentUserId ?? profiles[0]?.id ?? null
+  }, [lastParentQuizLearnerId, profiles, currentUserId])
+
   useEffect(() => {
     if (!learnerProfileId) {
-      setLearnerProfileId(currentUserId)
+      setLearnerProfileId(preferredLearnerProfileId)
     }
-  }, [learnerProfileId, currentUserId])
+  }, [learnerProfileId, preferredLearnerProfileId])
 
   useEffect(() => {
     if (!learnerProfileId) return
     const exists = profiles.some((profile) => profile.id === learnerProfileId)
     if (!exists) {
-      setLearnerProfileId(currentUserId)
+      setLearnerProfileId(preferredLearnerProfileId)
     }
-  }, [learnerProfileId, profiles, currentUserId])
+  }, [learnerProfileId, profiles, preferredLearnerProfileId])
 
   // Get vocabulary for selected sections
   const { dueWords } = useDueWords(
@@ -86,6 +100,10 @@ export default function ParentQuizSetupPage() {
     const learnerProfile =
       profiles.find((profile) => profile.id === learnerProfileId) ??
       profiles.find((profile) => profile.id === currentUserId)
+
+    if (learnerProfile) {
+      setLastParentQuizLearnerId(learnerProfile.id)
+    }
 
     startSession({
       exerciseType: 'flashcard',
@@ -277,7 +295,7 @@ export default function ParentQuizSetupPage() {
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Ergebnisanzeige bezieht sich auf dieses Profil.
+                    Ergebnisanzeige bezieht sich auf dieses Profil. Letzte Auswahl wird gemerkt.
                   </p>
                 </div>
               )}

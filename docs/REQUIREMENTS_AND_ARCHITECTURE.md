@@ -1875,3 +1875,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 2.4 | 2026-02-14 | Update | Documented governance exception for sharing revocation, parent auto-visibility of child books in family networks, and new voice requirements for quality controls + language override |
 | 2.5 | 2026-02-14 | Update | Added explicit difficult-word practice scope in setup flow and documented network-type decision guidance in network onboarding screens |
 | 2.6 | 2026-02-14 | Update | Extended language-assurance implementation notes with STT language override support in voice and add-vocabulary flows |
+| 2.7 | 2026-02-14 | Update | Added deterministic learner-default behavior and remembered learner selection for parent-quiz setup flows |

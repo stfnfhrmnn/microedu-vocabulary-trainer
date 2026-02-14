@@ -57,6 +57,7 @@ interface SettingsState {
   // Add vocabulary settings
   lastUsedSectionId: string | null
   recentSectionIds: string[]  // Last 5 used sections for quick-picker
+  lastParentQuizLearnerId: string | null
 
   // Practice settings
   practicePresets: PracticePreset[]
@@ -82,6 +83,7 @@ interface SettingsState {
   setHapticEnabled: (enabled: boolean) => void
   setLastUsedSectionId: (id: string | null) => void
   addRecentSection: (id: string) => void
+  setLastParentQuizLearnerId: (id: string | null) => void
   setLastPracticeConfig: (config: LastPracticeConfig) => void
   addPracticePreset: (preset: PracticePreset) => void
   removePracticePreset: (id: string) => void
@@ -108,6 +110,7 @@ export const useSettings = create<SettingsState>()(
       hapticEnabled: true,
       lastUsedSectionId: null,
       recentSectionIds: [],
+      lastParentQuizLearnerId: null,
       practicePresets: [],
       lastPracticeConfig: null,
       lastViewedSections: {},
@@ -133,6 +136,7 @@ export const useSettings = create<SettingsState>()(
         const filtered = state.recentSectionIds.filter((s) => s !== id)
         return { recentSectionIds: [id, ...filtered].slice(0, 5) }
       }),
+      setLastParentQuizLearnerId: (id) => set({ lastParentQuizLearnerId: id }),
       setLastPracticeConfig: (config) => set({ lastPracticeConfig: config }),
       addPracticePreset: (preset) => set((state) => ({
         practicePresets: [...state.practicePresets, preset]
@@ -161,6 +165,9 @@ export const useSettings = create<SettingsState>()(
         }
         if (!state.sttLanguageOverride) {
           state.sttLanguageOverride = 'auto'
+        }
+        if (!('lastParentQuizLearnerId' in state)) {
+          state.lastParentQuizLearnerId = null
         }
 
         const asBoolean = (value: unknown): boolean | null => {

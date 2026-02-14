@@ -33,6 +33,9 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
   - STT language override added to settings (`auto` + manual language selection)
   - Voice and group voice sessions honor STT override for recognition
   - Add-vocabulary microphone input now honors STT override for target field
+- `2026-02-14` Slice 5 shipped (`in progress`):
+  - Parent quiz learner selection now uses deterministic defaults
+  - Last selected learner profile is remembered for future parent sessions
 
 ## Open Story Backlog
 
@@ -45,7 +48,7 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 | `US-5.1` | Partial | No explicit language mismatch handling | TTS/STT language assurance, warnings, and manual override |
 | `US-9.3` | Partial | Governance exceptions unclear | Admin/teacher exception rules documented and enforced |
 | `US-9.4` / `US-9.6` | Partial | Parent contribution loop only implicit via copy | Explicit "copy and adapt" contribution flow |
-| `US-9.5` | Partial | Multi-child learner selection edge cases undefined | Deterministic learner selection defaults and switching |
+| `US-9.5` | Partial | Deterministic defaults implemented; network-linked child mapping still open | Deterministic learner selection defaults and switching |
 | `US-4.4` (new) | Missing | "Fehler beim Laden" retry/recovery story missing | Actionable load failure UI with retry/offline behavior |
 | `US-7.4` (new) | Missing | Code confusion prevention not formalized | Consistent 6-char vs 8-char code guidance in all relevant forms |
 | `US-8.4` (new) | Partial | Decision helper now shown, still needs E2E coverage | Lightweight decision helper (family/class/study_group) |
