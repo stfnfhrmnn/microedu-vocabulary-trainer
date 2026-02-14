@@ -21,6 +21,18 @@ const directions: { id: PracticeDirection; label: string }[] = [
   { id: 'targetToSource', label: 'Fremd → Deutsch' },
 ]
 
+type LearnerOption = {
+  optionId: string
+  learnerId: string
+  name: string
+  avatar: string
+  source: 'linked-child' | 'local-profile'
+  sourceLabel?: string
+}
+
+const LOCAL_LEARNER_PREFIX = 'local:'
+const LINKED_CHILD_PREFIX = 'linked-child:'
+
 export default function ParentQuizSetupPage() {
   const router = useRouter()
   const { sections, isLoading } = useSectionDueStats()
@@ -33,32 +45,146 @@ export default function ParentQuizSetupPage() {
   const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([])
   const [direction, setDirection] = useState<PracticeDirection>('sourceToTarget')
   const [showAllSections, setShowAllSections] = useState(false)
-  const [learnerProfileId, setLearnerProfileId] = useState<string | null>(null)
+  const [learnerOptionId, setLearnerOptionId] = useState<string | null>(null)
+  const [linkedChildren, setLinkedChildren] = useState<LearnerOption[]>([])
+
+  useEffect(() => {
+    let isActive = true
+
+    async function fetchLinkedChildren() {
+      try {
+        const token =
+          typeof window !== 'undefined' ? localStorage.getItem('sync-auth-token') : null
+        if (!token) {
+          if (isActive) setLinkedChildren([])
+          return
+        }
+
+        const networksResponse = await fetch('/api/networks', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!networksResponse.ok) {
+          if (isActive) setLinkedChildren([])
+          return
+        }
+
+        const networksData = await networksResponse.json()
+        const familyNetworks = (networksData.networks || []).filter(
+          (network: { id: string; type: string; myRole?: string }) =>
+            network.type === 'family' &&
+            (network.myRole === 'parent' || network.myRole === 'admin')
+        )
+
+        if (familyNetworks.length === 0) {
+          if (isActive) setLinkedChildren([])
+          return
+        }
+
+        const memberResponses = await Promise.all(
+          familyNetworks.map(
+            async (network: { id: string; name: string }) => {
+              const response = await fetch(`/api/networks/${network.id}/members`, {
+                headers: { Authorization: `Bearer ${token}` },
+              })
+              if (!response.ok) return null
+              const data = await response.json()
+              return { networkName: network.name, members: data.members || [] }
+            }
+          )
+        )
+
+        const childMap = new Map<string, LearnerOption>()
+        memberResponses.forEach((entry) => {
+          if (!entry) return
+          entry.members
+            .filter((member: { role: string; userId: string; isMe?: boolean }) =>
+              member.role === 'child' && !member.isMe
+            )
+            .forEach((member: { userId: string; nickname?: string; avatar?: string }) => {
+              if (!childMap.has(member.userId)) {
+                childMap.set(member.userId, {
+                  optionId: `${LINKED_CHILD_PREFIX}${member.userId}`,
+                  learnerId: member.userId,
+                  name: member.nickname || 'Kind',
+                  avatar: member.avatar || '🧒',
+                  source: 'linked-child',
+                  sourceLabel: entry.networkName,
+                })
+              }
+            })
+        })
+
+        if (isActive) {
+          setLinkedChildren([...childMap.values()])
+        }
+      } catch {
+        if (isActive) setLinkedChildren([])
+      }
+    }
+
+    fetchLinkedChildren()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
+
+  const learnerOptions = useMemo(() => {
+    const linked = linkedChildren
+    const local = profiles.map((profile) => ({
+      optionId: `${LOCAL_LEARNER_PREFIX}${profile.id}`,
+      learnerId: profile.id,
+      name: profile.name,
+      avatar: profile.avatar,
+      source: 'local-profile' as const,
+    }))
+
+    return [...linked, ...local]
+  }, [linkedChildren, profiles])
 
   const preferredLearnerProfileId = useMemo(() => {
-    if (lastParentQuizLearnerId && profiles.some((profile) => profile.id === lastParentQuizLearnerId)) {
-      return lastParentQuizLearnerId
+    if (!learnerOptions.length) return null
+
+    if (lastParentQuizLearnerId) {
+      const directMatch = learnerOptions.find(
+        (option) => option.optionId === lastParentQuizLearnerId
+      )
+      if (directMatch) return directMatch.optionId
+
+      // Legacy compatibility: older values stored raw profile/user ids.
+      const legacyMatch = learnerOptions.find(
+        (option) => option.learnerId === lastParentQuizLearnerId
+      )
+      if (legacyMatch) return legacyMatch.optionId
     }
 
-    const firstNonCurrent = profiles.find((profile) => profile.id !== currentUserId)
-    if (firstNonCurrent) return firstNonCurrent.id
+    const firstLinkedChild = learnerOptions.find((option) => option.source === 'linked-child')
+    if (firstLinkedChild) return firstLinkedChild.optionId
 
-    return currentUserId ?? profiles[0]?.id ?? null
-  }, [lastParentQuizLearnerId, profiles, currentUserId])
+    const firstNonCurrentLocal = learnerOptions.find(
+      (option) =>
+        option.source === 'local-profile' &&
+        option.learnerId !== currentUserId
+    )
+    if (firstNonCurrentLocal) return firstNonCurrentLocal.optionId
+
+    return learnerOptions[0]?.optionId ?? null
+  }, [lastParentQuizLearnerId, learnerOptions, currentUserId])
 
   useEffect(() => {
-    if (!learnerProfileId) {
-      setLearnerProfileId(preferredLearnerProfileId)
+    if (!learnerOptionId) {
+      setLearnerOptionId(preferredLearnerProfileId)
     }
-  }, [learnerProfileId, preferredLearnerProfileId])
+  }, [learnerOptionId, preferredLearnerProfileId])
 
   useEffect(() => {
-    if (!learnerProfileId) return
-    const exists = profiles.some((profile) => profile.id === learnerProfileId)
+    if (!learnerOptionId) return
+    const exists = learnerOptions.some((option) => option.optionId === learnerOptionId)
     if (!exists) {
-      setLearnerProfileId(preferredLearnerProfileId)
+      setLearnerOptionId(preferredLearnerProfileId)
     }
-  }, [learnerProfileId, profiles, preferredLearnerProfileId])
+  }, [learnerOptionId, learnerOptions, preferredLearnerProfileId])
 
   // Get vocabulary for selected sections
   const { dueWords } = useDueWords(
@@ -98,11 +224,11 @@ export default function ParentQuizSetupPage() {
     const targetLanguage = selectedStat?.book?.language
 
     const learnerProfile =
-      profiles.find((profile) => profile.id === learnerProfileId) ??
-      profiles.find((profile) => profile.id === currentUserId)
+      learnerOptions.find((option) => option.optionId === learnerOptionId) ??
+      learnerOptions.find((option) => option.optionId === preferredLearnerProfileId)
 
     if (learnerProfile) {
-      setLastParentQuizLearnerId(learnerProfile.id)
+      setLastParentQuizLearnerId(learnerProfile.optionId)
     }
 
     startSession({
@@ -111,7 +237,7 @@ export default function ParentQuizSetupPage() {
       sectionIds: selectedSectionIds,
       quizMode: 'parent',
       targetLanguage,
-      learnerProfileId: learnerProfile?.id ?? null,
+      learnerProfileId: learnerProfile?.learnerId ?? null,
       learnerProfileName: learnerProfile?.name ?? null,
       items: wordsToStudy.map((v) => ({
         vocabulary: v,
@@ -278,24 +404,33 @@ export default function ParentQuizSetupPage() {
           {/* Direction Selection */}
           <Card>
             <CardContent>
-              {profiles.length > 1 && (
+              {learnerOptions.length > 1 && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="parent-quiz-learner"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Lernen für
                   </label>
                   <select
-                    value={learnerProfileId ?? ''}
-                    onChange={(e) => setLearnerProfileId(e.target.value || null)}
+                    id="parent-quiz-learner"
+                    value={learnerOptionId ?? ''}
+                    onChange={(e) => setLearnerOptionId(e.target.value || null)}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
                   >
-                    {profiles.map((profile) => (
-                      <option key={profile.id} value={profile.id}>
-                        {profile.avatar} {profile.name}
+                    {learnerOptions.map((option) => (
+                      <option key={option.optionId} value={option.optionId}>
+                        {option.avatar} {option.name}
+                        {option.source === 'linked-child'
+                          ? ` · Kind${option.sourceLabel ? ` (${option.sourceLabel})` : ''}`
+                          : option.learnerId === currentUserId
+                            ? ' · eigenes Profil'
+                            : ' · lokales Profil'}
                       </option>
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Ergebnisanzeige bezieht sich auf dieses Profil. Letzte Auswahl wird gemerkt.
+                    Ergebnisanzeige und Sitzungseintrag nutzen dieses Lernprofil. Letzte Auswahl wird gemerkt.
                   </p>
                 </div>
               )}

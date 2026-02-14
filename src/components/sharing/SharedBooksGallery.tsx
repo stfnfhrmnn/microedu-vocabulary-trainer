@@ -112,6 +112,11 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
     router.push(`/practice?mode=free&bookId=${encodeURIComponent(bookId)}`)
   }
 
+  const handleOpenLibrary = (bookId: string | null) => {
+    if (!bookId) return
+    router.push(`/library/${encodeURIComponent(bookId)}`)
+  }
+
   const handleCopyAndPractice = async (sharedBookId: string) => {
     setCopyingId(sharedBookId)
     setError(null)
@@ -257,12 +262,20 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
                   )}
                   <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
+                      <span>{sharedBook.owner.avatar}</span>
                       <User className="h-3 w-3" />
                       {sharedBook.owner.name}
                     </span>
                     <span>•</span>
                     <span>{sharedBook.copyCount} Kopien</span>
                   </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {sharedBook.isOwner
+                      ? 'Dein Original (nur Freigabe verwalten)'
+                      : sharedBook.alreadyCopied
+                        ? 'Du bearbeitest deine eigene Kopie'
+                        : 'Nur lesen. Zum Bearbeiten bitte kopieren.'}
+                  </p>
                 </div>
               </div>
 
@@ -279,6 +292,12 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
                       className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                     >
                       Jetzt üben
+                    </button>
+                    <button
+                      onClick={() => handleOpenLibrary(sharedBook.copiedBookId)}
+                      className="px-3 py-1.5 text-sm bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      In Bibliothek
                     </button>
                   </>
                 ) : !sharedBook.isOwner ? (

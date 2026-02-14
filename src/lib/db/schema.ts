@@ -119,6 +119,9 @@ export interface ReviewSession {
   exerciseType: ExerciseType
   direction: PracticeDirection
   sectionIds: string[]
+  quizMode?: 'self' | 'parent'
+  learnerProfileId?: string | null
+  learnerProfileName?: string | null
   totalItems: number
   correctCount: number
   startedAt: Date
@@ -131,6 +134,9 @@ export interface ReviewAttempt {
   vocabularyId: string
   exerciseType: ExerciseType
   direction: PracticeDirection
+  quizMode?: 'self' | 'parent'
+  learnerProfileId?: string | null
+  learnerProfileName?: string | null
   userAnswer: string
   wasCorrect: boolean
   qualityRating: QualityRating

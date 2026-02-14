@@ -312,6 +312,152 @@ test('shared books support copy-and-practice in one step', async ({ page }) => {
   await expect(page).toHaveURL(/\/practice\?mode=free&bookId=copied-book-1/)
 })
 
+test('shared books show copy-and-adapt state after copying', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('sync-auth-token', 'e2e-token')
+  })
+
+  await page.route('**/api/networks/test-network', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        network: {
+          id: 'test-network',
+          name: 'Familie Test',
+          type: 'family',
+          inviteCode: 'ABC-123',
+          members: [],
+          myRole: 'parent',
+          sharedBooksCount: 1,
+        },
+      }),
+    })
+  })
+
+  await page.route('**/api/networks/test-network/shared-books', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        sharedBooks: [
+          {
+            id: 'share-2',
+            book: {
+              id: 'original-book-2',
+              name: 'Spanisch Lektion 2',
+              language: 'spanish',
+              coverColor: '#22c55e',
+              description: null,
+            },
+            owner: {
+              id: 'child-2',
+              name: 'Lea',
+              avatar: '🧒',
+            },
+            copyCount: 0,
+            sharedAt: new Date().toISOString(),
+            alreadyCopied: false,
+            copiedBookId: null,
+            isOwner: false,
+            canUnshare: false,
+          },
+        ],
+      }),
+    })
+  })
+
+  await page.route('**/api/shared-books/share-2/copy', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        copiedBook: {
+          id: 'copied-book-2',
+          name: 'Spanisch Lektion 2 (Kopie)',
+          language: 'spanish',
+          coverColor: '#22c55e',
+        },
+      }),
+    })
+  })
+
+  await page.goto('/networks/test-network')
+  await expect(page.getByText('🧒')).toBeVisible()
+  await page.getByRole('button', { name: 'Kopieren & anpassen' }).click()
+
+  await expect(page.getByText('Kopiert')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'In Bibliothek' })).toBeVisible()
+})
+
+test('parent quiz offers linked child learners from family membership', async ({ page }) => {
+  await seedPracticeData(page, { dueNow: true })
+  await setOnboardingComplete(page)
+
+  await page.addInitScript(() => {
+    localStorage.setItem('sync-auth-token', 'e2e-token')
+    localStorage.setItem(
+      'vocabulary-trainer-user-session',
+      JSON.stringify({
+        state: {
+          currentUserId: 'PARENT-01',
+          profiles: [
+            {
+              id: 'PARENT-01',
+              name: 'Mama',
+              avatar: '🦊',
+              createdAt: Date.now(),
+            },
+          ],
+        },
+        version: 0,
+      })
+    )
+  })
+
+  await page.route('**/api/networks', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        networks: [
+          {
+            id: 'family-1',
+            name: 'Familie Beispiel',
+            type: 'family',
+            myRole: 'parent',
+          },
+        ],
+      }),
+    })
+  })
+
+  await page.route('**/api/networks/family-1/members**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        members: [
+          {
+            id: 'member-child-1',
+            userId: 'child-server-1',
+            role: 'child',
+            nickname: 'Tom',
+            avatar: '🧒',
+            isMe: false,
+          },
+        ],
+      }),
+    })
+  })
+
+  await page.goto('/practice/parent-quiz')
+  const learnerSelect = page.getByLabel('Lernen für')
+  await expect(learnerSelect).toBeVisible()
+  await expect(learnerSelect).toContainText('Tom · Kind (Familie Beispiel)')
+})
+
 test('network list shows offline recovery guidance', async ({ page }) => {
   await page.addInitScript(() => {
     const proto = Object.getPrototypeOf(window.navigator)

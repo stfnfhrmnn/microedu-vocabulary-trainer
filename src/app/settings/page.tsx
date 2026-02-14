@@ -13,6 +13,7 @@ import { FamilySetupWizard } from '@/components/network/FamilySetupWizard'
 import { JoinNetworkModal } from '@/components/network/JoinNetworkModal'
 import { CreateNetworkModal } from '@/components/network/CreateNetworkModal'
 import { NetworkTypeGuide } from '@/components/network/NetworkTypeGuide'
+import { CodeFormatHint } from '@/components/network/CodeFormatHint'
 import { useTTS } from '@/hooks/useTTS'
 import { useSettings } from '@/stores/settings'
 import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
@@ -229,6 +230,10 @@ export default function SettingsPage() {
               Verbinde dich mit Familie, Freunden oder deiner Klasse.
             </p>
             <NetworkTypeGuide className="mb-4" />
+            <div className="space-y-1 mb-4">
+              <CodeFormatHint context="network" />
+              <CodeFormatHint context="account" />
+            </div>
 
             {networkSuccess && (
               <div className="p-3 bg-success-50 text-success-600 text-sm rounded-lg mb-4">

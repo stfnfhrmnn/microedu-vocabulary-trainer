@@ -34,7 +34,11 @@ export async function DELETE(
     if (sharedBook.ownerId !== user.userId) {
       const membership = await serverDb.query.networkMembers.findFirst({
         where: (members, { eq, and }) =>
-          and(eq(members.networkId, sharedBook.networkId), eq(members.userId, user.userId)),
+          and(
+            eq(members.networkId, sharedBook.networkId),
+            eq(members.userId, user.userId),
+            eq(members.joinStatus, 'active')
+          ),
       })
 
       if (!membership || !['admin', 'teacher'].includes(membership.role)) {

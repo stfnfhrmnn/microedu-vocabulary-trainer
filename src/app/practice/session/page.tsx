@@ -46,6 +46,9 @@ export default function PracticeSessionPage() {
   const currentStreak = usePracticeSession((state) => state.currentStreak)
   const sectionIds = usePracticeSession((state) => state.sectionIds)
   const targetLanguage = usePracticeSession((state) => state.targetLanguage)
+  const quizMode = usePracticeSession((state) => state.quizMode)
+  const learnerProfileId = usePracticeSession((state) => state.learnerProfileId)
+  const learnerProfileName = usePracticeSession((state) => state.learnerProfileName)
 
   const currentItem = usePracticeSession(useCurrentItem)
   const progressAnswered = usePracticeSession(selectProgressAnswered)
@@ -83,6 +86,9 @@ export default function PracticeSessionPage() {
           exerciseType,
           direction,
           sectionIds,
+          quizMode,
+          learnerProfileId,
+          learnerProfileName,
           totalItems: items.length,
           correctCount: 0,
           startedAt: new Date(),
@@ -91,7 +97,16 @@ export default function PracticeSessionPage() {
       }
     }
     initSession()
-  }, [items.length, exerciseType, direction, sectionIds, sessionId])
+  }, [
+    items.length,
+    exerciseType,
+    direction,
+    sectionIds,
+    quizMode,
+    learnerProfileId,
+    learnerProfileName,
+    sessionId,
+  ])
 
   // Navigate to summary when complete
   useEffect(() => {
@@ -154,23 +169,27 @@ export default function PracticeSessionPage() {
         }
       }
 
-      // Update learning progress in database
-      const vocabProgress = await getOrCreateProgress(currentItem.vocabulary.id)
-      const sm2Result = calculateNextReview(
-        {
-          easeFactor: vocabProgress.easeFactor,
-          interval: vocabProgress.interval,
-          repetitions: vocabProgress.repetitions,
-        },
-        qualityRating
-      )
+      // Parent quiz runs against a selected learner profile context.
+      // Until per-learner progress storage is available, avoid mutating local SM-2 progress
+      // to prevent parent sessions from affecting the active account's schedule.
+      if (quizMode !== 'parent') {
+        const vocabProgress = await getOrCreateProgress(currentItem.vocabulary.id)
+        const sm2Result = calculateNextReview(
+          {
+            easeFactor: vocabProgress.easeFactor,
+            interval: vocabProgress.interval,
+            repetitions: vocabProgress.repetitions,
+          },
+          qualityRating
+        )
 
-      await updateProgress(vocabProgress.id, {
-        ...sm2Result,
-        totalReviews: vocabProgress.totalReviews + 1,
-        correctReviews: vocabProgress.correctReviews + (isCorrect ? 1 : 0),
-        lastReviewDate: new Date(),
-      })
+        await updateProgress(vocabProgress.id, {
+          ...sm2Result,
+          totalReviews: vocabProgress.totalReviews + 1,
+          correctReviews: vocabProgress.correctReviews + (isCorrect ? 1 : 0),
+          lastReviewDate: new Date(),
+        })
+      }
 
       // Record attempt
       await createReviewAttempt({
@@ -178,6 +197,9 @@ export default function PracticeSessionPage() {
         vocabularyId: currentItem.vocabulary.id,
         exerciseType,
         direction,
+        quizMode,
+        learnerProfileId,
+        learnerProfileName,
         userAnswer: userAnswer || '',
         wasCorrect: isCorrect,
         qualityRating,
@@ -194,6 +216,9 @@ export default function PracticeSessionPage() {
       sessionId,
       exerciseType,
       direction,
+      quizMode,
+      learnerProfileId,
+      learnerProfileName,
       currentStreak,
       progressAnswered,
       progressTotal,

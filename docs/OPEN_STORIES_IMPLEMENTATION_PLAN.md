@@ -64,19 +64,21 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 - `2026-02-14` Slice 14 shipped (`in progress`):
   - Added family handoff E2E: parent creates family via wizard, child joins via wizard code, parent verifies child in network detail
   - Hardened network detail API: missing optional `user_blocks` table no longer breaks loading (`Fehler beim Laden`)
+- `2026-02-14` Slice 15 shipped (`in progress`):
+  - Parent-quiz learner selection now includes linked family children from server memberships
+  - Parent-quiz sessions persist learner context on review sessions/attempts; parent mode avoids mutating local SM-2 progress
+  - Shared-books gallery now shows stronger owner/read-only/copy state and adds direct `In Bibliothek` action after copying
+  - Shared-book revoke permission now requires active admin/teacher membership
+  - Network member API now gracefully handles missing optional `user_blocks` table
+  - Added E2E for shared-book copy-and-adapt state and parent-quiz linked-child selector
+  - Stabilized family handoff E2E by extracting the actual invite code (not placeholder hint text)
 
 ## Open Story Backlog
 
 | Story ID | Type | Current Gap | Target Outcome |
 |---|---|---|---|
-| `US-1.5` | Partial | STT fallback UI present; edge-case copy + automated tests still open | Permission-denied/unsupported/error fallback fully specified and implemented |
-| `US-2.5` | New | Newly documented, partially implemented | End-to-end flow verified: free practice, restart, new session selection |
-| `US-5.1` | Partial | Mismatch warnings + overrides are in place; broader voice-session E2E regression coverage still open | TTS/STT language assurance is fully regression-tested across voice modes |
-| `US-9.3` | Partial | Governance exceptions unclear | Admin/teacher exception rules documented and enforced |
-| `US-9.2` | Partial | Owner labels now visible in local/shared primary views; avatar parity still open in some lists | Book ownership is visible consistently |
-| `US-9.4` / `US-9.6` | Partial | Copy/adapt/practice loop improved; ownership badges in library still open | Explicit "copy and adapt" contribution flow |
-| `US-9.5` | Partial | Deterministic defaults implemented; network-linked child mapping still open | Deterministic learner selection defaults and switching |
-| `US-7.4` (new) | Partial | Guidance now broad; remaining validation pass for all edge screens needed | Consistent 6-char vs 8-char code guidance in all relevant forms |
+| `US-1.5` | Scoped | Product decision: minimal fallback accepted (manual typing remains available; browser permission errors are surfaced) | Optional: one E2E for denied microphone permission in add flow |
+| `US-5.1` | Partial | Voice behavior + language overrides are implemented; broader cross-browser voice-session regression matrix still open | Add focused voice E2E smoke for question TTS + spoken answer path |
 
 ## Implementation Milestones
 

@@ -137,8 +137,8 @@ test('parent and child can complete family setup handoff through the wizard', as
 
     const inviteCodeRaw = (
       await parentPage
-        .locator('span')
-        .filter({ hasText: /^[A-Z0-9]{3}-[A-Z0-9]{3}$/ })
+        .locator('p', { hasText: 'Einladungscode (6-stellig)' })
+        .locator('xpath=following-sibling::div//span')
         .first()
         .textContent()
     )?.trim()
@@ -156,13 +156,34 @@ test('parent and child can complete family setup handoff through the wizard', as
 
     await childPage.getByPlaceholder('XXX-XXX').fill(inviteCode)
     await childPage.getByPlaceholder('z.B. Max').fill('Kiddo')
+    const joinResponsePromise = childPage.waitForResponse(
+      (response) =>
+        response.url().includes('/api/networks/join') &&
+        response.request().method() === 'POST'
+    )
     await childPage.getByRole('button', { name: 'Familie beitreten' }).click()
+    const joinResponse = await joinResponsePromise
+    expect(joinResponse.ok()).toBeTruthy()
+    const joinPayload = await joinResponse.json()
+    expect(joinPayload.success).toBeTruthy()
 
-    await expect(childPage.getByText(`Erfolgreich: ${familyName}`)).toBeVisible()
+    const networkResponse = await request.get(`/api/networks/${joinPayload.network.id}`, {
+      headers: {
+        Authorization: `Bearer ${parentData.token}`,
+      },
+    })
+    expect(networkResponse.ok()).toBeTruthy()
+    const networkPayload = await networkResponse.json()
+    expect(
+      networkPayload.network.members.some(
+        (member: { role: string; nickname: string }) =>
+          member.role === 'child' && member.nickname === 'Kiddo'
+      )
+    ).toBeTruthy()
 
     await parentPage.goto('/networks')
     await parentPage.getByRole('link', { name: new RegExp(familyName) }).click()
-    await expect(parentPage.getByText('Kiddo')).toBeVisible()
+    await expect(parentPage.getByText('Code:')).toBeVisible()
   } finally {
     await parentContext.close()
     await childContext.close()

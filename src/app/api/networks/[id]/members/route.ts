@@ -10,6 +10,8 @@ import { getUserFromRequest } from '@/lib/auth/jwt'
 import { parsePaginationParams, paginateArray } from '@/lib/api/pagination'
 import { eq, and } from 'drizzle-orm'
 
+let hasLoggedMissingUserBlocksTable = false
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -52,15 +54,34 @@ export async function GET(
     const userMap = new Map(users.map((u) => [u.id, u]))
 
     // Check for blocked users
-    const myBlocks = await serverDb.query.userBlocks.findMany({
-      where: (blocks, { eq }) => eq(blocks.blockerId, user.userId),
-    })
-    const blockedByMe = new Set(myBlocks.map((b) => b.blockedId))
+    let blockedByMe = new Set<string>()
+    let blockedMe = new Set<string>()
 
-    const blocksAgainstMe = await serverDb.query.userBlocks.findMany({
-      where: (blocks, { eq }) => eq(blocks.blockedId, user.userId),
-    })
-    const blockedMe = new Set(blocksAgainstMe.map((b) => b.blockerId))
+    try {
+      const myBlocks = await serverDb.query.userBlocks.findMany({
+        where: (blocks, { eq }) => eq(blocks.blockerId, user.userId),
+      })
+      blockedByMe = new Set(myBlocks.map((b) => b.blockedId))
+
+      const blocksAgainstMe = await serverDb.query.userBlocks.findMany({
+        where: (blocks, { eq }) => eq(blocks.blockedId, user.userId),
+      })
+      blockedMe = new Set(blocksAgainstMe.map((b) => b.blockerId))
+    } catch (blockError) {
+      const maybeCode =
+        typeof blockError === 'object' && blockError && 'code' in blockError
+          ? String((blockError as { code?: unknown }).code)
+          : null
+
+      if (maybeCode === '42P01') {
+        if (!hasLoggedMissingUserBlocksTable) {
+          hasLoggedMissingUserBlocksTable = true
+          console.warn('Skipping member block filtering: optional table "user_blocks" is missing.')
+        }
+      } else {
+        console.warn('Skipping member block filtering:', blockError)
+      }
+    }
 
     // Build member list, filtering out blocked users
     const memberList = members
