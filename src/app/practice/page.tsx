@@ -111,6 +111,7 @@ export default function PracticePage() {
     const params = new URLSearchParams(window.location.search)
     const mode = params.get('mode')
     const requestedExerciseType = params.get('exerciseType')
+    const requestedScope = params.get('scope')
     const shouldResume = params.get('resume') === '1'
 
     if (lastPracticeConfig) {
@@ -123,6 +124,15 @@ export default function PracticePage() {
     if (mode === 'free') {
       setWordScope('all')
       setSectionsExpanded(true)
+      setSettingsExpanded(true)
+    }
+
+    if (
+      requestedScope === 'due' ||
+      requestedScope === 'all' ||
+      requestedScope === 'difficult'
+    ) {
+      setWordScope(requestedScope)
       setSettingsExpanded(true)
     }
 

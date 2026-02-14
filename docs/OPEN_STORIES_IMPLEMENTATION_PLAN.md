@@ -42,13 +42,16 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 - `2026-02-14` Slice 7 shipped (`in progress`):
   - Network list page now has actionable auth/offline/server error recovery
   - Account/network code hints added in migration and network overview surfaces
+- `2026-02-14` Slice 8 shipped (`in progress`):
+  - Dashboard adds direct CTA for difficult-word practice
+  - Practice setup supports explicit `scope` deep-link (`due/all/difficult`)
 
 ## Open Story Backlog
 
 | Story ID | Type | Current Gap | Target Outcome |
 |---|---|---|---|
 | `US-1.5` | Partial | STT fallback UI present; edge-case copy + automated tests still open | Permission-denied/unsupported/error fallback fully specified and implemented |
-| `US-2.2` / `US-2.4` | Partial | UI/flow now explicit; E2E coverage still open | Due-card mode selection + typed entry + difficult-word scope are explicit and regression-tested |
+| `US-2.2` / `US-2.4` | Partial | UI/deep-link flow now explicit; E2E coverage still open | Due-card mode selection + typed entry + difficult-word scope are explicit and regression-tested |
 | `US-2.5` | New | Newly documented, partially implemented | End-to-end flow verified: free practice, restart, new session selection |
 | `US-4.1` | Partial | Handoff copy clarified, end-to-end family E2E coverage still open | Parent create -> child join path clear in UX copy and flow |
 | `US-5.1` | Partial | No explicit language mismatch handling | TTS/STT language assurance, warnings, and manual override |

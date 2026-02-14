@@ -176,6 +176,15 @@ export default function HomePage() {
                     Frei üben (Abschnitte wählen)
                   </Button>
                 </Link>
+                <Link href="/practice?scope=difficult" className="col-span-2">
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    className="border-white/30 text-white hover:bg-white/10"
+                  >
+                    🎯 Schwierige Wörter üben
+                  </Button>
+                </Link>
               </div>
             )}
             {dueCount === 0 && totalCount > 0 && (
@@ -186,6 +195,11 @@ export default function HomePage() {
                 <Link href="/practice?mode=free">
                   <Button variant="outline" fullWidth className="border-white/30 text-white hover:bg-white/10">
                     Trotzdem frei üben
+                  </Button>
+                </Link>
+                <Link href="/practice?scope=difficult">
+                  <Button variant="outline" fullWidth className="border-white/30 text-white hover:bg-white/10">
+                    Schwierige Wörter üben
                   </Button>
                 </Link>
               </div>

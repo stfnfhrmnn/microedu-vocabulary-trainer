@@ -1878,3 +1878,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 2.7 | 2026-02-14 | Update | Added deterministic learner-default behavior and remembered learner selection for parent-quiz setup flows |
 | 2.8 | 2026-02-14 | Update | Clarified family invitation handoff text with explicit parent-create to child-join menu path steps |
 | 2.9 | 2026-02-14 | Update | Added broader network load-recovery behavior and expanded code-format guidance coverage across migration/network views |
+| 2.10 | 2026-02-14 | Update | Added direct difficult-word practice entry from dashboard and scope deep-link handling in practice setup |
