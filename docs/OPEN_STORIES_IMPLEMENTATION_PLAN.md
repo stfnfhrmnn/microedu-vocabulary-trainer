@@ -53,13 +53,16 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
   - Library book cards and book/chapter views now show owner label
 - `2026-02-14` Slice 11 shipped (`in progress`):
   - Voice and group voice now surface STT language-override mismatch warnings
+- `2026-02-14` Slice 12 shipped (`in progress`):
+  - Added E2E coverage for network auth recovery path (`/networks` load failure CTA to login)
+  - Added E2E coverage for practice deep links: `scope=difficult` and `bookId` section prefilter
 
 ## Open Story Backlog
 
 | Story ID | Type | Current Gap | Target Outcome |
 |---|---|---|---|
 | `US-1.5` | Partial | STT fallback UI present; edge-case copy + automated tests still open | Permission-denied/unsupported/error fallback fully specified and implemented |
-| `US-2.2` / `US-2.4` | Partial | UI/deep-link flow now explicit; E2E coverage still open | Due-card mode selection + typed entry + difficult-word scope are explicit and regression-tested |
+| `US-2.2` / `US-2.4` | Partial | Core deep-link E2E added; due-card typed-flow E2E still open | Due-card mode selection + typed entry + difficult-word scope are explicit and regression-tested |
 | `US-2.5` | New | Newly documented, partially implemented | End-to-end flow verified: free practice, restart, new session selection |
 | `US-4.1` | Partial | Handoff copy clarified, end-to-end family E2E coverage still open | Parent create -> child join path clear in UX copy and flow |
 | `US-5.1` | Partial | No explicit language mismatch handling | TTS/STT language assurance, warnings, and manual override |
@@ -67,7 +70,7 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 | `US-9.2` | Partial | Owner labels now visible in local/shared primary views; avatar parity still open in some lists | Book ownership is visible consistently |
 | `US-9.4` / `US-9.6` | Partial | Copy/adapt/practice loop improved; ownership badges in library still open | Explicit "copy and adapt" contribution flow |
 | `US-9.5` | Partial | Deterministic defaults implemented; network-linked child mapping still open | Deterministic learner selection defaults and switching |
-| `US-4.4` (new) | Partial | Recovery implemented on detail + list pages; E2E coverage still open | Actionable load failure UI with retry/offline behavior |
+| `US-4.4` (new) | Partial | Auth-recovery E2E covered; offline/server branch E2E still open | Actionable load failure UI with retry/offline behavior |
 | `US-7.4` (new) | Partial | Guidance now broad; remaining validation pass for all edge screens needed | Consistent 6-char vs 8-char code guidance in all relevant forms |
 | `US-8.4` (new) | Partial | Decision helper now shown, still needs E2E coverage | Lightweight decision helper (family/class/study_group) |
 | `US-5.6` (new) | Missing | TTS quality controls not formalized | User-facing voice quality settings + preview/test |
