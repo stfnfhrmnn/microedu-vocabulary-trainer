@@ -213,3 +213,80 @@ test('practice setup prefilters sections via bookId deep link', async ({ page })
   await expect(page.getByText('1 von 2')).toBeVisible()
   await expect(page.getByRole('button', { name: /1 Vokabel üben/i })).toBeVisible()
 })
+
+test('shared books support copy-and-practice in one step', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('sync-auth-token', 'e2e-token')
+  })
+
+  await page.route('**/api/networks/test-network', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        network: {
+          id: 'test-network',
+          name: 'Familie Test',
+          type: 'family',
+          inviteCode: 'ABC-123',
+          members: [],
+          myRole: 'parent',
+          sharedBooksCount: 1,
+        },
+      }),
+    })
+  })
+
+  await page.route('**/api/networks/test-network/shared-books', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        sharedBooks: [
+          {
+            id: 'share-1',
+            book: {
+              id: 'original-book-1',
+              name: 'Franzoesisch Lektion 1',
+              language: 'french',
+              coverColor: '#3b82f6',
+              description: null,
+            },
+            owner: {
+              id: 'child-1',
+              name: 'Kind',
+              avatar: '🧒',
+            },
+            copyCount: 0,
+            sharedAt: new Date().toISOString(),
+            alreadyCopied: false,
+            copiedBookId: null,
+            isOwner: false,
+            canUnshare: false,
+          },
+        ],
+      }),
+    })
+  })
+
+  await page.route('**/api/shared-books/share-1/copy', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        copiedBook: {
+          id: 'copied-book-1',
+          name: 'Franzoesisch Lektion 1 (Kopie)',
+          language: 'french',
+          coverColor: '#3b82f6',
+        },
+      }),
+    })
+  })
+
+  await page.goto('/networks/test-network')
+  await page.getByRole('button', { name: 'Kopieren & üben' }).click()
+
+  await expect(page).toHaveURL(/\/practice\?mode=free&bookId=copied-book-1/)
+})
