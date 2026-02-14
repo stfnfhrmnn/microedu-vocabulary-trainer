@@ -2,11 +2,11 @@ import { expect, test, type Page } from '@playwright/test'
 
 async function seedPracticeData(
   page: Page,
-  options: { includeSecondBook?: boolean } = {}
+  options: { includeSecondBook?: boolean; dueNow?: boolean } = {}
 ) {
   await page.goto('/login')
 
-  await page.evaluate(async ({ includeSecondBook }) => {
+  await page.evaluate(async ({ includeSecondBook, dueNow }) => {
     const DB_NAME = 'VocabularyTrainer'
     const DB_VERSION = 4
     const now = new Date()
@@ -124,7 +124,9 @@ async function seedPracticeData(
           easeFactor: 2.1,
           interval: 2,
           repetitions: 1,
-          nextReviewDate: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+          nextReviewDate: dueNow
+            ? new Date(now.getTime() - 60 * 60 * 1000)
+            : new Date(now.getTime() + 24 * 60 * 60 * 1000),
           totalReviews: 6,
           correctReviews: 1,
           createdAt: now,
@@ -182,6 +184,25 @@ async function seedPracticeData(
       }
     })
   }, options)
+}
+
+async function setOnboardingComplete(page: Page) {
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'onboarding-storage',
+      JSON.stringify({
+        state: {
+          hasCompletedOnboarding: true,
+          currentStep: 0,
+          selectedLanguage: 'french',
+          dailyGoal: 15,
+          profileName: 'E2E',
+          profileAvatar: '🧪',
+        },
+        version: 0,
+      })
+    )
+  })
 }
 
 test('network list shows actionable auth recovery', async ({ page }) => {
@@ -289,4 +310,70 @@ test('shared books support copy-and-practice in one step', async ({ page }) => {
   await page.getByRole('button', { name: 'Kopieren & üben' }).click()
 
   await expect(page).toHaveURL(/\/practice\?mode=free&bookId=copied-book-1/)
+})
+
+test('network list shows offline recovery guidance', async ({ page }) => {
+  await page.addInitScript(() => {
+    const proto = Object.getPrototypeOf(window.navigator)
+    Object.defineProperty(proto, 'onLine', {
+      configurable: true,
+      get: () => false,
+    })
+  })
+
+  await page.goto('/networks')
+
+  await expect(
+    page.getByText('Du bist offline. Netzwerke benötigen eine Internetverbindung.')
+  ).toBeVisible()
+  await expect(
+    page.getByText('Sobald du wieder online bist, kannst du deine Netzwerke laden.')
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Erneut versuchen' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Zum Login' })).toHaveCount(0)
+})
+
+test('network list shows server error retry without auth redirect', async ({ page }) => {
+  let requestCount = 0
+  await page.addInitScript(() => {
+    localStorage.setItem('sync-auth-token', 'e2e-token')
+  })
+
+  await page.route('**/api/networks', async (route) => {
+    requestCount += 1
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'server down' }),
+    })
+  })
+
+  await page.goto('/networks')
+
+  await expect(page.getByText('Fehler beim Laden der Netzwerke')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Erneut versuchen' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Zum Login' })).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Erneut versuchen' }).click()
+  await expect.poll(() => requestCount).toBeGreaterThan(1)
+})
+
+test('network type helper is visible with all three recommendations', async ({ page }) => {
+  await page.goto('/networks')
+
+  await expect(page.getByText('Welche Art passt?')).toBeVisible()
+  await expect(page.getByText('Familie', { exact: true })).toBeVisible()
+  await expect(page.getByText('Klasse', { exact: true })).toBeVisible()
+  await expect(page.getByText('Lerngruppe', { exact: true })).toBeVisible()
+})
+
+test('due card can start a typed session directly', async ({ page }) => {
+  await seedPracticeData(page, { dueNow: true })
+  await setOnboardingComplete(page)
+
+  await page.goto('/')
+  await page.getByRole('button', { name: /Mit Eingabe/i }).click()
+
+  await expect(page).toHaveURL(/\/practice\/session$/)
+  await expect(page.getByPlaceholder('Deine Antwort...')).toBeVisible()
 })

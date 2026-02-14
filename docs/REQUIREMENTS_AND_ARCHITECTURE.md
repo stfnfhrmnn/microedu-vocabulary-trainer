@@ -208,6 +208,24 @@ A mobile-friendly vocabulary learning app that:
 - Each participant answers in turn
 - Results compared at the end
 
+#### US-5.6: Pronunciation Quality Controls
+> As a learner, I want to control pronunciation quality and quickly test it so that voice output is understandable on my device.
+
+**Acceptance Criteria:**
+- Settings provide a voice quality selector for Google TTS (`WaveNet` / `Standard`)
+- Voice quality preference is persisted per user
+- Settings provide a `Stimme testen` action for immediate playback
+- Web Speech fallback remains available if Google TTS is unavailable
+
+#### US-5.7: Language Override Confirmation for TTS/STT
+> As a learner, I want to force pronunciation/input language when needed and clearly understand that automatic language detection is being overridden.
+
+**Acceptance Criteria:**
+- Settings allow manual override for TTS and STT language (`auto` + supported languages)
+- Selecting a manual override requires explicit confirmation from the user
+- Voice flows show clear feedback when an override changes the effective language
+- Automatic mode remains the default and can be restored at any time
+
 ### Epic 6: Gamification & Motivation
 
 #### US-6.1: XP and Levels
@@ -1883,3 +1901,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 2.12 | 2026-02-14 | Update | Added explicit owner labels in primary library list and book/chapter detail views to improve ownership clarity |
 | 2.13 | 2026-02-14 | Update | Added STT language-override mismatch warning behavior in voice and group-voice sessions for clearer language assurance feedback |
 | 2.14 | 2026-02-14 | Update | Added E2E coverage for network auth-recovery and practice deep-link flows (`scope` + `bookId`) |
+| 2.15 | 2026-02-14 | Update | Added explicit US-5.6/US-5.7 user stories with acceptance criteria, including manual override confirmation and quality/test controls |

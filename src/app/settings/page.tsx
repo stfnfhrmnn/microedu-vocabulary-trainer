@@ -60,6 +60,10 @@ const ttsLanguageOptions = [
   { value: 'latin', label: 'Latein' },
 ]
 
+const ttsLanguageLabelMap = Object.fromEntries(
+  ttsLanguageOptions.map((option) => [option.value, option.label])
+) as Record<(typeof ttsLanguageOptions)[number]['value'], string>
+
 const TTS_SAMPLE_TEXT = {
   german: 'Hallo! So klingt die Aussprache auf diesem Gerät.',
   french: 'Bonjour! Voici un test de prononciation.',
@@ -151,6 +155,19 @@ export default function SettingsPage() {
     const language =
       settings.ttsLanguageOverride === 'auto' ? 'german' : settings.ttsLanguageOverride
     await speak(TTS_SAMPLE_TEXT[language], language)
+  }
+
+  const confirmLanguageOverride = (
+    scopeLabel: 'Aussprache' | 'Eingabe',
+    currentOverride: typeof settings.ttsLanguageOverride,
+    nextOverride: typeof settings.ttsLanguageOverride
+  ) => {
+    if (nextOverride === 'auto' || nextOverride === currentOverride) return true
+
+    return window.confirm(
+      `${scopeLabel}-Sprache wirklich auf "${ttsLanguageLabelMap[nextOverride]}" festlegen?\n\n` +
+      'Damit überschreibst du die automatische Sprachwahl des aktuellen Inhalts.'
+    )
   }
 
   return (
@@ -371,11 +388,13 @@ export default function SettingsPage() {
                 label="Aussprache-Sprache"
                 options={ttsLanguageOptions}
                 value={settings.ttsLanguageOverride}
-                onChange={(e) =>
-                  settings.setTTSLanguageOverride(
-                    e.target.value as typeof settings.ttsLanguageOverride
-                  )
-                }
+                onChange={(e) => {
+                  const value = e.target.value as typeof settings.ttsLanguageOverride
+                  if (!confirmLanguageOverride('Aussprache', settings.ttsLanguageOverride, value)) {
+                    return
+                  }
+                  settings.setTTSLanguageOverride(value)
+                }}
                 helperText="Automatisch nutzt die Sprache des aktuellen Inhalts. Manuelle Wahl überschreibt dies."
               />
 
@@ -383,11 +402,13 @@ export default function SettingsPage() {
                 label="Eingabe-Sprache (STT)"
                 options={ttsLanguageOptions}
                 value={settings.sttLanguageOverride}
-                onChange={(e) =>
-                  settings.setSTTLanguageOverride(
-                    e.target.value as typeof settings.sttLanguageOverride
-                  )
-                }
+                onChange={(e) => {
+                  const value = e.target.value as typeof settings.sttLanguageOverride
+                  if (!confirmLanguageOverride('Eingabe', settings.sttLanguageOverride, value)) {
+                    return
+                  }
+                  settings.setSTTLanguageOverride(value)
+                }}
                 helperText="Automatisch nutzt die Antwortsprache. Bei Erkennungsproblemen manuell festlegen."
               />
 
