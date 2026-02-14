@@ -70,7 +70,7 @@ export function GroupVoiceSessionView({
   } = useGroupVoiceSession()
 
   // Settings
-  const { ttsProvider, ttsRate, ttsPitch, googleVoiceType } = useSettings()
+  const { ttsProvider, ttsRate, ttsPitch, googleVoiceType, ttsLanguageOverride } = useSettings()
   const { available: hasGoogleApi } = useGoogleApiStatus()
 
   // Services
@@ -95,9 +95,10 @@ export function GroupVoiceSessionView({
       provider: ttsProvider,
       googleEnabled: hasGoogleApi,
       googleVoiceType,
+      ttsLanguageOverride,
     })
     conversationService.current.setEnabled(hasGoogleApi)
-  }, [ttsProvider, hasGoogleApi, googleVoiceType])
+  }, [ttsProvider, hasGoogleApi, googleVoiceType, ttsLanguageOverride])
 
   // Cleanup on unmount
   useEffect(() => {

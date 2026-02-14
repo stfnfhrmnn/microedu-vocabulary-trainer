@@ -8,6 +8,7 @@ import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { NetworkOverview } from '@/components/network/NetworkOverview'
+import { SharedBooksGallery } from '@/components/sharing/SharedBooksGallery'
 import type { Network, UserRole } from '@/lib/db/schema'
 
 interface NetworkMemberSummary {
@@ -195,6 +196,10 @@ export default function NetworkDetailPage() {
         sharedBooksCount={network.sharedBooksCount}
         myRole={network.myRole}
       />
+
+      <div className="mt-6">
+        <SharedBooksGallery networkId={network.id} />
+      </div>
 
       {/* Actions */}
       <Card className="mt-6">

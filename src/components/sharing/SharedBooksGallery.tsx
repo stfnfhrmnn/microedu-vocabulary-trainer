@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Copy, User, Check, Loader2 } from 'lucide-react'
+import { BookOpen, Copy, User, Check, Loader2, Unlink } from 'lucide-react'
 
 interface SharedBook {
   id: string
@@ -22,6 +22,7 @@ interface SharedBook {
   sharedAt: string
   alreadyCopied: boolean
   isOwner: boolean
+  canUnshare?: boolean
 }
 
 interface SharedBooksGalleryProps {
@@ -33,6 +34,7 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
   const [sharedBooks, setSharedBooks] = useState<SharedBook[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [copyingId, setCopyingId] = useState<string | null>(null)
+  const [unsharingId, setUnsharingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -91,6 +93,30 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
       setError(err instanceof Error ? err.message : 'Fehler beim Kopieren')
     } finally {
       setCopyingId(null)
+    }
+  }
+
+  const handleUnshare = async (sharedBookId: string) => {
+    setUnsharingId(sharedBookId)
+    setError(null)
+    try {
+      const response = await fetch(`/api/shared-books/${sharedBookId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('sync-auth-token')}`,
+        },
+      })
+
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(data.error || 'Teilen konnte nicht beendet werden')
+      }
+
+      setSharedBooks((prev) => prev.filter((book) => book.id !== sharedBookId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler beim Beenden der Freigabe')
+    } finally {
+      setUnsharingId(null)
     }
   }
 
@@ -184,15 +210,13 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
               </div>
 
               {/* Actions */}
-              <div className="mt-3 flex justify-end">
-                {sharedBook.isOwner ? (
-                  <span className="text-sm text-muted-foreground">Dein Buch</span>
-                ) : sharedBook.alreadyCopied ? (
-                  <span className="flex items-center gap-1 text-sm text-green-600">
+              <div className="mt-3 flex justify-end gap-2">
+                {sharedBook.alreadyCopied ? (
+                  <span className="flex items-center gap-1 text-sm text-green-600 px-2">
                     <Check className="h-4 w-4" />
                     Kopiert
                   </span>
-                ) : (
+                ) : !sharedBook.isOwner ? (
                   <button
                     onClick={() => handleCopy(sharedBook.id)}
                     disabled={copyingId === sharedBook.id}
@@ -206,7 +230,28 @@ export function SharedBooksGallery({ networkId, onCopy }: SharedBooksGalleryProp
                     ) : (
                       <>
                         <Copy className="h-4 w-4" />
-                        Kopieren
+                        Kopieren & anpassen
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <span className="text-sm text-muted-foreground px-2">Dein Buch</span>
+                )}
+                {sharedBook.canUnshare && (
+                  <button
+                    onClick={() => handleUnshare(sharedBook.id)}
+                    disabled={unsharingId === sharedBook.id}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    {unsharingId === sharedBook.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Beende...
+                      </>
+                    ) : (
+                      <>
+                        <Unlink className="h-4 w-4" />
+                        Teilen beenden
                       </>
                     )}
                   </button>

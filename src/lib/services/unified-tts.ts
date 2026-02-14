@@ -9,7 +9,7 @@
 import type { Language } from '@/lib/db/schema'
 import { getTTSService } from './text-to-speech'
 import { getGoogleTTSService, type GoogleTTSOptions } from './google-tts'
-import type { TTSProvider, GoogleVoiceType } from '@/stores/settings'
+import type { TTSProvider, GoogleVoiceType, TTSLanguageOverride } from '@/stores/settings'
 
 interface UnifiedTTSOptions {
   rate?: number    // Speaking rate (0.5-2.0, 1.0 = normal)
@@ -21,6 +21,9 @@ interface SpeakResult {
   success: boolean
   error?: string
   provider: TTSProvider
+  warning?: string
+  requestedLanguage: Language | 'german'
+  effectiveLanguage: Language | 'german'
 }
 
 /**
@@ -30,6 +33,7 @@ export class UnifiedTTSService {
   private provider: TTSProvider = 'web-speech'
   private googleEnabled: boolean = false
   private googleVoiceType: GoogleVoiceType = 'wavenet'
+  private languageOverride: TTSLanguageOverride = 'auto'
   private webTTS = getTTSService()
   private googleTTS = getGoogleTTSService()
 
@@ -41,6 +45,7 @@ export class UnifiedTTSService {
     googleApiKey?: string | null  // Legacy - now just boolean check
     googleEnabled?: boolean
     googleVoiceType?: GoogleVoiceType
+    ttsLanguageOverride?: TTSLanguageOverride
   }) {
     this.provider = config.provider
     // Support both old googleApiKey (truthy check) and new googleEnabled
@@ -53,6 +58,9 @@ export class UnifiedTTSService {
     }
     if (config.googleVoiceType !== undefined) {
       this.googleVoiceType = config.googleVoiceType
+    }
+    if (config.ttsLanguageOverride !== undefined) {
+      this.languageOverride = config.ttsLanguageOverride
     }
   }
 
@@ -78,6 +86,14 @@ export class UnifiedTTSService {
   setGoogleEnabled(enabled: boolean) {
     this.googleEnabled = enabled
     this.googleTTS.setEnabled(enabled)
+  }
+
+  /**
+   * Set pronunciation language override.
+   * `auto` keeps the language requested by the caller.
+   */
+  setLanguageOverride(override: TTSLanguageOverride) {
+    this.languageOverride = override
   }
 
   /**
@@ -116,6 +132,13 @@ export class UnifiedTTSService {
     language: Language | 'german',
     options: UnifiedTTSOptions = {}
   ): Promise<SpeakResult> {
+    const effectiveLanguage =
+      this.languageOverride === 'auto' ? language : this.languageOverride
+    const languageWarning =
+      effectiveLanguage !== language
+        ? `Aussprache-Sprache überschrieben (${language} → ${effectiveLanguage}).`
+        : undefined
+
     // Try primary provider first
     if (this.provider === 'google-cloud' && this.googleTTS.isAvailable()) {
       // Map normalized pitch (0.5-2.0) to Google's range (-20 to 20)
@@ -128,14 +151,44 @@ export class UnifiedTTSService {
         useWaveNet: this.googleVoiceType === 'wavenet',
       }
 
-      const result = await this.googleTTS.speak(text, language, googleOptions)
+      const result = await this.googleTTS.speak(text, effectiveLanguage, googleOptions)
 
       if (result.success) {
-        return { success: true, provider: 'google-cloud' }
+        return {
+          success: true,
+          provider: 'google-cloud',
+          warning: languageWarning,
+          requestedLanguage: language,
+          effectiveLanguage,
+        }
       }
 
       // Fall back to Web Speech API on error
       console.warn('Google TTS failed, falling back to Web Speech API:', result.error)
+      const fallbackResult = await this.webTTS.speak(text, effectiveLanguage, {
+        rate: options.rate ?? 0.9,
+        pitch: options.pitch ?? 1,
+        volume: options.volume ?? 1,
+      })
+
+      if (fallbackResult.success) {
+        return {
+          success: true,
+          provider: 'web-speech',
+          warning:
+            `Google TTS fehlgeschlagen, Web Speech verwendet. ${languageWarning ?? ''}`.trim(),
+          requestedLanguage: language,
+          effectiveLanguage,
+        }
+      }
+
+      return {
+        success: false,
+        error: fallbackResult.error,
+        provider: 'web-speech',
+        requestedLanguage: language,
+        effectiveLanguage,
+      }
     }
 
     // Use Web Speech API
@@ -145,16 +198,24 @@ export class UnifiedTTSService {
       volume: options.volume ?? 1,
     }
 
-    const result = await this.webTTS.speak(text, language, webOptions)
+    const result = await this.webTTS.speak(text, effectiveLanguage, webOptions)
 
     if (result.success) {
-      return { success: true, provider: 'web-speech' }
+      return {
+        success: true,
+        provider: 'web-speech',
+        warning: languageWarning,
+        requestedLanguage: language,
+        effectiveLanguage,
+      }
     }
 
     return {
       success: false,
       error: result.error,
       provider: 'web-speech',
+      requestedLanguage: language,
+      effectiveLanguage,
     }
   }
 

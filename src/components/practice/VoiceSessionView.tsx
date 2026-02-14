@@ -62,7 +62,8 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
   const progress = useVoiceSessionProgress()
 
   // Get settings for TTS and AI analysis
-  const { ttsProvider, useAIAnalysis, ttsRate, ttsPitch, googleVoiceType } = useSettings()
+  const { ttsProvider, useAIAnalysis, ttsRate, ttsPitch, googleVoiceType, ttsLanguageOverride } =
+    useSettings()
   const { available: hasGoogleApi } = useGoogleApiStatus()
   const [error, setError] = useState<string | null>(null)
 
@@ -80,11 +81,12 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
       provider: ttsProvider,
       googleEnabled: hasGoogleApi,
       googleVoiceType,
+      ttsLanguageOverride,
     })
     analyzerService.current.setEnabled(hasGoogleApi)
     analyzerService.current.setUseAI(useAIAnalysis)
     setUsingAI(useAIAnalysis && hasGoogleApi)
-  }, [ttsProvider, hasGoogleApi, useAIAnalysis, googleVoiceType])
+  }, [ttsProvider, hasGoogleApi, useAIAnalysis, googleVoiceType, ttsLanguageOverride])
 
   // Cleanup timeouts on unmount
   useEffect(() => {

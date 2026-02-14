@@ -331,6 +331,7 @@ A mobile-friendly vocabulary learning app that:
 - Only owner can edit book metadata, chapter/section structure, and vocabulary content
 - Non-owners only see read-only actions (view, practice, copy)
 - Delete and sharing controls are hidden/disabled for non-owners
+- Network admins/teachers may stop sharing in their network, but still cannot edit book content unless they are the owner
 
 #### US-9.4: Parent Access to Child Books
 > As a parent in a family network, I want automatic read-only access to my child’s books so that I can support practice without setup overhead.
@@ -339,6 +340,7 @@ A mobile-friendly vocabulary learning app that:
 - Parent can see child books by default after family link exists
 - Child books are clearly marked read-only in parent account
 - Parent cannot modify child-owned content directly
+- Parent can copy child books into own library for adaptation
 
 #### US-9.5: Parent-Led Practice from Parent Account
 > As a parent, I want to start practice from my account using my child’s books so that we can practice together.
@@ -434,6 +436,8 @@ A mobile-friendly vocabulary learning app that:
 | FR-5.3 | System shall analyze spoken answers for correctness using AI (Gemini) | Should |
 | FR-5.4 | System shall provide a screen-free parent quiz mode | Should |
 | FR-5.5 | System shall support group voice practice sessions | Could |
+| FR-5.6 | System shall provide pronunciation quality controls (voice type and test playback) | Should |
+| FR-5.7 | System shall support pronunciation language override with clear user feedback | Should |
 
 ### FR-6: Gamification
 
@@ -475,6 +479,8 @@ A mobile-friendly vocabulary learning app that:
 | FR-8.11 | System shall allow read-only users to run practice sessions from visible books without edit rights | Should |
 | FR-8.12 | System shall allow users to copy read-only books into their own editable library | Must |
 | FR-8.13 | System shall allow owners to revoke network sharing at any time | Must |
+| FR-8.14 | System shall automatically surface child-owned books as read-only to parent members in family networks | Should |
+| FR-8.15 | System shall allow network admins/teachers to revoke sharing for moderation while preserving owner-only content editing | Should |
 
 ### FR-9: Safety & Moderation
 
@@ -1866,3 +1872,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 2.1 | 2026-02-14 | Update | Added simplified book ownership/access model, expanded Epic 9 user stories for owner/parent/read-only flows, clarified account vs network code formats, and documented bulk language swap plus voice-assisted manual entry requirements |
 | 2.2 | 2026-02-14 | Update | Added US-2.5 and FR-3.10 to explicitly cover practice beyond daily goals (free-practice and restart flows) |
 | 2.3 | 2026-02-14 | Update | Added detailed implementation plan for all open story gaps in `docs/OPEN_STORIES_IMPLEMENTATION_PLAN.md` |
+| 2.4 | 2026-02-14 | Update | Documented governance exception for sharing revocation, parent auto-visibility of child books in family networks, and new voice requirements for quality controls + language override |

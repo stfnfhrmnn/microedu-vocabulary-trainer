@@ -13,6 +13,19 @@ This plan covers all currently open user-story gaps:
 
 Goal: close these gaps with simple, predictable behavior and minimal complexity.
 
+## Progress Snapshot
+
+- `2026-02-14` Slice 1 shipped (`ce79c89`):
+  - Practice resume/new-session split and free-practice fallback
+  - Network detail retry/offline/auth recovery
+  - Reusable 6-char vs 8-char code hints in key flows
+  - STT unavailable hint in add-vocabulary
+- `2026-02-14` Slice 2 shipped (`in progress`):
+  - TTS language override + voice test in settings
+  - Parent-quiz learner profile context selection/display
+  - Shared book unshare control for owner/admin/teacher
+  - Automatic parent visibility of child books in family networks
+
 ## Open Story Backlog
 
 | Story ID | Type | Current Gap | Target Outcome |

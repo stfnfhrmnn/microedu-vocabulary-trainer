@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { FamilySetupWizard } from '@/components/network/FamilySetupWizard'
 import { JoinNetworkModal } from '@/components/network/JoinNetworkModal'
 import { CreateNetworkModal } from '@/components/network/CreateNetworkModal'
+import { useTTS } from '@/hooks/useTTS'
 import { useSettings } from '@/stores/settings'
 import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
 import { db } from '@/lib/db/db'
@@ -50,8 +51,24 @@ const googleVoiceOptions = [
   { value: 'standard', label: 'Standard (Schneller)' },
 ]
 
+const ttsLanguageOptions = [
+  { value: 'auto', label: 'Automatisch (empfohlen)' },
+  { value: 'german', label: 'Deutsch' },
+  { value: 'french', label: 'Französisch' },
+  { value: 'spanish', label: 'Spanisch' },
+  { value: 'latin', label: 'Latein' },
+]
+
+const TTS_SAMPLE_TEXT = {
+  german: 'Hallo! So klingt die Aussprache auf diesem Gerät.',
+  french: 'Bonjour! Voici un test de prononciation.',
+  spanish: 'Hola! Esta es una prueba de pronunciación.',
+  latin: 'Salve! Haec est probatio pronuntiationis.',
+} as const
+
 export default function SettingsPage() {
   const settings = useSettings()
+  const { speak, isSpeaking, error: ttsError } = useTTS()
   const { available: hasGoogleApi, loading: googleApiLoading } = useGoogleApiStatus()
   const [googleDebug, setGoogleDebug] = useState<{
     hasGoogleApiKey: boolean
@@ -127,6 +144,12 @@ export default function SettingsPage() {
     } catch (error) {
       setGoogleDebugError(error instanceof Error ? error.message : 'Debug-Anfrage fehlgeschlagen')
     }
+  }
+
+  const handleTestVoice = async () => {
+    const language =
+      settings.ttsLanguageOverride === 'auto' ? 'german' : settings.ttsLanguageOverride
+    await speak(TTS_SAMPLE_TEXT[language], language)
   }
 
   return (
@@ -341,6 +364,32 @@ export default function SettingsPage() {
                   helperText="WaveNet klingt natürlicher, Standard ist schneller"
                 />
               )}
+
+              <Select
+                label="Aussprache-Sprache"
+                options={ttsLanguageOptions}
+                value={settings.ttsLanguageOverride}
+                onChange={(e) =>
+                  settings.setTTSLanguageOverride(
+                    e.target.value as typeof settings.ttsLanguageOverride
+                  )
+                }
+                helperText="Automatisch nutzt die Sprache des aktuellen Inhalts. Manuelle Wahl überschreibt dies."
+              />
+
+              <div>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={handleTestVoice}
+                  disabled={isSpeaking}
+                >
+                  {isSpeaking ? 'Test läuft...' : 'Stimme testen'}
+                </Button>
+                {ttsError && (
+                  <p className="text-xs text-error-600 mt-1">{ttsError}</p>
+                )}
+              </div>
 
               {/* Voice Speed */}
               <div>

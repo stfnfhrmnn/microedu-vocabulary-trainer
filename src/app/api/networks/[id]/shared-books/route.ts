@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, inArray } from 'drizzle-orm'
 
 export async function GET(
   request: Request,
@@ -29,6 +29,56 @@ export async function GET(
 
     if (!membership) {
       return NextResponse.json({ error: 'Not a member of this network' }, { status: 403 })
+    }
+
+    const network = await serverDb.query.networks.findFirst({
+      where: (networks, { eq }) => eq(networks.id, networkId),
+    })
+
+    if (!network) {
+      return NextResponse.json({ error: 'Network not found' }, { status: 404 })
+    }
+
+    // Family rule: parents automatically see child-owned books as read-only/shareable copies.
+    // We materialize missing share records once so existing copy/unshare flows work unchanged.
+    if (network.type === 'family' && membership.role === 'parent') {
+      const familyMembers = await serverDb.query.networkMembers.findMany({
+        where: (members, { eq, and }) =>
+          and(eq(members.networkId, networkId), eq(members.joinStatus, 'active')),
+      })
+
+      const childUserIds = familyMembers
+        .filter((member) => member.role === 'child')
+        .map((member) => member.userId)
+
+      if (childUserIds.length > 0) {
+        const childBooks = await serverDb.query.books.findMany({
+          where: (books, { inArray, and, isNull }) =>
+            and(inArray(books.userId, childUserIds), isNull(books.deletedAt)),
+          columns: { id: true, userId: true },
+        })
+
+        if (childBooks.length > 0) {
+          const existingShares = await serverDb.query.networkSharedBooks.findMany({
+            where: (shared, { eq }) => eq(shared.networkId, networkId),
+            columns: { bookId: true },
+          })
+          const sharedBookIds = new Set(existingShares.map((row) => row.bookId))
+
+          const missingShares = childBooks.filter((book) => !sharedBookIds.has(book.id))
+          if (missingShares.length > 0) {
+            await serverDb.insert(schema.networkSharedBooks).values(
+              missingShares.map((book) => ({
+                bookId: book.id,
+                ownerId: book.userId,
+                networkId,
+                permissions: 'copy' as const,
+                copyCount: 0,
+              }))
+            )
+          }
+        }
+      }
     }
 
     // Get shared books
@@ -96,6 +146,10 @@ export async function GET(
           sharedAt: shared.sharedAt,
           alreadyCopied: copiedOriginals.has(shared.bookId),
           isOwner: shared.ownerId === user.userId,
+          canUnshare:
+            shared.ownerId === user.userId ||
+            membership.role === 'admin' ||
+            membership.role === 'teacher',
         }
       })
       .filter(Boolean)

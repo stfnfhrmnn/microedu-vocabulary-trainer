@@ -7,6 +7,7 @@ import type { Locale } from '@/i18n/config'
 
 export type TTSProvider = 'web-speech' | 'google-cloud'
 export type GoogleVoiceType = 'wavenet' | 'standard'
+export type TTSLanguageOverride = 'auto' | 'german' | 'french' | 'spanish' | 'latin'
 
 // Practice preset configuration
 export interface PracticePreset {
@@ -43,6 +44,7 @@ interface SettingsState {
   ttsRate: number         // 0.5 to 2.0 (1.0 = normal)
   ttsPitch: number        // 0.5 to 2.0 (1.0 = normal) - Web Speech only
   googleVoiceType: GoogleVoiceType  // WaveNet (better) or Standard
+  ttsLanguageOverride: TTSLanguageOverride
 
   // App settings
   locale: Locale
@@ -70,6 +72,7 @@ interface SettingsState {
   setTTSRate: (rate: number) => void
   setTTSPitch: (pitch: number) => void
   setGoogleVoiceType: (type: GoogleVoiceType) => void
+  setTTSLanguageOverride: (override: TTSLanguageOverride) => void
   setLocale: (locale: Locale) => void
   setSoundEnabled: (enabled: boolean) => void
   setHapticEnabled: (enabled: boolean) => void
@@ -94,6 +97,7 @@ export const useSettings = create<SettingsState>()(
       ttsRate: 1.0,
       ttsPitch: 1.0,
       googleVoiceType: 'wavenet',
+      ttsLanguageOverride: 'auto',
       locale: 'de',
       soundEnabled: true,
       hapticEnabled: true,
@@ -113,6 +117,7 @@ export const useSettings = create<SettingsState>()(
       setTTSRate: (rate) => set({ ttsRate: rate }),
       setTTSPitch: (pitch) => set({ ttsPitch: pitch }),
       setGoogleVoiceType: (type) => set({ googleVoiceType: type }),
+      setTTSLanguageOverride: (override) => set({ ttsLanguageOverride: override }),
       setLocale: (locale) => set({ locale }),
       setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
       setHapticEnabled: (enabled) => set({ hapticEnabled: enabled }),
@@ -145,9 +150,12 @@ export const useSettings = create<SettingsState>()(
         if (state.ocrProvider === 'gemini') {
           state.ocrProvider = 'google-vision'
         }
+        if (!state.ttsLanguageOverride) {
+          state.ttsLanguageOverride = 'auto'
+        }
         return state as unknown as SettingsState
       },
-      version: 2,
+      version: 3,
     }
   )
 )

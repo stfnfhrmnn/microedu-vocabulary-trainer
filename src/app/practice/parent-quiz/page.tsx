@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -11,6 +11,7 @@ import { SectionSuggestions } from '@/components/practice/SectionSuggestions'
 import { useSectionDueStats } from '@/lib/db/hooks/useSectionDueStats'
 import { useDueWords } from '@/lib/db/hooks/useDueWords'
 import { usePracticeSession } from '@/stores/practice-session'
+import { useUserSession } from '@/stores/user-session'
 import { cn } from '@/lib/utils/cn'
 import type { PracticeDirection } from '@/lib/db/schema'
 
@@ -23,10 +24,27 @@ export default function ParentQuizSetupPage() {
   const router = useRouter()
   const { sections, isLoading } = useSectionDueStats()
   const startSession = usePracticeSession((state) => state.startSession)
+  const profiles = useUserSession((state) => state.profiles)
+  const currentUserId = useUserSession((state) => state.currentUserId)
 
   const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([])
   const [direction, setDirection] = useState<PracticeDirection>('sourceToTarget')
   const [showAllSections, setShowAllSections] = useState(false)
+  const [learnerProfileId, setLearnerProfileId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!learnerProfileId) {
+      setLearnerProfileId(currentUserId)
+    }
+  }, [learnerProfileId, currentUserId])
+
+  useEffect(() => {
+    if (!learnerProfileId) return
+    const exists = profiles.some((profile) => profile.id === learnerProfileId)
+    if (!exists) {
+      setLearnerProfileId(currentUserId)
+    }
+  }, [learnerProfileId, profiles, currentUserId])
 
   // Get vocabulary for selected sections
   const { dueWords } = useDueWords(
@@ -65,12 +83,18 @@ export default function ParentQuizSetupPage() {
     const selectedStat = sections.find((s) => selectedSectionIds.includes(s.section.id))
     const targetLanguage = selectedStat?.book?.language
 
+    const learnerProfile =
+      profiles.find((profile) => profile.id === learnerProfileId) ??
+      profiles.find((profile) => profile.id === currentUserId)
+
     startSession({
       exerciseType: 'flashcard',
       direction,
       sectionIds: selectedSectionIds,
       quizMode: 'parent',
       targetLanguage,
+      learnerProfileId: learnerProfile?.id ?? null,
+      learnerProfileName: learnerProfile?.name ?? null,
       items: wordsToStudy.map((v) => ({
         vocabulary: v,
         progress: v.progress,
@@ -236,6 +260,28 @@ export default function ParentQuizSetupPage() {
           {/* Direction Selection */}
           <Card>
             <CardContent>
+              {profiles.length > 1 && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Lernen für
+                  </label>
+                  <select
+                    value={learnerProfileId ?? ''}
+                    onChange={(e) => setLearnerProfileId(e.target.value || null)}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                  >
+                    {profiles.map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.avatar} {profile.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ergebnisanzeige bezieht sich auf dieses Profil.
+                  </p>
+                </div>
+              )}
+
               <h3 className="font-semibold text-gray-900 mb-3">Richtung</h3>
               <div className="grid grid-cols-2 gap-3">
                 {directions.map((dir) => (

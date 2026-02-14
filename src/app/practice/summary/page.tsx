@@ -20,6 +20,7 @@ export default function PracticeSummaryPage() {
   const items = usePracticeSession((state) => state.items)
   const maxStreak = usePracticeSession((state) => state.maxStreak)
   const quizMode = usePracticeSession((state) => state.quizMode)
+  const learnerProfileName = usePracticeSession((state) => state.learnerProfileName)
   const reset = usePracticeSession((state) => state.reset)
   const progressTotal = usePracticeSession(selectProgressTotal)
 
@@ -272,6 +273,16 @@ export default function PracticeSummaryPage() {
         >
           {getCompletionMessage(correctCount, progressTotal)}
         </motion.p>
+        {quizMode === 'parent' && learnerProfileName && (
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="text-sm text-primary-700 bg-primary-50 rounded-full px-3 py-1 mb-6"
+          >
+            Lernprofil: {learnerProfileName}
+          </motion.p>
+        )}
 
         {/* Stats */}
         <motion.div

@@ -18,6 +18,8 @@ interface PracticeSessionState {
   sectionIds: string[]
   quizMode: QuizMode
   targetLanguage: Language | null
+  learnerProfileId: string | null
+  learnerProfileName: string | null
 
   // Session state
   items: PracticeItem[]
@@ -39,6 +41,8 @@ interface PracticeSessionState {
     items: { vocabulary: VocabularyItem; progress?: LearningProgress }[]
     quizMode?: QuizMode
     targetLanguage?: Language
+    learnerProfileId?: string | null
+    learnerProfileName?: string | null
   }) => void
 
   recordAnswer: (
@@ -80,6 +84,8 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
   sectionIds: [],
   quizMode: 'self',
   targetLanguage: null,
+  learnerProfileId: null,
+  learnerProfileName: null,
   items: [],
   currentIndex: 0,
   isSessionActive: false,
@@ -109,6 +115,8 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
       sectionIds: config.sectionIds,
       quizMode: config.quizMode ?? 'self',
       targetLanguage: config.targetLanguage ?? null,
+      learnerProfileId: config.learnerProfileId ?? null,
+      learnerProfileName: config.learnerProfileName ?? null,
       items: shuffledItems,
       currentIndex: 0,
       isSessionActive: true,
@@ -165,6 +173,8 @@ export const usePracticeSession = create<PracticeSessionState>((set, get) => ({
       sectionIds: [],
       quizMode: 'self',
       targetLanguage: null,
+      learnerProfileId: null,
+      learnerProfileName: null,
       items: [],
       currentIndex: 0,
       isSessionActive: false,

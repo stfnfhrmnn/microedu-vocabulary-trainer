@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { getUnifiedTTSService } from '@/lib/services/unified-tts'
 import { useGoogleApiStatus } from '@/hooks/useGoogleApiStatus'
 import { useSettings } from '@/stores/settings'
+import { toast } from '@/stores/toast'
 import type { Language } from '@/lib/db/schema'
 
 interface UseTTSResult {
@@ -15,9 +16,10 @@ interface UseTTSResult {
 }
 
 export function useTTS(): UseTTSResult {
-  const { ttsProvider, ttsRate, ttsPitch, googleVoiceType } = useSettings()
+  const { ttsProvider, ttsRate, ttsPitch, googleVoiceType, ttsLanguageOverride } = useSettings()
   const { available: hasGoogleApi } = useGoogleApiStatus()
   const ttsService = useRef(getUnifiedTTSService())
+  const lastWarningRef = useRef<string | null>(null)
 
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isAvailable, setIsAvailable] = useState(false)
@@ -28,9 +30,10 @@ export function useTTS(): UseTTSResult {
       provider: ttsProvider,
       googleEnabled: hasGoogleApi,
       googleVoiceType,
+      ttsLanguageOverride,
     })
     setIsAvailable(ttsService.current.isAvailable())
-  }, [ttsProvider, hasGoogleApi, googleVoiceType])
+  }, [ttsProvider, hasGoogleApi, googleVoiceType, ttsLanguageOverride])
 
   const speak = useCallback(async (text: string, language: Language | 'german') => {
     setError(null)
@@ -43,6 +46,9 @@ export function useTTS(): UseTTSResult {
       })
       if (!result.success) {
         setError(result.error || 'Pronunciation failed')
+      } else if (result.warning && result.warning !== lastWarningRef.current) {
+        lastWarningRef.current = result.warning
+        toast.info(result.warning, 3500)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Pronunciation failed')

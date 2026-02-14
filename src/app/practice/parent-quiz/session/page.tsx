@@ -38,6 +38,7 @@ export default function ParentQuizSessionPage() {
   const currentStreak = usePracticeSession((state) => state.currentStreak)
   const sectionIds = usePracticeSession((state) => state.sectionIds)
   const quizMode = usePracticeSession((state) => state.quizMode)
+  const learnerProfileName = usePracticeSession((state) => state.learnerProfileName)
 
   const currentItem = usePracticeSession(useCurrentItem)
   const progressAnswered = usePracticeSession(selectProgressAnswered)
@@ -201,6 +202,13 @@ export default function ParentQuizSessionPage() {
         </div>
         <div className="w-16" /> {/* Spacer for balance */}
       </div>
+      {learnerProfileName && (
+        <div className="px-4 pt-2 text-center">
+          <span className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs text-primary-700">
+            Lernen für: {learnerProfileName}
+          </span>
+        </div>
+      )}
 
       {/* Progress bar */}
       <ProgressBar
