@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { JoinNetworkModal } from '@/components/network/JoinNetworkModal'
 import { CreateNetworkModal } from '@/components/network/CreateNetworkModal'
+import { NetworkTypeGuide } from '@/components/network/NetworkTypeGuide'
 import type { Network, UserRole } from '@/lib/db/schema'
 
 interface NetworkWithRole extends Network {
@@ -202,20 +203,7 @@ export default function NetworksPage() {
             Netzwerke verbinden dich mit anderen Lernenden. Du kannst Bücher teilen,
             Fortschritte vergleichen und gemeinsam lernen.
           </p>
-          <div className="mt-4 space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <span>👨‍👩‍👧‍👦</span>
-              <span className="text-gray-600"><strong>Familie:</strong> Eltern sehen den Fortschritt ihrer Kinder</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>🏫</span>
-              <span className="text-gray-600"><strong>Klasse:</strong> Lehrer teilen Vokabeln mit Schülern</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>📚</span>
-              <span className="text-gray-600"><strong>Lerngruppe:</strong> Mit Freunden gemeinsam lernen</span>
-            </div>
-          </div>
+          <NetworkTypeGuide className="mt-4" />
         </CardContent>
       </Card>
 

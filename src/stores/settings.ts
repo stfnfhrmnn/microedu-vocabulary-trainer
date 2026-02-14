@@ -8,6 +8,7 @@ import type { Locale } from '@/i18n/config'
 export type TTSProvider = 'web-speech' | 'google-cloud'
 export type GoogleVoiceType = 'wavenet' | 'standard'
 export type TTSLanguageOverride = 'auto' | 'german' | 'french' | 'spanish' | 'latin'
+export type PracticeWordScope = 'due' | 'all' | 'difficult'
 
 // Practice preset configuration
 export interface PracticePreset {
@@ -15,7 +16,7 @@ export interface PracticePreset {
   name: string
   exerciseType: ExerciseType
   direction: PracticeDirection
-  dueOnly: boolean
+  wordScope: PracticeWordScope
   sectionIds: string[] | 'all'  // 'all' means all available sections
 }
 
@@ -23,7 +24,7 @@ export interface PracticePreset {
 export interface LastPracticeConfig {
   exerciseType: ExerciseType
   direction: PracticeDirection
-  dueOnly: boolean
+  wordScope: PracticeWordScope
   sectionIds: string[]
 }
 
@@ -153,9 +154,37 @@ export const useSettings = create<SettingsState>()(
         if (!state.ttsLanguageOverride) {
           state.ttsLanguageOverride = 'auto'
         }
+
+        const asBoolean = (value: unknown): boolean | null => {
+          if (typeof value === 'boolean') return value
+          return null
+        }
+
+        const mapDueOnlyToScope = (dueOnlyValue: unknown): PracticeWordScope =>
+          asBoolean(dueOnlyValue) === false ? 'all' : 'due'
+
+        if (Array.isArray(state.practicePresets)) {
+          state.practicePresets = state.practicePresets.map((preset) => {
+            if (!preset || typeof preset !== 'object') return preset
+            const typedPreset = preset as Record<string, unknown>
+            if (!typedPreset.wordScope) {
+              typedPreset.wordScope = mapDueOnlyToScope(typedPreset.dueOnly)
+            }
+            delete typedPreset.dueOnly
+            return typedPreset
+          })
+        }
+
+        if (state.lastPracticeConfig && typeof state.lastPracticeConfig === 'object') {
+          const config = state.lastPracticeConfig as Record<string, unknown>
+          if (!config.wordScope) {
+            config.wordScope = mapDueOnlyToScope(config.dueOnly)
+          }
+          delete config.dueOnly
+        }
         return state as unknown as SettingsState
       },
-      version: 3,
+      version: 4,
     }
   )
 )

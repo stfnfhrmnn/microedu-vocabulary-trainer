@@ -7,6 +7,7 @@ import type { Network, NetworkType, UserRole } from '@/lib/db/schema'
 import { useSyncStatus } from '@/stores/sync'
 import { CloudSyncRequired } from './CloudSyncRequired'
 import { CodeFormatHint } from './CodeFormatHint'
+import { NetworkTypeGuide } from './NetworkTypeGuide'
 
 interface CreateNetworkModalProps {
   isOpen: boolean
@@ -85,12 +86,6 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
     setCreatedNetwork(null)
   }
 
-  const networkTypes: Array<{ value: NetworkType; label: string; emoji: string; desc: string }> = [
-    { value: 'class', label: 'Klasse', emoji: '🏫', desc: 'Für Schulklassen' },
-    { value: 'study_group', label: 'Lerngruppe', emoji: '📚', desc: 'Für Lerngruppen' },
-    { value: 'family', label: 'Familie', emoji: '👨‍👩‍👧‍👦', desc: 'Für Familien' },
-  ]
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -153,26 +148,15 @@ export function CreateNetworkModal({ isOpen, onClose, onCreated }: CreateNetwork
                   <label className="block text-sm font-medium mb-1.5">
                     Art des Netzwerks
                   </label>
-                  <div className="space-y-2">
-                    {networkTypes.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setType(option.value)}
-                        className={`w-full p-3 rounded-xl border-2 transition-all flex items-center gap-3 text-left ${
-                          type === option.value
-                            ? 'border-primary bg-primary/10'
-                            : 'border-transparent bg-secondary hover:bg-secondary/80'
-                        }`}
-                      >
-                        <span className="text-2xl">{option.emoji}</span>
-                        <div>
-                          <span className="font-medium block">{option.label}</span>
-                          <span className="text-sm text-muted-foreground">{option.desc}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                  <NetworkTypeGuide
+                    selectedType={type}
+                    onSelect={(nextType) => {
+                      setType(nextType)
+                      if (nextType === 'family' && role === 'teacher') {
+                        setRole('parent')
+                      }
+                    }}
+                  />
                 </div>
 
                 {/* Role Selection */}

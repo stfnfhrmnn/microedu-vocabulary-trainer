@@ -20,18 +20,22 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
   - Network detail retry/offline/auth recovery
   - Reusable 6-char vs 8-char code hints in key flows
   - STT unavailable hint in add-vocabulary
-- `2026-02-14` Slice 2 shipped (`in progress`):
+- `2026-02-14` Slice 2 shipped (`2269c9e`):
   - TTS language override + voice test in settings
   - Parent-quiz learner profile context selection/display
   - Shared book unshare control for owner/admin/teacher
   - Automatic parent visibility of child books in family networks
+- `2026-02-14` Slice 3 shipped (`pending commit`):
+  - Practice setup adds explicit `fällig / alle / schwierig` scope
+  - "Schwierige Vokabeln" mode based on historical answer accuracy
+  - Network type decision helper added in create/discovery/settings flows
 
 ## Open Story Backlog
 
 | Story ID | Type | Current Gap | Target Outcome |
 |---|---|---|---|
 | `US-1.5` | Partial | STT happy-path only in spec | Permission-denied/unsupported/error fallback fully specified and implemented |
-| `US-2.2` / `US-2.4` | Partial | Not explicitly tied to "Heute wiederholen" flow | Due-card mode selection and typed-mode entry are explicit and test-covered |
+| `US-2.2` / `US-2.4` | Partial | UI/flow now explicit; E2E coverage still open | Due-card mode selection + typed entry + difficult-word scope are explicit and regression-tested |
 | `US-2.5` | New | Newly documented, partially implemented | End-to-end flow verified: free practice, restart, new session selection |
 | `US-4.1` | Partial | Invite handoff path ambiguous | Parent create -> child join path clear in UX copy and flow |
 | `US-5.1` | Partial | No explicit language mismatch handling | TTS/STT language assurance, warnings, and manual override |
@@ -40,7 +44,7 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 | `US-9.5` | Partial | Multi-child learner selection edge cases undefined | Deterministic learner selection defaults and switching |
 | `US-4.4` (new) | Missing | "Fehler beim Laden" retry/recovery story missing | Actionable load failure UI with retry/offline behavior |
 | `US-7.4` (new) | Missing | Code confusion prevention not formalized | Consistent 6-char vs 8-char code guidance in all relevant forms |
-| `US-8.4` (new) | Missing | No simple guidance for selecting network type | Lightweight decision helper (family/class/study_group) |
+| `US-8.4` (new) | Partial | Decision helper now shown, still needs E2E coverage | Lightweight decision helper (family/class/study_group) |
 | `US-5.6` (new) | Missing | TTS quality controls not formalized | User-facing voice quality settings + preview/test |
 | `US-5.7` (new) | Missing | Language assurance story not formalized | Force/confirm language for pronunciation + speech recognition |
 

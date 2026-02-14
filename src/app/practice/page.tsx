@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, Bookmark, Plus, X, Trash2 } from 'lucide-react'
@@ -8,13 +8,17 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Toggle } from '@/components/ui/Toggle'
 import { Input } from '@/components/ui/Input'
 import { useAllSections } from '@/lib/db/hooks/useBooks'
 import { useVocabularyWithProgress } from '@/lib/db/hooks/useVocabulary'
 import { useDueWords } from '@/lib/db/hooks/useDueWords'
 import { usePracticeSession } from '@/stores/practice-session'
-import { useSettings, type PracticePreset } from '@/stores/settings'
+import {
+  useSettings,
+  type PracticePreset,
+  type PracticeWordScope,
+} from '@/stores/settings'
+import { isDifficultProgress } from '@/lib/learning/difficulty'
 import type { ExerciseType, PracticeDirection } from '@/lib/db/schema'
 
 const exerciseTypes: { id: ExerciseType; label: string; icon: string; short: string }[] = [
@@ -30,6 +34,11 @@ const directions: { id: PracticeDirection; label: string; short: string }[] = [
 ]
 
 const validExerciseTypes: ExerciseType[] = ['flashcard', 'multipleChoice', 'typed']
+const wordScopeOptions: Array<{ id: PracticeWordScope; label: string; short: string }> = [
+  { id: 'due', label: 'Nur fällige Vokabeln', short: 'Fällige' },
+  { id: 'all', label: 'Alle Vokabeln', short: 'Alle' },
+  { id: 'difficult', label: 'Schwierige Vokabeln', short: 'Schwierig' },
+]
 
 export default function PracticePage() {
   const router = useRouter()
@@ -48,7 +57,7 @@ export default function PracticePage() {
   const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([])
   const [exerciseType, setExerciseType] = useState<ExerciseType>(defaultExerciseType)
   const [direction, setDirection] = useState<PracticeDirection>(defaultDirection)
-  const [dueOnly, setDueOnly] = useState(true)
+  const [wordScope, setWordScope] = useState<PracticeWordScope>('due')
   const [sectionsExpanded, setSectionsExpanded] = useState(false)
   const [settingsExpanded, setSettingsExpanded] = useState(false)
   const [showSavePreset, setShowSavePreset] = useState(false)
@@ -61,8 +70,13 @@ export default function PracticePage() {
   const { vocabulary: allVocabulary, isLoading: vocabLoading } =
     useVocabularyWithProgress(selectedSectionIds)
   const { dueWords } = useDueWords(selectedSectionIds)
+  const difficultWords = useMemo(
+    () => allVocabulary.filter((item) => isDifficultProgress(item.progress)),
+    [allVocabulary]
+  )
 
-  const wordsToStudy = dueOnly ? dueWords : allVocabulary
+  const wordsToStudy =
+    wordScope === 'due' ? dueWords : wordScope === 'difficult' ? difficultWords : allVocabulary
   const wordCount = wordsToStudy.length
 
   // Auto-select all sections initially
@@ -75,12 +89,12 @@ export default function PracticePage() {
   const applyPracticeConfig = useCallback((config: {
     exerciseType: ExerciseType
     direction: PracticeDirection
-    dueOnly: boolean
+    wordScope: PracticeWordScope
     sectionIds: string[]
   }) => {
     setExerciseType(config.exerciseType)
     setDirection(config.direction)
-    setDueOnly(config.dueOnly)
+    setWordScope(config.wordScope)
 
     const validSectionIds = config.sectionIds.filter((id) => sections.some((s) => s.id === id))
     if (validSectionIds.length > 0) {
@@ -100,11 +114,14 @@ export default function PracticePage() {
     const shouldResume = params.get('resume') === '1'
 
     if (lastPracticeConfig) {
-      applyPracticeConfig(lastPracticeConfig)
+      applyPracticeConfig({
+        ...lastPracticeConfig,
+        wordScope: lastPracticeConfig.wordScope ?? 'due',
+      })
     }
 
     if (mode === 'free') {
-      setDueOnly(false)
+      setWordScope('all')
       setSectionsExpanded(true)
       setSettingsExpanded(true)
     }
@@ -147,7 +164,7 @@ export default function PracticePage() {
     setLastPracticeConfig({
       exerciseType,
       direction,
-      dueOnly,
+      wordScope,
       sectionIds: selectedSectionIds,
     })
 
@@ -171,7 +188,7 @@ export default function PracticePage() {
     wordCount,
     exerciseType,
     direction,
-    dueOnly,
+    wordScope,
     selectedSectionIds,
     sections,
     setLastPracticeConfig,
@@ -187,8 +204,8 @@ export default function PracticePage() {
     if (selectedSectionIds.length === 0) return
 
     if (wordCount === 0) {
-      if (dueOnly && allVocabulary.length > 0) {
-        setDueOnly(false)
+      if (wordScope === 'due' && allVocabulary.length > 0) {
+        setWordScope('all')
         return
       }
       setShouldAutoStart(false)
@@ -203,7 +220,7 @@ export default function PracticePage() {
     vocabLoading,
     selectedSectionIds.length,
     wordCount,
-    dueOnly,
+    wordScope,
     allVocabulary.length,
     handleStart,
   ])
@@ -216,7 +233,7 @@ export default function PracticePage() {
       name: presetName.trim(),
       exerciseType,
       direction,
-      dueOnly,
+      wordScope,
       sectionIds: selectedSectionIds.length === sections.length ? 'all' : selectedSectionIds,
     }
 
@@ -230,7 +247,7 @@ export default function PracticePage() {
       applyPracticeConfig({
         exerciseType: preset.exerciseType,
         direction: preset.direction,
-        dueOnly: preset.dueOnly,
+        wordScope: preset.wordScope ?? 'due',
         sectionIds: sections.map((s) => s.id),
       })
       return
@@ -239,7 +256,7 @@ export default function PracticePage() {
     applyPracticeConfig({
       exerciseType: preset.exerciseType,
       direction: preset.direction,
-      dueOnly: preset.dueOnly,
+      wordScope: preset.wordScope ?? 'due',
       sectionIds: preset.sectionIds,
     })
   }
@@ -247,7 +264,8 @@ export default function PracticePage() {
   // Get current settings summary for collapsed view
   const currentExercise = exerciseTypes.find(e => e.id === exerciseType)
   const currentDirection = directions.find(d => d.id === direction)
-  const settingsSummary = `${currentExercise?.short} · ${currentDirection?.short} · ${dueOnly ? 'Fällige' : 'Alle'}`
+  const currentScope = wordScopeOptions.find((scope) => scope.id === wordScope)
+  const settingsSummary = `${currentExercise?.short} · ${currentDirection?.short} · ${currentScope?.short ?? 'Fällige'}`
 
   const isLoading = sectionsLoading || vocabLoading
 
@@ -465,18 +483,36 @@ export default function PracticePage() {
                           </div>
                         </div>
 
-                        {/* Due Only Toggle */}
+                        {/* Word Scope */}
                         <div>
-                          <Toggle
-                            checked={dueOnly}
-                            onChange={setDueOnly}
-                            label="Nur fällige Vokabeln"
-                            description={
-                              dueOnly
-                                ? `${dueWords.length} bereit`
-                                : `${allVocabulary.length} insgesamt`
-                            }
-                          />
+                          <p className="text-sm font-medium text-gray-700 mb-2">Wortauswahl</p>
+                          <div className="grid grid-cols-1 gap-2">
+                            {wordScopeOptions.map((scope) => {
+                              const count =
+                                scope.id === 'due'
+                                  ? dueWords.length
+                                  : scope.id === 'difficult'
+                                    ? difficultWords.length
+                                    : allVocabulary.length
+                              return (
+                                <button
+                                  key={scope.id}
+                                  type="button"
+                                  onClick={() => setWordScope(scope.id)}
+                                  className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${
+                                    wordScope === scope.id
+                                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                      : 'border-gray-200 bg-white hover:bg-gray-50'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium">{scope.label}</span>
+                                    <span className="text-xs text-gray-500">{count}</span>
+                                  </div>
+                                </button>
+                              )
+                            })}
+                          </div>
                         </div>
 
                         {/* Save Preset */}

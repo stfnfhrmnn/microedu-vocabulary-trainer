@@ -55,7 +55,7 @@ export default function HomePage() {
     setLastPracticeConfig({
       exerciseType,
       direction,
-      dueOnly: true,
+      wordScope: 'due',
       sectionIds: allSectionIds,
     })
 

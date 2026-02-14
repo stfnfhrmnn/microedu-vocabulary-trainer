@@ -1873,3 +1873,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 2.2 | 2026-02-14 | Update | Added US-2.5 and FR-3.10 to explicitly cover practice beyond daily goals (free-practice and restart flows) |
 | 2.3 | 2026-02-14 | Update | Added detailed implementation plan for all open story gaps in `docs/OPEN_STORIES_IMPLEMENTATION_PLAN.md` |
 | 2.4 | 2026-02-14 | Update | Documented governance exception for sharing revocation, parent auto-visibility of child books in family networks, and new voice requirements for quality controls + language override |
+| 2.5 | 2026-02-14 | Update | Added explicit difficult-word practice scope in setup flow and documented network-type decision guidance in network onboarding screens |
