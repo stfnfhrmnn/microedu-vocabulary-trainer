@@ -61,6 +61,9 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
   - Added unit tests for `UnifiedTTSService` voice-quality routing and override behavior
   - Added E2E coverage for network offline/server recovery branches and due-card typed start
   - Added E2E coverage for network-type helper visibility
+- `2026-02-14` Slice 14 shipped (`in progress`):
+  - Added family handoff E2E: parent creates family via wizard, child joins via wizard code, parent verifies child in network detail
+  - Hardened network detail API: missing optional `user_blocks` table no longer breaks loading (`Fehler beim Laden`)
 
 ## Open Story Backlog
 
@@ -68,7 +71,6 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 |---|---|---|---|
 | `US-1.5` | Partial | STT fallback UI present; edge-case copy + automated tests still open | Permission-denied/unsupported/error fallback fully specified and implemented |
 | `US-2.5` | New | Newly documented, partially implemented | End-to-end flow verified: free practice, restart, new session selection |
-| `US-4.1` | Partial | Handoff copy clarified, end-to-end family E2E coverage still open | Parent create -> child join path clear in UX copy and flow |
 | `US-5.1` | Partial | Mismatch warnings + overrides are in place; broader voice-session E2E regression coverage still open | TTS/STT language assurance is fully regression-tested across voice modes |
 | `US-9.3` | Partial | Governance exceptions unclear | Admin/teacher exception rules documented and enforced |
 | `US-9.2` | Partial | Owner labels now visible in local/shared primary views; avatar parity still open in some lists | Book ownership is visible consistently |

@@ -1,4 +1,39 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type APIRequestContext, type Page } from '@playwright/test'
+
+async function registerUser(request: APIRequestContext, name: string) {
+  const response = await request.post('/api/auth/register', {
+    data: {
+      name,
+      avatar: '🧪',
+    },
+  })
+  expect(response.ok()).toBeTruthy()
+  return response.json()
+}
+
+async function seedAuthState(
+  page: Page,
+  token: string,
+  userId: string
+) {
+  const syncState = {
+    state: {
+      lastSyncTime: null,
+      isRegistered: true,
+      serverUserId: userId,
+      hasSeenCodePrompt: true,
+    },
+    version: 0,
+  }
+
+  await page.addInitScript(
+    ({ token, syncState }) => {
+      localStorage.setItem('sync-auth-token', token)
+      localStorage.setItem('vocabulary-trainer-sync', JSON.stringify(syncState))
+    },
+    { token, syncState }
+  )
+}
 
 test('parent can create a family network', async ({ page, request }) => {
   const runtimeErrors: string[] = []
@@ -21,25 +56,7 @@ test('parent can create a family network', async ({ page, request }) => {
   })
 
   const unique = Date.now()
-  const registerResponse = await request.post('/api/auth/register', {
-    data: {
-      name: `E2E Parent ${unique}`,
-      avatar: '🧪',
-    },
-  })
-
-  expect(registerResponse.ok()).toBeTruthy()
-  const registerData = await registerResponse.json()
-
-  const syncState = {
-    state: {
-      lastSyncTime: null,
-      isRegistered: true,
-      serverUserId: registerData.user.id,
-      hasSeenCodePrompt: true,
-    },
-    version: 0,
-  }
+  const registerData = await registerUser(request, `E2E Parent ${unique}`)
 
   await page.addInitScript(() => {
     const store = window as Window & { __e2eErrors?: unknown[] }
@@ -64,13 +81,7 @@ test('parent can create a family network', async ({ page, request }) => {
     })
   })
 
-  await page.addInitScript(
-    ({ token, syncState }) => {
-      localStorage.setItem('sync-auth-token', token)
-      localStorage.setItem('vocabulary-trainer-sync', JSON.stringify(syncState))
-    },
-    { token: registerData.token, syncState }
-  )
+  await seedAuthState(page, registerData.token, registerData.user.id)
 
   await page.goto('/networks')
 
@@ -80,7 +91,7 @@ test('parent can create a family network', async ({ page, request }) => {
   await page.getByLabel('Name des Netzwerks').fill(`Familie Test ${unique}`)
   await page.getByRole('button', { name: 'Netzwerk erstellen' }).click()
 
-  await expect(page.getByText('Einladungscode', { exact: true })).toBeVisible()
+  await expect(page.getByText('Einladungscode (6-stellig)')).toBeVisible()
 
   await page.getByRole('button', { name: 'Fertig' }).click()
   await expect(page.getByRole('link', { name: new RegExp(`Familie Test ${unique}`) })).toBeVisible()
@@ -93,4 +104,67 @@ test('parent can create a family network', async ({ page, request }) => {
     runtimeErrors.push(`windowErrors: ${JSON.stringify(windowErrors)}`)
   }
   expect(runtimeErrors).toEqual([])
+})
+
+test('parent and child can complete family setup handoff through the wizard', async ({
+  browser,
+  request,
+}) => {
+  test.setTimeout(90_000)
+  const unique = Date.now()
+  const parentData = await registerUser(request, `Wizard Parent ${unique}`)
+  const childData = await registerUser(request, `Wizard Child ${unique}`)
+
+  const parentContext = await browser.newContext()
+  const childContext = await browser.newContext()
+  const parentPage = await parentContext.newPage()
+  const childPage = await childContext.newPage()
+
+  try {
+    const familyName = `Wizard Familie ${unique}`
+    await seedAuthState(parentPage, parentData.token, parentData.user.id)
+    await seedAuthState(childPage, childData.token, childData.user.id)
+
+    await parentPage.goto('/settings')
+    await parentPage.getByRole('button', { name: 'Familie einrichten' }).click()
+    await parentPage.getByRole('button', { name: 'Ich bin ein Elternteil' }).click()
+
+    await expect(
+      parentPage.getByText('Einstellungen → Gemeinsam lernen → Familie einrichten → Ich bin das Kind')
+    ).toBeVisible()
+    await parentPage.getByPlaceholder('z.B. Familie Müller').fill(familyName)
+    await parentPage.getByRole('button', { name: 'Familie erstellen' }).click()
+
+    const inviteCodeRaw = (
+      await parentPage
+        .locator('span')
+        .filter({ hasText: /^[A-Z0-9]{3}-[A-Z0-9]{3}$/ })
+        .first()
+        .textContent()
+    )?.trim()
+    expect(inviteCodeRaw).toMatch(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/)
+    const inviteCode = inviteCodeRaw || ''
+
+    await expect(parentPage.getByText('Einladungscode (6-stellig)')).toBeVisible()
+    await parentPage.getByRole('button', { name: 'Fertig' }).click()
+
+    await childPage.goto('/settings')
+    await childPage.getByRole('button', { name: 'Familie einrichten' }).click()
+    await childPage.getByRole('button', { name: 'Ich bin das Kind' }).click()
+
+    await expect(childPage.getByText(/Netzwerkcode:\s*XXX-XXX/i)).toBeVisible()
+
+    await childPage.getByPlaceholder('XXX-XXX').fill(inviteCode)
+    await childPage.getByPlaceholder('z.B. Max').fill('Kiddo')
+    await childPage.getByRole('button', { name: 'Familie beitreten' }).click()
+
+    await expect(childPage.getByText(`Erfolgreich: ${familyName}`)).toBeVisible()
+
+    await parentPage.goto('/networks')
+    await parentPage.getByRole('link', { name: new RegExp(familyName) }).click()
+    await expect(parentPage.getByText('Kiddo')).toBeVisible()
+  } finally {
+    await parentContext.close()
+    await childContext.close()
+  }
 })

@@ -1902,3 +1902,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 2.13 | 2026-02-14 | Update | Added STT language-override mismatch warning behavior in voice and group-voice sessions for clearer language assurance feedback |
 | 2.14 | 2026-02-14 | Update | Added E2E coverage for network auth-recovery and practice deep-link flows (`scope` + `bookId`) |
 | 2.15 | 2026-02-14 | Update | Added explicit US-5.6/US-5.7 user stories with acceptance criteria, including manual override confirmation and quality/test controls |
+| 2.16 | 2026-02-14 | Update | Added family wizard handoff E2E coverage and documented resilient network-detail loading when optional block tables are unavailable |

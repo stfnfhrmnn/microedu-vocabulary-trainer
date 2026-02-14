@@ -22,6 +22,7 @@ const UpdateNetworkSchema = z.object({
 })
 
 const NetworkIdSchema = z.string().uuid()
+let hasLoggedMissingUserBlocksTable = false
 
 export async function GET(
   request: Request,
@@ -79,15 +80,36 @@ export async function GET(
 
     const userMap = new Map(users.map((u) => [u.id, u]))
 
-    const myBlocks = await serverDb.query.userBlocks.findMany({
-      where: (blocks, { eq }) => eq(blocks.blockerId, user.userId),
-    })
-    const blockedByMe = new Set(myBlocks.map((b) => b.blockedId))
+    let blockedByMe = new Set<string>()
+    let blockedMe = new Set<string>()
 
-    const blocksAgainstMe = await serverDb.query.userBlocks.findMany({
-      where: (blocks, { eq }) => eq(blocks.blockedId, user.userId),
-    })
-    const blockedMe = new Set(blocksAgainstMe.map((b) => b.blockerId))
+    try {
+      const myBlocks = await serverDb.query.userBlocks.findMany({
+        where: (blocks, { eq }) => eq(blocks.blockerId, user.userId),
+      })
+      blockedByMe = new Set(myBlocks.map((b) => b.blockedId))
+
+      const blocksAgainstMe = await serverDb.query.userBlocks.findMany({
+        where: (blocks, { eq }) => eq(blocks.blockedId, user.userId),
+      })
+      blockedMe = new Set(blocksAgainstMe.map((b) => b.blockerId))
+    } catch (blockError) {
+      // Some environments may not have the optional safety tables migrated yet.
+      // Keep network loading functional and skip block filtering in that case.
+      const maybeCode =
+        typeof blockError === 'object' && blockError && 'code' in blockError
+          ? String((blockError as { code?: unknown }).code)
+          : null
+
+      if (maybeCode === '42P01') {
+        if (!hasLoggedMissingUserBlocksTable) {
+          hasLoggedMissingUserBlocksTable = true
+          console.warn('Skipping block filtering: optional table "user_blocks" is missing.')
+        }
+      } else {
+        console.warn('Skipping block filtering for network detail:', blockError)
+      }
+    }
 
     const memberList = members
       .filter((member) => !blockedByMe.has(member.userId) && !blockedMe.has(member.userId))
