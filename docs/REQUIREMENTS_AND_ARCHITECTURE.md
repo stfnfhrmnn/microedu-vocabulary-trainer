@@ -1876,3 +1876,4 @@ The OCR pipeline should be designed to handle all these formats, with manual ent
 | 2.5 | 2026-02-14 | Update | Added explicit difficult-word practice scope in setup flow and documented network-type decision guidance in network onboarding screens |
 | 2.6 | 2026-02-14 | Update | Extended language-assurance implementation notes with STT language override support in voice and add-vocabulary flows |
 | 2.7 | 2026-02-14 | Update | Added deterministic learner-default behavior and remembered learner selection for parent-quiz setup flows |
+| 2.8 | 2026-02-14 | Update | Clarified family invitation handoff text with explicit parent-create to child-join menu path steps |

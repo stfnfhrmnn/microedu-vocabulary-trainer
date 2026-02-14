@@ -290,9 +290,15 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <p className="text-sm text-blue-800">
-                        <strong>Was passiert dann?</strong><br />
-                        Du erhältst einen Einladungscode, den du deinen Kindern geben kannst.
-                        So könnt ihr euren Lernfortschritt gemeinsam sehen.
+                        <strong>So funktioniert&apos;s:</strong><br />
+                        1) Du erstellst die Familie und erhältst einen <strong>6-stelligen Code</strong>.<br />
+                        2) Dein Kind öffnet:
+                        <br />
+                        <span className="font-mono text-xs">
+                          Einstellungen → Gemeinsam lernen → Familie einrichten → Ich bin das Kind
+                        </span>
+                        <br />
+                        3) Kind gibt den Code ein und ist verbunden.
                       </p>
                     </div>
 
@@ -442,6 +448,7 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
                       </span>
                     </p>
                   </div>
+                  <CodeFormatHint context="network" className="text-center" />
 
                   <button
                     onClick={handleDone}

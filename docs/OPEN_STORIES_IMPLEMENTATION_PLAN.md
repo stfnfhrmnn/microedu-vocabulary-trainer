@@ -36,6 +36,9 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 - `2026-02-14` Slice 5 shipped (`in progress`):
   - Parent quiz learner selection now uses deterministic defaults
   - Last selected learner profile is remembered for future parent sessions
+- `2026-02-14` Slice 6 shipped (`in progress`):
+  - Family setup handoff copy now shows explicit parent→child join steps
+  - Child join path text aligned to current menu labels
 
 ## Open Story Backlog
 
@@ -44,7 +47,7 @@ Goal: close these gaps with simple, predictable behavior and minimal complexity.
 | `US-1.5` | Partial | STT fallback UI present; edge-case copy + automated tests still open | Permission-denied/unsupported/error fallback fully specified and implemented |
 | `US-2.2` / `US-2.4` | Partial | UI/flow now explicit; E2E coverage still open | Due-card mode selection + typed entry + difficult-word scope are explicit and regression-tested |
 | `US-2.5` | New | Newly documented, partially implemented | End-to-end flow verified: free practice, restart, new session selection |
-| `US-4.1` | Partial | Invite handoff path ambiguous | Parent create -> child join path clear in UX copy and flow |
+| `US-4.1` | Partial | Handoff copy clarified, end-to-end family E2E coverage still open | Parent create -> child join path clear in UX copy and flow |
 | `US-5.1` | Partial | No explicit language mismatch handling | TTS/STT language assurance, warnings, and manual override |
 | `US-9.3` | Partial | Governance exceptions unclear | Admin/teacher exception rules documented and enforced |
 | `US-9.4` / `US-9.6` | Partial | Parent contribution loop only implicit via copy | Explicit "copy and adapt" contribution flow |
