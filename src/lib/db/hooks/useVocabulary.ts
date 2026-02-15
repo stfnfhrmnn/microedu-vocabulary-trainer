@@ -60,9 +60,28 @@ export function useVocabularyByBook(bookId: string | undefined) {
 }
 
 export function useVocabularyWithProgress(
-  sectionIds: string[]
+  sectionIds?: string[] | null
 ): { vocabulary: VocabularyWithProgress[]; isLoading: boolean } {
+  const sectionKey = sectionIds ? sectionIds.join(',') : '__all__'
   const result = useLiveQuery(async () => {
+    if (sectionIds == null) {
+      const vocab = await db.vocabularyItems.toArray()
+      const vocabIds = vocab.map((v) => v.id)
+      if (vocabIds.length === 0) return []
+
+      const progressItems = await db.learningProgress
+        .where('vocabularyId')
+        .anyOf(vocabIds)
+        .toArray()
+
+      const progressMap = new Map(progressItems.map((p) => [p.vocabularyId, p]))
+
+      return vocab.map((v) => ({
+        ...v,
+        progress: progressMap.get(v.id),
+      }))
+    }
+
     if (sectionIds.length === 0) return []
 
     const vocab = await db.vocabularyItems
@@ -71,6 +90,8 @@ export function useVocabularyWithProgress(
       .toArray()
 
     const vocabIds = vocab.map((v) => v.id)
+    if (vocabIds.length === 0) return []
+
     const progressItems = await db.learningProgress
       .where('vocabularyId')
       .anyOf(vocabIds)
@@ -82,7 +103,7 @@ export function useVocabularyWithProgress(
       ...v,
       progress: progressMap.get(v.id),
     }))
-  }, [sectionIds.join(',')])
+  }, [sectionKey])
 
   return {
     vocabulary: result ?? [],
