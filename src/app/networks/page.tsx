@@ -141,12 +141,12 @@ export default function NetworksPage() {
     fetchNetworks()
   }, [])
 
-  const handleNetworkJoined = (network: Network) => {
+  const handleNetworkJoined = () => {
     setShowJoinModal(false)
     fetchNetworks()
   }
 
-  const handleNetworkCreated = (network: Network) => {
+  const handleNetworkCreated = () => {
     setShowCreateModal(false)
     fetchNetworks()
   }

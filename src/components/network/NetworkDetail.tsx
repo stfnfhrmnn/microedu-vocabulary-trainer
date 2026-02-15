@@ -297,9 +297,7 @@ export function NetworkDetail({ networkId, currentUserId, onBack }: NetworkDetai
         )}
         {activeTab === 'members' && (
           <MemberList
-            networkId={networkId}
             members={members}
-            currentUserId={currentUserId}
             isAdmin={isAdmin}
             onRemoveMember={handleRemoveMember}
             onUpdateMember={handleUpdateMember}

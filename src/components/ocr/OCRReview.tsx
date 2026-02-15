@@ -129,16 +129,6 @@ export function OCRReview({
 
   const duplicateCount = candidates.filter(c => c.isDuplicate).length
 
-  // Group candidates by chapter for display summary
-  const chapterSummary = useMemo(() => {
-    const summary = new Map<string, number>()
-    candidates.forEach(c => {
-      const assignment = c.chapterAssignment || 'book-level'
-      summary.set(assignment, (summary.get(assignment) || 0) + 1)
-    })
-    return summary
-  }, [candidates])
-
   return (
     <div className="flex flex-col h-full">
       {/* Book selector */}

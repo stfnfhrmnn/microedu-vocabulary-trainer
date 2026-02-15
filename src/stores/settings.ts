@@ -98,8 +98,8 @@ export const useSettings = create<SettingsState>()(
       defaultExerciseType: 'flashcard',
       typingStrictness: 'normal',
       ocrProvider: 'tesseract',
-      ttsProvider: 'web-speech',
-      useAIAnalysis: false,
+      ttsProvider: 'google-cloud',
+      useAIAnalysis: true,
       ttsRate: 1.0,
       ttsPitch: 1.0,
       googleVoiceType: 'wavenet',
@@ -160,6 +160,12 @@ export const useSettings = create<SettingsState>()(
         if (state.ocrProvider === 'gemini') {
           state.ocrProvider = 'google-vision'
         }
+        if (state.ttsProvider !== 'google-cloud') {
+          state.ttsProvider = 'google-cloud'
+        }
+        if (state.useAIAnalysis !== true) {
+          state.useAIAnalysis = true
+        }
         if (!state.ttsLanguageOverride) {
           state.ttsLanguageOverride = 'auto'
         }
@@ -199,7 +205,7 @@ export const useSettings = create<SettingsState>()(
         }
         return state as unknown as SettingsState
       },
-      version: 4,
+      version: 5,
     }
   )
 )

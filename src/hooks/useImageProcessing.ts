@@ -1,12 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import {
-  processImage,
-  getImageDimensions,
-  type ProcessedImage,
-  type ProcessImageOptions,
-} from '@/lib/services/image-processing'
+import { processImage, type ProcessedImage, type ProcessImageOptions } from '@/lib/services/image-processing'
 
 interface UseImageProcessingResult {
   process: (source: Blob | File, options?: ProcessImageOptions) => Promise<ProcessedImage>
@@ -32,10 +27,6 @@ export function useImageProcessing(): UseImageProcessingResult {
       setProgress({ stage: 'loading', percent: 10 })
 
       try {
-        // Get dimensions first
-        setProgress({ stage: 'loading', percent: 20 })
-        const dimensions = await getImageDimensions(source)
-
         setProgress({ stage: 'cropping', percent: 40 })
 
         // Process the image

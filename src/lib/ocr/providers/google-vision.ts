@@ -129,10 +129,11 @@ export class GoogleVisionProvider implements OCRProvider {
     image: Blob,
     hints?: ExtractionHints
   ): Promise<VocabularyCandidate[]> {
+    void hints
     const result = await this.extractText(image)
 
     // Use the parser to extract vocabulary pairs
-    return parseVocabularyFromText(result.text, result.blocks, hints)
+    return parseVocabularyFromText(result.text, result.blocks)
   }
 
   async terminate(): Promise<void> {

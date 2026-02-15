@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { useOCR } from '@/hooks/useOCR'
 import { useAllSections } from '@/lib/db/hooks/useBooks'
 import { createVocabularyItems } from '@/lib/db/db'
-import type { VocabularyCandidate, ExtractionHints } from '@/lib/ocr/types'
+import type { ExtractionHints } from '@/lib/ocr/types'
 
 type ScanStep = 'capture' | 'processing' | 'review' | 'success'
 
@@ -292,15 +292,16 @@ function ScanPageContent() {
 
             <div className="flex-1 flex flex-col items-center justify-center p-8">
               {/* Preview of captured image */}
-              {capturedImage && (
-                <div className="w-48 h-48 rounded-xl overflow-hidden mb-6 shadow-lg">
-                  <img
-                    src={URL.createObjectURL(capturedImage)}
-                    alt="Erfasstes Bild"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+                {capturedImage && (
+                  <div className="w-48 h-48 rounded-xl overflow-hidden mb-6 shadow-lg">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={URL.createObjectURL(capturedImage)}
+                      alt="Erfasstes Bild"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
 
               {/* Progress indicator */}
               <OCRProgress

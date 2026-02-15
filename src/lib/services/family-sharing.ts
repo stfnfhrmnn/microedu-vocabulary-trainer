@@ -269,8 +269,7 @@ export async function unshareBook(sharedBookId: string): Promise<void> {
  * Copy a shared book to user's library
  */
 export async function copySharedBook(
-  sharedBookId: string,
-  targetUserId: string
+  sharedBookId: string
 ): Promise<string> {
   const sharedBook = await db.sharedBooks.get(sharedBookId)
   if (!sharedBook) {

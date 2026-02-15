@@ -58,7 +58,7 @@ export default function PracticeSummaryPage() {
       recordWordsLearned(progressTotal)
 
       // Check and unlock achievements
-      checkAndUnlockAchievements(currentStreak, longestStreak, isParentQuiz)
+      checkAndUnlockAchievements(currentStreak, longestStreak)
     }
   }, [
     items.length,

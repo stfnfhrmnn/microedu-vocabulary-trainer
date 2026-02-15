@@ -17,7 +17,6 @@ import type {
   NetworkType,
   NetworkSettings,
   MemberVisibility,
-  JoinStatus,
   LeaderboardEntry,
   CompetitionStats,
   PeriodType,

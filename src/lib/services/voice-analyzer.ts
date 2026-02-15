@@ -137,19 +137,19 @@ export async function analyzeVoiceResponse(
 
     if (!response.ok) {
       console.error('Gemini API error:', response.status)
-      return fallbackAnalysis(transcript, expectedAnswer, answerLanguage)
+      return fallbackAnalysis(transcript, expectedAnswer)
     }
 
     const data: GeminiResponse = await response.json()
 
     if (data.error) {
       console.error('Gemini error:', data.error.message)
-      return fallbackAnalysis(transcript, expectedAnswer, answerLanguage)
+      return fallbackAnalysis(transcript, expectedAnswer)
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text
     if (!text) {
-      return fallbackAnalysis(transcript, expectedAnswer, answerLanguage)
+      return fallbackAnalysis(transcript, expectedAnswer)
     }
 
     // Parse JSON response
@@ -157,7 +157,7 @@ export async function analyzeVoiceResponse(
       // Extract JSON from potential markdown code blocks
       const jsonMatch = text.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
-        return fallbackAnalysis(transcript, expectedAnswer, answerLanguage)
+        return fallbackAnalysis(transcript, expectedAnswer)
       }
 
       const result = JSON.parse(jsonMatch[0])
@@ -171,11 +171,11 @@ export async function analyzeVoiceResponse(
       }
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', parseError)
-      return fallbackAnalysis(transcript, expectedAnswer, answerLanguage)
+      return fallbackAnalysis(transcript, expectedAnswer)
     }
   } catch (error) {
     console.error('Voice analysis error:', error)
-    return fallbackAnalysis(transcript, expectedAnswer, answerLanguage)
+    return fallbackAnalysis(transcript, expectedAnswer)
   }
 }
 
@@ -185,8 +185,7 @@ export async function analyzeVoiceResponse(
  */
 function fallbackAnalysis(
   transcript: string,
-  expectedAnswer: string,
-  answerLanguage: Language | 'german'
+  expectedAnswer: string
 ): AnalysisResult {
   // Import the existing extractor dynamically to avoid circular dependencies
   const normalized = transcript.toLowerCase().trim()
@@ -304,7 +303,7 @@ export class VoiceAnalyzerService {
     answerLanguage: Language | 'german'
   ): Promise<AnalysisResult> {
     if (!this.enabled || !this.useAI) {
-      return fallbackAnalysis(transcript, expectedAnswer, answerLanguage)
+      return fallbackAnalysis(transcript, expectedAnswer)
     }
 
     return analyzeVoiceResponse(

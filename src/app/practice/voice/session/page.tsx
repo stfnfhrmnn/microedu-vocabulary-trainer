@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useVoiceSession, useVoiceSessionStats } from '@/stores/voice-session'
+import { useVoiceSession } from '@/stores/voice-session'
 import { useGamification } from '@/stores/gamification'
 import { useOnboarding } from '@/stores/onboarding'
 import { useAchievements } from '@/stores/achievements'
@@ -18,11 +18,9 @@ export default function VoiceSessionPage() {
     items,
     direction,
     sectionIds,
-    mode,
     reset,
   } = useVoiceSession()
 
-  const stats = useVoiceSessionStats()
   const recordSessionComplete = useGamification((s) => s.recordSessionComplete)
   const currentStreak = useGamification((s) => s.currentStreak)
   const longestStreak = useGamification((s) => s.longestStreak)
@@ -151,7 +149,7 @@ export default function VoiceSessionPage() {
     // Record achievements
     recordSession(correctCount, totalCount, false)
     recordWordsLearned(totalCount)
-    checkAndUnlockAchievements(currentStreak, longestStreak, false)
+    checkAndUnlockAchievements(currentStreak, longestStreak)
 
     // Navigate to summary
     router.push('/practice/voice/summary')

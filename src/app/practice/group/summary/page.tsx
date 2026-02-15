@@ -12,7 +12,6 @@ import {
   BookOpen,
   RotateCcw,
   Home,
-  TrendingUp,
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Card, CardContent } from '@/components/ui/Card'

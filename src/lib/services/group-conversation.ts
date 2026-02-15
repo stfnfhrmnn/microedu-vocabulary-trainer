@@ -34,25 +34,6 @@ interface ConversationContext {
   difficultWords: Array<{ word: string; translation: string; missedBy: string[] }>
 }
 
-interface GeneratedResponse {
-  text: string
-  intent:
-    | 'greeting'
-    | 'question'
-    | 'feedback_correct'
-    | 'feedback_incorrect'
-    | 'encouragement'
-    | 'help_offer'
-    | 'hint'
-    | 'summary'
-    | 'other'
-  targetPlayer?: string
-  suggestedWord?: {
-    source: string
-    target: string
-  }
-}
-
 /**
  * Build the system prompt for the group session
  */

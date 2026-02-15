@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { eq, isNull } from 'drizzle-orm'
-import { serverDb, schema } from '@/lib/db/postgres'
+import { serverDb } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
 
 export async function GET(request: Request) {

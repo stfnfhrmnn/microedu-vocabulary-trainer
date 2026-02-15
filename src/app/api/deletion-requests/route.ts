@@ -7,7 +7,6 @@
 import { NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
-import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 const DeletionRequestSchema = z.object({

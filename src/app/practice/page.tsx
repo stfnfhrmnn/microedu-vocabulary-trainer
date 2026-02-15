@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp, Bookmark, Plus, X, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Bookmark, Plus, X } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { useAllSections } from '@/lib/db/hooks/useBooks'
+import { useAllSections, useBooks } from '@/lib/db/hooks/useBooks'
 import { useVocabularyWithProgress } from '@/lib/db/hooks/useVocabulary'
 import { useDueWords } from '@/lib/db/hooks/useDueWords'
 import { usePracticeSession } from '@/stores/practice-session'
@@ -43,6 +43,7 @@ const wordScopeOptions: Array<{ id: PracticeWordScope; label: string; short: str
 export default function PracticePage() {
   const router = useRouter()
   const { sections, isLoading: sectionsLoading } = useAllSections()
+  const { books } = useBooks()
   const startSession = usePracticeSession((state) => state.startSession)
   const {
     defaultExerciseType,
@@ -79,6 +80,7 @@ export default function PracticePage() {
   const wordsToStudy =
     wordScope === 'due' ? dueWords : wordScope === 'difficult' ? difficultWords : allVocabulary
   const wordCount = wordsToStudy.length
+  const bookMap = useMemo(() => new Map(books.map((book) => [book.id, book])), [books])
 
   // Auto-select all sections initially
   useEffect(() => {
@@ -161,7 +163,7 @@ export default function PracticePage() {
       setSectionsExpanded(true)
       setSettingsExpanded(true)
     }
-  }, [sections.length, lastPracticeConfig, applyPracticeConfig])
+  }, [sections, lastPracticeConfig, applyPracticeConfig])
 
   const toggleSection = (sectionId: string) => {
     setSelectedSectionIds((prev) =>
@@ -192,7 +194,9 @@ export default function PracticePage() {
 
     // Get target language from the first selected section's book
     const selectedSection = sections.find((s) => selectedSectionIds.includes(s.id))
-    const targetLanguage = selectedSection?.book?.language
+    const fallbackBookId = wordsToStudy[0]?.bookId
+    const fallbackLanguage = fallbackBookId ? bookMap.get(fallbackBookId)?.language : undefined
+    const targetLanguage = selectedSection?.book?.language ?? fallbackLanguage
 
     startSession({
       exerciseType,
@@ -213,6 +217,7 @@ export default function PracticePage() {
     wordScope,
     selectedSectionIds,
     sections,
+    bookMap,
     setLastPracticeConfig,
     startSession,
     wordsToStudy,

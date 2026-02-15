@@ -5,7 +5,6 @@
 
 import type {
   TextBlock,
-  ExtractionHints,
   VocabularyCandidate,
   ChapterMarker,
   ParsedChapter,
@@ -159,8 +158,7 @@ function cleanOCRText(text: string): string {
  */
 export function parseVocabularyFromText(
   text: string,
-  blocks?: TextBlock[],
-  hints?: ExtractionHints
+  blocks?: TextBlock[]
 ): VocabularyCandidate[] {
   // First try two-column detection if we have block info
   if (blocks && blocks.length > 0) {
@@ -201,7 +199,6 @@ function detectTwoColumnLayout(blocks: TextBlock[]): VocabularyCandidate[] {
   }
 
   // Calculate the median x-position to split into left/right columns
-  const xPositions = blocksWithBbox.map(b => b.bbox!.x0).sort((a, b) => a - b)
   const pageWidth = Math.max(...blocksWithBbox.map(b => b.bbox!.x1))
   const midpoint = pageWidth / 2
 
@@ -482,8 +479,7 @@ export function detectChapterHeadersVisual(blocks: TextBlock[]): ChapterMarker[]
  */
 export function parseVocabularyWithChapters(
   text: string,
-  blocks?: TextBlock[],
-  hints?: ExtractionHints
+  blocks?: TextBlock[]
 ): MultiChapterOCRResult {
   const lines = text.split(/\n|\r\n/)
 
@@ -500,7 +496,7 @@ export function parseVocabularyWithChapters(
 
   // If no chapters detected, return all vocabulary as unassigned
   if (chapterMarkers.length === 0) {
-    const allVocab = parseVocabularyFromText(text, blocks, hints)
+    const allVocab = parseVocabularyFromText(text, blocks)
     return {
       chapters: [],
       unassignedVocabulary: allVocab,
@@ -514,7 +510,7 @@ export function parseVocabularyWithChapters(
   // Vocabulary before first chapter
   if (chapterMarkers[0].startIndex > 0) {
     const preChapterLines = lines.slice(0, chapterMarkers[0].startIndex)
-    const preChapterVocab = parseVocabularyFromText(preChapterLines.join('\n'), undefined, hints)
+    const preChapterVocab = parseVocabularyFromText(preChapterLines.join('\n'))
     unassignedVocabulary.push(...preChapterVocab)
   }
 
@@ -522,7 +518,7 @@ export function parseVocabularyWithChapters(
   for (const marker of chapterMarkers) {
     const chapterLines = lines.slice(marker.startIndex + 1, marker.endIndex)
     const chapterText = chapterLines.join('\n')
-    const candidates = parseVocabularyFromText(chapterText, undefined, hints)
+    const candidates = parseVocabularyFromText(chapterText)
 
     chapters.push({
       detectedName: marker.detectedName,

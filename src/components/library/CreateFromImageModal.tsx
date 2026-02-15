@@ -43,17 +43,14 @@ export function CreateFromImageModal({
   type,
   onCreateBook,
   onCreateChapter,
-  bookId,
   bookLanguage,
 }: CreateFromImageModalProps) {
   const [step, setStep] = useState<Step>('capture')
-  const [capturedImage, setCapturedImage] = useState<Blob | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [extractedName, setExtractedName] = useState('')
   const [name, setName] = useState('')
   const [language, setLanguage] = useState<Language>(bookLanguage || 'french')
   const [coverColor, setCoverColor] = useState('#3b82f6')
-  const [isProcessing, setIsProcessing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -63,7 +60,6 @@ export function CreateFromImageModal({
 
   const resetState = useCallback(() => {
     setStep('capture')
-    setCapturedImage(null)
     setImagePreview(null)
     setExtractedName('')
     setName('')
@@ -80,10 +76,8 @@ export function CreateFromImageModal({
   }, [resetState, onClose])
 
   const processImage = useCallback(async (blob: Blob) => {
-    setCapturedImage(blob)
     setImagePreview(URL.createObjectURL(blob))
     setStep('processing')
-    setIsProcessing(true)
     setError(null)
 
     try {
@@ -98,11 +92,9 @@ export function CreateFromImageModal({
       }
 
       setStep('review')
-    } catch (err) {
+    } catch {
       setError('Konnte keinen Text erkennen. Bitte versuche es erneut.')
       setStep('capture')
-    } finally {
-      setIsProcessing(false)
     }
   }, [type])
 
@@ -123,7 +115,7 @@ export function CreateFromImageModal({
       if (videoRef.current) {
         videoRef.current.srcObject = stream
       }
-    } catch (err) {
+    } catch {
       setError('Kamera-Zugriff nicht möglich')
     }
   }, [])
@@ -161,7 +153,7 @@ export function CreateFromImageModal({
         await onCreateChapter(name.trim())
       }
       handleClose()
-    } catch (err) {
+    } catch {
       setError('Konnte nicht erstellen. Bitte versuche es erneut.')
     } finally {
       setIsSubmitting(false)
@@ -260,6 +252,7 @@ export function CreateFromImageModal({
           >
             {imagePreview && (
               <div className="w-32 h-32 rounded-xl overflow-hidden mb-4 shadow-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePreview}
                   alt="Erfasstes Bild"
@@ -285,6 +278,7 @@ export function CreateFromImageModal({
             {/* Image preview */}
             {imagePreview && (
               <div className="w-full aspect-video rounded-xl overflow-hidden bg-gray-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePreview}
                   alt="Erfasstes Bild"

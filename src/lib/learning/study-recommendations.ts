@@ -9,7 +9,7 @@
  */
 
 import { db } from '@/lib/db/db'
-import type { VocabularyItem, LearningProgress, ReviewAttempt } from '@/lib/db/schema'
+import type { VocabularyItem, LearningProgress } from '@/lib/db/schema'
 import { getMasteryLevel } from './sm2'
 
 // ============================================================================
@@ -171,16 +171,11 @@ export async function getProgressPrediction(): Promise<ProgressPrediction> {
   const progressMap = new Map(allProgress.map(p => [p.vocabularyId, p]))
 
   let mastered = 0
-  let learning = 0
-  let newWords = 0
-
   for (const vocab of allVocab) {
     const progress = progressMap.get(vocab.id)
     const level = getMasteryLevel(progress?.interval || 0)
 
     if (level === 'mastered') mastered++
-    else if (level === 'learning') learning++
-    else newWords++
   }
 
   const totalWords = allVocab.length

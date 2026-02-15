@@ -2,18 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Plus, Settings, ChevronRight, Trophy, BookOpen } from 'lucide-react'
+import { Users, Plus, ChevronRight, Trophy, BookOpen } from 'lucide-react'
 import { useNetworkStore } from '@/stores/network'
 import { JoinNetworkModal } from './JoinNetworkModal'
 import { CreateNetworkModal } from './CreateNetworkModal'
 import type { Network, UserRole } from '@/lib/db/schema'
 
 interface NetworkListProps {
-  userId: string
   onSelectNetwork?: (networkId: string) => void
 }
 
-export function NetworkList({ userId, onSelectNetwork }: NetworkListProps) {
+export function NetworkList({ onSelectNetwork }: NetworkListProps) {
   const { networks, isLoading, setNetworks, setLoading, setError } = useNetworkStore()
   const [showJoinModal, setShowJoinModal] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)

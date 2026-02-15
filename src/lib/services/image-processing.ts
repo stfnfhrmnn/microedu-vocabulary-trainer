@@ -108,17 +108,6 @@ function calculateResizedDimensions(
   }
 }
 
-/**
- * Resize image to fit within max megapixels
- */
-async function resizeImage(
-  img: HTMLImageElement,
-  maxPixels: number = MAX_PIXELS
-): Promise<HTMLCanvasElement> {
-  const { width, height } = calculateResizedDimensions(img.width, img.height, maxPixels)
-  return createCanvasFromImage(img, width, height)
-}
-
 // ============================================================================
 // WebP Conversion
 // ============================================================================
@@ -183,7 +172,6 @@ function detectDocumentBounds(
   }
 
   // Scan from edges to find content boundaries
-  const threshold = 20 // Minimum contrast difference
   const sampleStep = Math.max(1, Math.floor(Math.min(width, height) / 100))
 
   let top = 0

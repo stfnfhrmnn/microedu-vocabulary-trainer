@@ -9,7 +9,7 @@ import { useCompetitionStore } from '@/stores/competition'
  * Call submitToNetwork after each practice session to update leaderboards
  */
 export function useCompetitionSync() {
-  const { currentStreak, totalXP, todayActivity } = useGamification()
+  const { currentStreak } = useGamification()
   const { addSessionStats, pendingSessionStats, clearPendingStats, setSyncing } = useCompetitionStore()
   const lastSubmittedRef = useRef<number>(0)
 

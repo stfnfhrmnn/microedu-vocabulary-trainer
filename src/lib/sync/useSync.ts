@@ -99,7 +99,7 @@ export function useSync() {
     }
 
     init()
-  }, []) // Empty deps - run only once
+  }, [performSync, updatePendingCount]) // Run once, guarded by initRef
 
   // Set up sync interval
   useEffect(() => {

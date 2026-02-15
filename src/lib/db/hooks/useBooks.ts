@@ -2,7 +2,7 @@
 
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, createBook, updateBook, deleteBook } from '../db'
-import type { Book, CreateBook } from '../schema'
+import type { CreateBook } from '../schema'
 
 export function useBooks() {
   const books = useLiveQuery(() => db.books.orderBy('name').toArray(), [])

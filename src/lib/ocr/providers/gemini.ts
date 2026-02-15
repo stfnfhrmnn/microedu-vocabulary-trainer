@@ -37,6 +37,8 @@ export class GeminiProvider implements OCRProvider {
       throw new Error('Gemini API key not configured')
     }
 
+    void image
+
     // TODO: Implement Gemini Vision API call
     // For now, throw not implemented error
     throw new Error(
@@ -51,6 +53,9 @@ export class GeminiProvider implements OCRProvider {
     if (!this.apiKey) {
       throw new Error('Gemini API key not configured')
     }
+
+    void image
+    void hints
 
     // TODO: Implement Gemini Vision API call with structured prompt
     // The prompt would ask Gemini to:

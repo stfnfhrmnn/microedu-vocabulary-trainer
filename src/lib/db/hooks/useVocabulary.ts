@@ -8,7 +8,7 @@ import {
   updateVocabularyItem,
   deleteVocabularyItem,
 } from '../db'
-import type { CreateVocabularyItem, VocabularyWithProgress } from '../schema'
+import type { VocabularyWithProgress } from '../schema'
 
 export function useVocabulary(sectionId: string | undefined) {
   const vocabulary = useLiveQuery(

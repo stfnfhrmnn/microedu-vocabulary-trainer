@@ -12,7 +12,7 @@ import {
   Trash2,
   Edit2,
   Camera,
-  Image,
+  Image as ImageIcon,
   Languages,
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -588,7 +588,7 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
               imageModal.open()
             }}
           >
-            <Image className="w-4 h-4 mr-2" />
+            <ImageIcon className="w-4 h-4 mr-2" />
             Kapitel aus Bild erstellen
           </Button>
           <Button

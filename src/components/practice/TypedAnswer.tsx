@@ -9,7 +9,7 @@ import { VoiceInputButton } from './VoiceInputButton'
 import { PronunciationButton } from '@/components/vocabulary/PronunciationButton'
 import { processAccentInput } from '@/lib/utils/accent-helpers'
 import { checkAnswer, highlightDifferences, hasAccentMismatchOnly } from '@/lib/learning/fuzzy-match'
-import type { StrictnessLevel, DifferenceSegment } from '@/lib/learning/fuzzy-match'
+import type { StrictnessLevel } from '@/lib/learning/fuzzy-match'
 import type { Language } from '@/lib/db/schema'
 
 export interface TypedAnswerProps {
@@ -33,14 +33,13 @@ export function TypedAnswer({
 }: TypedAnswerProps) {
   const [userAnswer, setUserAnswer] = useState('')
   const [showResult, setShowResult] = useState(false)
-  const [showAccentKeyboard, setShowAccentKeyboard] = useState(true)
+  const [showAccentKeyboard] = useState(true)
   const [result, setResult] = useState<{
     isCorrect: boolean
     similarity: number
     hasAccentIssue: boolean
   } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const cursorPosRef = useRef<number>(0)
 
   // Insert accent character at cursor position
   const insertAccent = useCallback((char: string) => {

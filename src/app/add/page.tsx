@@ -17,7 +17,7 @@ import { useAllSections, useBooks } from '@/lib/db/hooks/useBooks'
 import { createVocabularyItem, createSection, createBook, createChapter } from '@/lib/db/db'
 import { getLangCode, SOURCE_LANG_CODE } from '@/lib/utils/language-codes'
 import { useSettings } from '@/stores/settings'
-import type { Book, Language } from '@/lib/db/schema'
+import type { Language } from '@/lib/db/schema'
 
 // Selection can be either a section or a book (for unsorted vocab)
 interface Selection {
@@ -376,11 +376,6 @@ function AddVocabularyForm() {
         order: nextOrder,
         coveredInClass: false,
       })
-      const section = sections.find(s => s.id === newSection.id) || {
-        ...newSection,
-        book: books.find(b => b.id === chapterOption.bookId),
-        chapter: { name: chapterOption.label.split(' › ')[1] }
-      }
       const book = books.find(b => b.id === chapterOption.bookId)
       if (book) {
         setSelection({
@@ -488,7 +483,7 @@ function AddVocabularyForm() {
   }
 
   // Handle keyboard shortcuts
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     // Ctrl/Cmd + Enter to save from anywhere
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault()
@@ -496,7 +491,7 @@ function AddVocabularyForm() {
         handleSubmit(e as unknown as React.FormEvent)
       }
     }
-  }, [sourceText, targetText, selection])
+  }
 
   const canSubmit = sourceText.trim() && targetText.trim() && selection
 

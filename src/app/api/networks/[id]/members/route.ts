@@ -5,10 +5,9 @@
  */
 
 import { NextResponse } from 'next/server'
-import { serverDb, schema } from '@/lib/db/postgres'
+import { serverDb } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
 import { parsePaginationParams, paginateArray } from '@/lib/api/pagination'
-import { eq, and } from 'drizzle-orm'
 
 let hasLoggedMissingUserBlocksTable = false
 

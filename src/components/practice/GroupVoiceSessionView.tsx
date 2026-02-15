@@ -9,7 +9,6 @@ import {
   Square,
   Users,
   Eye,
-  Play,
   Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
@@ -57,8 +56,6 @@ export function GroupVoiceSessionView({
     questionsAsked,
     difficultWords,
     lastTranscript,
-    setStatus,
-    setCurrentSpeaker,
     setLastTranscript,
     setCurrentQuestion,
     addConversationTurn,
@@ -109,21 +106,23 @@ export function GroupVoiceSessionView({
     conversationService.current.setEnabled(hasGoogleApi)
   }, [ttsProvider, hasGoogleApi, googleVoiceType, ttsLanguageOverride])
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      clearAllTimeouts()
-      ttsService.current.stop()
-      sttService.current.stop()
-    }
-  }, [])
-
   const clearAllTimeouts = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     if (encouragementTimeoutRef.current)
       clearTimeout(encouragementTimeoutRef.current)
     if (helpOfferTimeoutRef.current) clearTimeout(helpOfferTimeoutRef.current)
   }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    const tts = ttsService.current
+    const stt = sttService.current
+    return () => {
+      clearAllTimeouts()
+      tts.stop()
+      stt.stop()
+    }
+  }, [clearAllTimeouts])
 
   /**
    * Speak text using TTS

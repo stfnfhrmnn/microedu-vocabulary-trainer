@@ -6,7 +6,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Network, NetworkMember, UserRole, PeriodType } from '@/lib/db/schema'
+import type { Network, NetworkMember, UserRole } from '@/lib/db/schema'
 
 interface NetworkState {
   // Current user's networks
@@ -47,7 +47,7 @@ const initialState = {
 
 export const useNetworkStore = create<NetworkState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       ...initialState,
 
       setNetworks: (networks) => set({ networks }),

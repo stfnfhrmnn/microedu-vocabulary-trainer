@@ -9,7 +9,6 @@ import { NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
 import { generateNetworkInviteCode } from '@/lib/utils/user-id'
-import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 
 const CreateNetworkSchema = z.object({

@@ -12,7 +12,7 @@ interface LeaderboardProps {
 }
 
 export function Leaderboard({ networkId, currentUserId }: LeaderboardProps) {
-  const { currentPeriod, setCurrentPeriod, setLeaderboard, getLeaderboard, isLoading, setLoading } = useCompetitionStore()
+  const { currentPeriod, setCurrentPeriod, setLeaderboard, isLoading, setLoading } = useCompetitionStore()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [supporters, setSupporters] = useState<LeaderboardEntry[]>([])
   const [myRank, setMyRank] = useState<number | null>(null)

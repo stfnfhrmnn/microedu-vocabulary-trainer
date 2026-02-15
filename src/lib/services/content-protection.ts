@@ -9,7 +9,6 @@ import { db } from '@/lib/db/db'
 import { generateId } from '@/lib/utils/id'
 import type {
   DeletionRequest,
-  DeletionStatus,
   UserBlock,
   ContentReport,
   ReportType,
@@ -187,9 +186,7 @@ export async function rejectDeletionRequest(requestId: string): Promise<void> {
 /**
  * Get pending deletion requests for a parent to review
  */
-export async function getPendingDeletionRequests(
-  parentUserId: string
-): Promise<DeletionRequest[]> {
+export async function getPendingDeletionRequests(): Promise<DeletionRequest[]> {
   // In a real implementation, this would check parent-child relationships
   return db.deletionRequests
     .where('status')

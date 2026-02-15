@@ -64,7 +64,6 @@ function DictatePageContent() {
   const [processingError, setProcessingError] = useState<string | null>(null)
 
   // Dictation results
-  const [rawTranscript, setRawTranscript] = useState('')
   const [candidates, setCandidates] = useState<VocabularyCandidate[]>([])
 
   // Pre-select section
@@ -135,7 +134,6 @@ function DictatePageContent() {
 
   const handleDictationStop = useCallback(
     async (transcript: string, rawPairs: VocabularyCandidate[]) => {
-      setRawTranscript(transcript)
       setCandidates(rawPairs) // Show heuristic results as fallback
 
       if (!transcript.trim()) {
@@ -224,13 +222,11 @@ function DictatePageContent() {
 
   const handleCancel = useCallback(() => {
     setCandidates([])
-    setRawTranscript('')
     setStep('setup')
   }, [])
 
   const handleDictateMore = useCallback(() => {
     setCandidates([])
-    setRawTranscript('')
     setSavedCount(0)
     setStep('setup')
   }, [])

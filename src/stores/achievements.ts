@@ -5,7 +5,6 @@ import { persist } from 'zustand/middleware'
 import {
   ACHIEVEMENTS,
   checkAchievement,
-  getAchievementById,
   type AchievementStats,
 } from '@/lib/gamification/achievements'
 
@@ -34,8 +33,7 @@ interface AchievementsState {
   // Actions
   checkAndUnlockAchievements: (
     currentStreak: number,
-    longestStreak: number,
-    isParentQuiz?: boolean
+    longestStreak: number
   ) => string[]
   recordSession: (correctCount: number, totalCount: number, isParentQuiz?: boolean) => void
   recordCorrectAnswer: () => void
@@ -61,7 +59,7 @@ export const useAchievements = create<AchievementsState>()(
       },
       pendingUnlocks: [],
 
-      checkAndUnlockAchievements: (currentStreak, longestStreak, isParentQuiz = false) => {
+      checkAndUnlockAchievements: (currentStreak, longestStreak) => {
         const state = get()
         const now = new Date()
 

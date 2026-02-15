@@ -17,18 +17,14 @@ interface Member {
 }
 
 interface MemberListProps {
-  networkId: string
   members: Member[]
-  currentUserId: string
   isAdmin: boolean
   onRemoveMember?: (memberId: string) => void
   onUpdateMember?: (memberId: string, updates: Partial<Member>) => void
 }
 
 export function MemberList({
-  networkId,
   members,
-  currentUserId,
   isAdmin,
   onRemoveMember,
   onUpdateMember,

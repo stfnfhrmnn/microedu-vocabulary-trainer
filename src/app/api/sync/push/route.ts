@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
 import { z } from 'zod'

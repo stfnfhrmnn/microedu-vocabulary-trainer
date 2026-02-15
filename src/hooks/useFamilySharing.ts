@@ -14,7 +14,7 @@ import {
   setProgressSharing,
   getSharedProgressChildren,
 } from '@/lib/services/family-sharing'
-import type { FamilyGroup, FamilyMember, SharedBook, UserRole } from '@/lib/db/schema'
+import type { UserRole } from '@/lib/db/schema'
 
 // ============================================================================
 // Family Groups Hook
@@ -129,13 +129,13 @@ export function useSharedBooks(familyId: string, userId: string) {
     async (sharedBookId: string) => {
       try {
         setError(null)
-        return await copySharedBook(sharedBookId, userId)
+        return await copySharedBook(sharedBookId)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to copy book')
         throw err
       }
     },
-    [userId]
+    []
   )
 
   return {

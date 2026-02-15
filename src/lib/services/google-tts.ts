@@ -151,7 +151,7 @@ export function playBase64Audio(base64Audio: string): Promise<void> {
         resolve()
       }
 
-      audio.onerror = (e) => {
+      audio.onerror = () => {
         URL.revokeObjectURL(url)
         reject(new Error('Failed to play audio'))
       }

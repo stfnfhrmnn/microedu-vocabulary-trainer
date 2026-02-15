@@ -5,10 +5,9 @@
  */
 
 import { NextResponse } from 'next/server'
-import { serverDb, schema } from '@/lib/db/postgres'
+import { serverDb } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
 import { parsePaginationParams, paginateArray } from '@/lib/api/pagination'
-import { eq, and, sql } from 'drizzle-orm'
 
 export async function GET(
   request: Request,
@@ -70,7 +69,7 @@ export async function GET(
     // Get stats for all members
     const userIds = members.map((m) => m.userId)
     const stats = await serverDb.query.competitionStats.findMany({
-      where: (stats, { inArray, eq, and, gte }) =>
+      where: (stats, { inArray, eq, and }) =>
         and(
           inArray(stats.userId, userIds),
           eq(stats.periodType, periodType)

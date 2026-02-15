@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { serverDb, schema } from '@/lib/db/postgres'
 import { signToken } from '@/lib/auth/jwt'
 import { authRateLimiter } from '@/lib/api/rate-limit'
-import { eq, and, isNull, gt } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 const VerifySchema = z.object({

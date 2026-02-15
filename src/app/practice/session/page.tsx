@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils/cn'
-import { Button } from '@/components/ui/Button'
 import { FlashCard } from '@/components/practice/FlashCard'
 import { AnswerButtons } from '@/components/practice/AnswerButtons'
 import { MultipleChoice, generateOptions } from '@/components/practice/MultipleChoice'
@@ -19,14 +17,13 @@ import {
   getQuestionAnswer,
 } from '@/stores/practice-session'
 import { useSettings } from '@/stores/settings'
-import { calculateNextReview, mapUserRating, getDefaultProgress } from '@/lib/learning/sm2'
+import { calculateNextReview, mapUserRating } from '@/lib/learning/sm2'
 import { getOrCreateProgress, updateProgress, createReviewSession, createReviewAttempt, completeReviewSession } from '@/lib/db/db'
 import { getCorrectMessage, getIncorrectMessage, getStreakMessage } from '@/lib/utils/messages'
 import { useSound } from '@/hooks/useSound'
 import { useHaptics } from '@/hooks/useHaptics'
 import { useGamification } from '@/stores/gamification'
 import { useAchievements } from '@/stores/achievements'
-import type { QualityRating } from '@/lib/db/schema'
 
 export default function PracticeSessionPage() {
   const router = useRouter()

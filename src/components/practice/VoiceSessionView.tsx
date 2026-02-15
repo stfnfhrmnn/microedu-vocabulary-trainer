@@ -99,12 +99,14 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
 
   // Cleanup timeouts on unmount
   useEffect(() => {
+    const tts = ttsService.current
+    const stt = sttService.current
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
-      ttsService.current.stop()
-      sttService.current.stop()
+      tts.stop()
+      stt.stop()
     }
   }, [])
 

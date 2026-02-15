@@ -136,7 +136,7 @@ export class TesseractProvider implements OCRProvider {
     const ocrResult = await this.extractText(image)
 
     // Parse vocabulary from extracted text, including bounding boxes for two-column detection
-    const parsed = parseVocabularyFromText(ocrResult.text, ocrResult.blocks, hints)
+    const parsed = parseVocabularyFromText(ocrResult.text, ocrResult.blocks)
 
     // Combine parser confidence with OCR confidence
     return parsed.map((item) => ({

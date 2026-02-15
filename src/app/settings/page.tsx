@@ -132,7 +132,7 @@ export default function SettingsPage() {
 
       setExportMessage('Export erfolgreich!')
       setTimeout(() => setExportMessage(null), 3000)
-    } catch (error) {
+    } catch {
       setExportMessage('Export fehlgeschlagen')
       setTimeout(() => setExportMessage(null), 3000)
     }
@@ -157,6 +157,23 @@ export default function SettingsPage() {
       settings.ttsLanguageOverride === 'auto' ? 'german' : settings.ttsLanguageOverride
     await speak(TTS_SAMPLE_TEXT[language], language)
   }
+
+  const ttsActiveProvider =
+    settings.ttsProvider === 'google-cloud' && hasGoogleApi
+      ? 'Google Cloud TTS (online)'
+      : 'Lokal (Web Speech)'
+  const ttsFallbackNote =
+    settings.ttsProvider === 'google-cloud' && hasGoogleApi
+      ? 'Fallback: Lokal (Web Speech)'
+      : null
+  const sttActiveProvider =
+    settings.useAIAnalysis && hasGoogleApi
+      ? 'Gemini Analyse (online)'
+      : 'Lokal (Web Speech)'
+  const sttFallbackNote =
+    settings.useAIAnalysis && hasGoogleApi
+      ? 'Fallback: Lokal (Web Speech)'
+      : null
 
   const confirmLanguageOverride = (
     scopeLabel: 'Aussprache' | 'Eingabe',
@@ -360,6 +377,23 @@ export default function SettingsPage() {
             <h3 className="font-semibold text-gray-900 mb-4">Sprachübung</h3>
 
             <div className="space-y-4">
+              <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium text-gray-700">Aktiv (TTS)</span>
+                  <span>{ttsActiveProvider}</span>
+                </div>
+                {ttsFallbackNote && (
+                  <div className="text-xs text-gray-500 mt-1">{ttsFallbackNote}</div>
+                )}
+                <div className="flex items-center justify-between gap-3 mt-3">
+                  <span className="font-medium text-gray-700">Aktiv (STT)</span>
+                  <span>{sttActiveProvider}</span>
+                </div>
+                {sttFallbackNote && (
+                  <div className="text-xs text-gray-500 mt-1">{sttFallbackNote}</div>
+                )}
+              </div>
+
               <Select
                 label="Sprachausgabe (TTS)"
                 options={getTtsOptions(hasGoogleApi)}

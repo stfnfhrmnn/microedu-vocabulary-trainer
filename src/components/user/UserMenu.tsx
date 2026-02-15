@@ -18,7 +18,6 @@ import {
   type UserProfile,
 } from '@/stores/user-session'
 import { useSyncStatus } from '@/stores/sync'
-import { formatUserIdShort } from '@/lib/utils/user-id'
 import { cn } from '@/lib/utils/cn'
 
 interface UserMenuProps {

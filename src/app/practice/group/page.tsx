@@ -45,14 +45,6 @@ interface SectionOption {
   wordCount: number
 }
 
-const modeOptions = [
-  {
-    value: 'lernkreis',
-    label: 'Lernkreis',
-    description: 'Gemeinsam lernen, sich gegenseitig helfen',
-  },
-]
-
 const immersionOptions = [
   { value: 'beginner', label: 'Anfänger', description: 'Hauptsächlich Deutsch' },
   {
@@ -102,7 +94,7 @@ export default function GroupPracticeSetupPage() {
   const [targetLanguage, setTargetLanguage] = useState<Language>('french')
 
   // Settings state
-  const [mode, setMode] = useState<GroupSessionMode>('lernkreis')
+  const mode: GroupSessionMode = 'lernkreis'
   const [immersionLevel, setImmersionLevel] =
     useState<ImmersionLevel>('intermediate')
   const [timingMode, setTimingMode] = useState<TimingMode>('calm')

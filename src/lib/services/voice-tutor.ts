@@ -157,8 +157,6 @@ export function generateFeedbackScript(options: FeedbackOptions): string {
     expectedAnswer,
     currentStreak,
     questionNumber,
-    totalQuestions,
-    isLastQuestion,
   } = options
 
   if (mode === 'calm') {

@@ -152,7 +152,7 @@ class SpeechRecognitionService {
       this.recognition.start()
       this.isListening = true
       return true
-    } catch (err) {
+    } catch {
       onError?.('Failed to start speech recognition')
       return false
     }

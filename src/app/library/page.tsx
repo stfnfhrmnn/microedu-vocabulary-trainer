@@ -15,7 +15,7 @@ import { CreateFromImageModal } from '@/components/library/CreateFromImageModal'
 import { useBooks } from '@/lib/db/hooks/useBooks'
 import { useVocabularyByBook } from '@/lib/db/hooks/useVocabulary'
 import { useCurrentProfile } from '@/stores/user-session'
-import type { Language, Book, CreateBook } from '@/lib/db/schema'
+import type { Language, Book } from '@/lib/db/schema'
 
 const languageOptions = [
   { value: 'french', label: 'Französisch' },

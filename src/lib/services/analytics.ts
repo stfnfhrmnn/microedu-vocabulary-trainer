@@ -9,12 +9,7 @@
 
 import { db } from '@/lib/db/db'
 import { getMasteryLevel } from '@/lib/learning/sm2'
-import type {
-  ReviewSession,
-  ReviewAttempt,
-  LearningProgress,
-  VocabularyItem,
-} from '@/lib/db/schema'
+import type { ReviewAttempt, VocabularyItem } from '@/lib/db/schema'
 
 // ============================================================================
 // Types
@@ -326,12 +321,11 @@ export async function getDifficultyHeatmap(): Promise<DifficultyHeatmapEntry[]> 
 /**
  * Check for achieved milestones
  */
-export async function checkMilestones(userId?: string): Promise<LearningMilestone[]> {
+export async function checkMilestones(): Promise<LearningMilestone[]> {
   const milestones: LearningMilestone[] = []
 
   const vocabulary = await db.vocabularyItems.toArray()
   const progress = await db.learningProgress.toArray()
-  const sessions = await db.reviewSessions.toArray()
 
   const totalWords = vocabulary.length
   const masteredWords = progress.filter(p => getMasteryLevel(p.interval) === 'mastered').length

@@ -27,7 +27,7 @@ import {
 } from '@/lib/db/db'
 import { useSettings } from '@/stores/settings'
 import { useCurrentProfile } from '@/stores/user-session'
-import type { Section, VocabularyItem } from '@/lib/db/schema'
+import type { Section } from '@/lib/db/schema'
 
 // Expandable section with inline vocabulary
 function ExpandableSection({

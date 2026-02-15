@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNetworkStore } from '@/stores/network'
 import { useCompetitionStore } from '@/stores/competition'
-import type { Network, NetworkMember, PeriodType, LeaderboardEntry } from '@/lib/db/schema'
+import type { NetworkMember, PeriodType, LeaderboardEntry } from '@/lib/db/schema'
 
 // Helper to get auth token
 function getAuthHeader(): Record<string, string> {
@@ -151,7 +151,7 @@ export function useNetworkMembers(networkId: string | null) {
  * Hook for leaderboard
  */
 export function useLeaderboard(networkId: string | null) {
-  const { currentPeriod, setCurrentPeriod, setLeaderboard, getLeaderboard } = useCompetitionStore()
+  const { currentPeriod, setCurrentPeriod, setLeaderboard } = useCompetitionStore()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [supporters, setSupporters] = useState<LeaderboardEntry[]>([])
   const [myRank, setMyRank] = useState<number | null>(null)

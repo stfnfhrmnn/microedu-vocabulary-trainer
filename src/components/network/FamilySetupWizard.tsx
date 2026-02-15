@@ -19,7 +19,6 @@ type Step = 'role' | 'create' | 'join' | 'success'
 export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWizardProps) {
   const { isRegistered } = useSyncStatus()
   const [step, setStep] = useState<Step>('role')
-  const [userRole, setUserRole] = useState<'parent' | 'child' | null>(null)
 
   // Create form state
   const [familyName, setFamilyName] = useState('')
@@ -43,7 +42,6 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
   }
 
   const handleRoleSelect = (role: 'parent' | 'child') => {
-    setUserRole(role)
     setStep(role === 'parent' ? 'create' : 'join')
   }
 
@@ -140,7 +138,6 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
 
   const handleReset = () => {
     setStep('role')
-    setUserRole(null)
     setFamilyName('')
     setCreatedNetwork(null)
     setInviteCode('')
@@ -152,7 +149,6 @@ export function FamilySetupWizard({ isOpen, onClose, onComplete }: FamilySetupWi
   const handleBack = () => {
     if (step === 'create' || step === 'join') {
       setStep('role')
-      setUserRole(null)
     }
   }
 

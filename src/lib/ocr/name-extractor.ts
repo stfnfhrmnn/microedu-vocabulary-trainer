@@ -33,8 +33,8 @@ export async function extractTitleFromImage(
 
     // Try different extraction strategies
     const strategies = [
-      () => extractByLargestBlock(result.blocks, type),
-      () => extractByTopPosition(result.blocks, type),
+      () => extractByLargestBlock(result.blocks),
+      () => extractByTopPosition(result.blocks),
       () => extractByPattern(result.blocks, type),
       () => extractFallback(result.blocks),
     ]
@@ -57,10 +57,7 @@ export async function extractTitleFromImage(
  * Extract by finding the largest text block
  * Large text is typically the title
  */
-function extractByLargestBlock(
-  blocks: TextBlock[],
-  type: 'book' | 'chapter'
-): ExtractedTitle | null {
+function extractByLargestBlock(blocks: TextBlock[]): ExtractedTitle | null {
   const blocksWithBbox = blocks.filter(b => b.bbox && b.text.trim().length >= 2)
 
   if (blocksWithBbox.length === 0) return null
@@ -79,7 +76,7 @@ function extractByLargestBlock(
 
   // Validate it looks like a title
   const title = cleanTitle(largest.block.text)
-  if (isValidTitle(title, type)) {
+  if (isValidTitle(title)) {
     return {
       title,
       confidence: Math.min(0.9, largest.block.confidence),
@@ -94,10 +91,7 @@ function extractByLargestBlock(
  * Extract by finding text at the top of the image
  * Titles are often at the top
  */
-function extractByTopPosition(
-  blocks: TextBlock[],
-  type: 'book' | 'chapter'
-): ExtractedTitle | null {
+function extractByTopPosition(blocks: TextBlock[]): ExtractedTitle | null {
   const blocksWithBbox = blocks.filter(b => b.bbox && b.text.trim().length >= 2)
 
   if (blocksWithBbox.length === 0) return null
@@ -110,7 +104,7 @@ function extractByTopPosition(
 
   for (const block of topBlocks) {
     const title = cleanTitle(block.text)
-    if (isValidTitle(title, type)) {
+    if (isValidTitle(title)) {
       return {
         title,
         confidence: Math.min(0.85, block.confidence),
@@ -198,7 +192,7 @@ function cleanTitle(text: string): string {
 /**
  * Validate if text looks like a valid title
  */
-function isValidTitle(text: string, type: 'book' | 'chapter'): boolean {
+function isValidTitle(text: string): boolean {
   // Too short
   if (text.length < 2) return false
 

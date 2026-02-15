@@ -12,7 +12,7 @@ import { serverDb, schema } from '@/lib/db/postgres'
 import { getUserFromRequest } from '@/lib/auth/jwt'
 import { authRateLimiter } from '@/lib/api/rate-limit'
 import { generateTransferToken, generateTransferPin } from '@/lib/utils/user-id'
-import { eq, and, isNull, gt } from 'drizzle-orm'
+import { eq, and, isNull } from 'drizzle-orm'
 
 const TRANSFER_EXPIRY_MINUTES = 15
 
