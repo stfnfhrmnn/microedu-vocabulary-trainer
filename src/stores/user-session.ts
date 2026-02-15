@@ -11,6 +11,37 @@ export const AVATAR_OPTIONS = [
 
 export type AvatarEmoji = typeof AVATAR_OPTIONS[number]
 
+export const AVATAR_UNLOCK_LEVELS: Record<AvatarEmoji, number> = {
+  '🦊': 1,
+  '🐻': 1,
+  '🐼': 1,
+  '🐨': 1,
+  '🦁': 2,
+  '🐯': 2,
+  '🐸': 3,
+  '🦉': 4,
+  '🐙': 5,
+  '🦋': 6,
+  '🌟': 7,
+  '🚀': 8,
+  '🎨': 9,
+  '🎵': 10,
+  '📚': 12,
+  '🔮': 15,
+}
+
+export function getAvatarUnlockLevel(avatar: AvatarEmoji): number {
+  return AVATAR_UNLOCK_LEVELS[avatar] ?? 1
+}
+
+export function isAvatarUnlocked(avatar: AvatarEmoji, level: number): boolean {
+  return level >= getAvatarUnlockLevel(avatar)
+}
+
+export function getUnlockedAvatars(level: number): AvatarEmoji[] {
+  return AVATAR_OPTIONS.filter((avatar) => isAvatarUnlocked(avatar, level))
+}
+
 export interface UserProfile {
   id: string           // XXXX-XXXX format
   name: string         // Display name

@@ -27,12 +27,14 @@ import {
 } from '@/lib/db/db'
 import { useSettings } from '@/stores/settings'
 import { useCurrentProfile } from '@/stores/user-session'
-import type { Section } from '@/lib/db/schema'
+import { PronunciationButton } from '@/components/vocabulary/PronunciationButton'
+import type { Language, Section } from '@/lib/db/schema'
 
 // Expandable section with inline vocabulary
 function ExpandableSection({
   section,
   bookId,
+  bookLanguage,
   isExpanded,
   onToggleExpand,
   onToggleCovered,
@@ -41,6 +43,7 @@ function ExpandableSection({
 }: {
   section: Section
   bookId: string
+  bookLanguage?: Language
   isExpanded: boolean
   onToggleExpand: () => void
   onToggleCovered: (covered: boolean) => void
@@ -328,6 +331,14 @@ function ExpandableSection({
                             <p className="text-xs text-gray-400 mt-0.5">{item.notes}</p>
                           )}
                         </div>
+                        {bookLanguage && !isSelectMode && (
+                          <PronunciationButton
+                            text={item.targetText}
+                            language={bookLanguage}
+                            size="sm"
+                            variant="ghost"
+                          />
+                        )}
                         {!isSelectMode && (
                           <button
                             onClick={() => handleDeleteVocabulary(item.id)}
@@ -690,6 +701,7 @@ export default function ChapterPageContent({
               <ExpandableSection
                 section={section}
                 bookId={bookId}
+                bookLanguage={book?.language}
                 isExpanded={expandedSectionId === section.id}
                 onToggleExpand={() => handleToggleSection(section.id)}
                 onToggleCovered={(covered) => handleToggleCovered(section.id, covered)}

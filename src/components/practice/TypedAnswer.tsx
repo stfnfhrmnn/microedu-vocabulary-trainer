@@ -201,7 +201,17 @@ export function TypedAnswer({
               {result.isCorrect ? (
                 <div className="text-success-700">
                   <p className="text-2xl mb-1">Richtig!</p>
-                  <p className="font-medium">{correctAnswer}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <p className="font-medium">{correctAnswer}</p>
+                    {answerLanguage && (
+                      <PronunciationButton
+                        text={correctAnswer}
+                        language={answerLanguage}
+                        size="sm"
+                        variant="ghost"
+                      />
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="text-error-700">
@@ -220,6 +230,16 @@ export function TypedAnswer({
                       )
                     ))}
                   </p>
+                  {answerLanguage && (
+                    <div className="flex justify-center mt-2">
+                      <PronunciationButton
+                        text={correctAnswer}
+                        language={answerLanguage}
+                        size="sm"
+                        variant="ghost"
+                      />
+                    </div>
+                  )}
                   {result.hasAccentIssue && (
                     <p className="text-sm text-error-500 mt-2">
                       Achte auf die Akzente!

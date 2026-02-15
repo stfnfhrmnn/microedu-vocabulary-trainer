@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
+import { PronunciationButton } from '@/components/vocabulary/PronunciationButton'
+import type { Language } from '@/lib/db/schema'
 
 export interface MultipleChoiceProps {
   question: string
@@ -10,6 +12,8 @@ export interface MultipleChoiceProps {
   options: string[]
   onAnswer: (selectedAnswer: string, isCorrect: boolean) => void
   disabled?: boolean
+  questionLanguage?: Language | 'german'
+  answerLanguage?: Language | 'german'
 }
 
 export function MultipleChoice({
@@ -18,6 +22,8 @@ export function MultipleChoice({
   options,
   onAnswer,
   disabled,
+  questionLanguage,
+  answerLanguage,
 }: MultipleChoiceProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null)
   const [showResult, setShowResult] = useState(false)
@@ -65,7 +71,17 @@ export function MultipleChoice({
         <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">
           Was bedeutet...
         </p>
-        <p className="text-vocab-lg text-gray-900 text-center">{question}</p>
+        <div className="flex items-center justify-center gap-3">
+          <p className="text-vocab-lg text-gray-900 text-center">{question}</p>
+          {questionLanguage && (
+            <PronunciationButton
+              text={question}
+              language={questionLanguage}
+              size="md"
+              variant="circle"
+            />
+          )}
+        </div>
       </div>
 
       {/* Options */}
@@ -102,6 +118,14 @@ export function MultipleChoice({
                 {String.fromCharCode(65 + index)}
               </span>
               <span className="flex-1">{option}</span>
+              {showResult && option === correctAnswer && answerLanguage && (
+                <PronunciationButton
+                  text={option}
+                  language={answerLanguage}
+                  size="sm"
+                  variant="ghost"
+                />
+              )}
               <AnimatePresence>
                 {showResult && option === correctAnswer && (
                   <motion.span

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
@@ -14,9 +14,11 @@ import {
   useUserSession,
   useCurrentProfile,
   AVATAR_OPTIONS,
+  getUnlockedAvatars,
   type AvatarEmoji,
   type UserProfile,
 } from '@/stores/user-session'
+import { useGamification } from '@/stores/gamification'
 import { useSyncStatus } from '@/stores/sync'
 import { cn } from '@/lib/utils/cn'
 
@@ -30,6 +32,9 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
   const { profiles, updateProfile, switchProfile, createProfile, deleteProfile } =
     useUserSession()
   const { isRegistered } = useSyncStatus()
+  const level = useGamification((s) => s.level)
+  const unlockedAvatars = useMemo(() => getUnlockedAvatars(level), [level])
+  const defaultAvatar = unlockedAvatars[0] ?? AVATAR_OPTIONS[0]
 
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState(profile.name)
@@ -40,7 +45,7 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
   // New profile creation state
   const [showNewProfileModal, setShowNewProfileModal] = useState(false)
   const [newProfileName, setNewProfileName] = useState('')
-  const [newProfileAvatar, setNewProfileAvatar] = useState<AvatarEmoji>(AVATAR_OPTIONS[0])
+  const [newProfileAvatar, setNewProfileAvatar] = useState<AvatarEmoji>(defaultAvatar)
 
   const handleNameSubmit = useCallback(() => {
     if (editedName.trim()) {
@@ -86,9 +91,10 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
   const handleNewProfileClick = useCallback(() => {
     // Reset form and show modal
     setNewProfileName('')
-    setNewProfileAvatar(AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)])
+    const pool = unlockedAvatars.length > 0 ? unlockedAvatars : AVATAR_OPTIONS
+    setNewProfileAvatar(pool[Math.floor(Math.random() * pool.length)])
     setShowNewProfileModal(true)
-  }, [])
+  }, [unlockedAvatars])
 
   const handleCreateNewProfile = useCallback(() => {
     if (newProfileName.trim().length < 2) return
@@ -119,6 +125,7 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
               <AvatarPicker
                 selected={profile.avatar}
                 onSelect={handleAvatarSelect}
+                currentLevel={level}
               />
               <Button
                 variant="ghost"
@@ -388,23 +395,14 @@ export function UserMenu({ isOpen, onClose }: UserMenuProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Avatar
               </label>
-              <div className="grid grid-cols-8 gap-2">
-                {AVATAR_OPTIONS.map((avatar) => (
-                  <button
-                    key={avatar}
-                    type="button"
-                    onClick={() => setNewProfileAvatar(avatar)}
-                    className={cn(
-                      'w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all',
-                      newProfileAvatar === avatar
-                        ? 'bg-primary-100 ring-2 ring-primary-500 scale-110'
-                        : 'bg-gray-100 hover:bg-gray-200'
-                    )}
-                  >
-                    {avatar}
-                  </button>
-                ))}
-              </div>
+              <AvatarPicker
+                selected={newProfileAvatar}
+                onSelect={setNewProfileAvatar}
+                currentLevel={level}
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Graue Avatare schaltest du über XP-Level frei.
+              </p>
             </div>
 
             {/* Preview */}

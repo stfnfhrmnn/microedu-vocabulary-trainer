@@ -181,7 +181,7 @@ export default function ParentQuizSessionPage() {
     return null
   }
 
-  const { question, answer } = getQuestionAnswer(
+  const { question, answer, questionLanguage, answerLanguage } = getQuestionAnswer(
     currentItem.vocabulary,
     direction,
     currentIndex
@@ -240,6 +240,8 @@ export default function ParentQuizSessionPage() {
               question={question}
               answer={answer}
               notes={currentItem.vocabulary.notes}
+              questionLanguage={questionLanguage}
+              answerLanguage={answerLanguage}
             />
           </motion.div>
         </AnimatePresence>

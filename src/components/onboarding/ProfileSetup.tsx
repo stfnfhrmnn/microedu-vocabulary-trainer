@@ -1,10 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { AVATAR_OPTIONS, type AvatarEmoji } from '@/stores/user-session'
+import { AvatarPicker } from '@/components/user/AvatarPicker'
+import { useGamification } from '@/stores/gamification'
+import {
+  AVATAR_OPTIONS,
+  getUnlockedAvatars,
+  isAvatarUnlocked,
+  type AvatarEmoji,
+} from '@/stores/user-session'
 
 interface ProfileSetupProps {
   initialName?: string
@@ -19,9 +26,14 @@ export function ProfileSetup({
   onComplete,
   onBack,
 }: ProfileSetupProps) {
+  const level = useGamification((s) => s.level)
+  const unlockedAvatars = useMemo(() => getUnlockedAvatars(level), [level])
+  const fallbackAvatar = unlockedAvatars[0] ?? AVATAR_OPTIONS[0]
+  const initialSelection =
+    initialAvatar && isAvatarUnlocked(initialAvatar, level) ? initialAvatar : fallbackAvatar
   const [name, setName] = useState(initialName)
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarEmoji>(
-    initialAvatar || AVATAR_OPTIONS[0]
+    initialSelection
   )
 
   const isValid = name.trim().length >= 2
@@ -88,29 +100,14 @@ export function ProfileSetup({
           <label className="block text-sm font-medium text-gray-700 mb-3">
             Wähle deinen Avatar
           </label>
-          <div className="grid grid-cols-8 gap-2">
-            {AVATAR_OPTIONS.map((avatar, index) => (
-              <motion.button
-                key={avatar}
-                type="button"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5 + index * 0.02 }}
-                onClick={() => setSelectedAvatar(avatar)}
-                className={`
-                  w-10 h-10 rounded-full flex items-center justify-center text-xl
-                  transition-all duration-200
-                  ${
-                    selectedAvatar === avatar
-                      ? 'bg-primary-100 ring-2 ring-primary-500 scale-110'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }
-                `}
-              >
-                {avatar}
-              </motion.button>
-            ))}
-          </div>
+          <AvatarPicker
+            selected={selectedAvatar}
+            onSelect={setSelectedAvatar}
+            currentLevel={level}
+          />
+          <p className="text-xs text-gray-500 mt-3">
+            Graue Avatare schaltest du über XP-Level frei.
+          </p>
         </motion.div>
 
         {/* Preview */}

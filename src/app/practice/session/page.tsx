@@ -334,6 +334,8 @@ export default function PracticeSessionPage() {
             correctAnswer={answer}
             options={generateOptions(answer, allAnswers)}
             onAnswer={handleMultipleChoiceAnswer}
+            questionLanguage={questionLanguage}
+            answerLanguage={answerLanguage}
           />
         )}
 

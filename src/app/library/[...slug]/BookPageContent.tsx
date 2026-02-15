@@ -34,7 +34,8 @@ import {
   deleteVocabularyItem,
   swapVocabularyLanguages,
 } from '@/lib/db/db'
-import type { Chapter } from '@/lib/db/schema'
+import { PronunciationButton } from '@/components/vocabulary/PronunciationButton'
+import type { Chapter, Language } from '@/lib/db/schema'
 
 // Breadcrumb component
 function Breadcrumb({ bookName }: { bookName: string }) {
@@ -79,7 +80,7 @@ function ChapterCard({ chapter, bookId }: { chapter: Chapter; bookId: string }) 
   )
 }
 
-function UnsortedVocabularyCard({ bookId }: { bookId: string }) {
+function UnsortedVocabularyCard({ bookId, bookLanguage }: { bookId: string; bookLanguage?: Language }) {
   const { vocabulary, isLoading } = useBookLevelVocabulary(bookId)
   const [isExpanded, setIsExpanded] = useState(false)
   const [deletingVocabId, setDeletingVocabId] = useState<string | null>(null)
@@ -281,6 +282,14 @@ function UnsortedVocabularyCard({ bookId }: { bookId: string }) {
                           <p className="text-xs text-gray-400 mt-0.5">{item.notes}</p>
                         )}
                       </div>
+                      {bookLanguage && !isSelectMode && (
+                        <PronunciationButton
+                          text={item.targetText}
+                          language={bookLanguage}
+                          size="sm"
+                          variant="ghost"
+                        />
+                      )}
                       {!isSelectMode && (
                         <button
                           onClick={(e) => {
@@ -457,7 +466,7 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
         </div>
       ) : chapters.length === 0 ? (
         <>
-          <UnsortedVocabularyCard bookId={bookId} />
+          <UnsortedVocabularyCard bookId={bookId} bookLanguage={book?.language} />
           <Card>
             <CardContent className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -491,7 +500,7 @@ export default function BookPageContent({ bookId }: { bookId: string }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <UnsortedVocabularyCard bookId={bookId} />
+          <UnsortedVocabularyCard bookId={bookId} bookLanguage={book?.language} />
           {chapters.map((chapter, index) => (
             <motion.div
               key={chapter.id}
