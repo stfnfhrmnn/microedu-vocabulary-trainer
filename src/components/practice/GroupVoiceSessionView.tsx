@@ -820,7 +820,7 @@ export function GroupVoiceSessionView({
             exit={{ opacity: 0, y: -10 }}
             className="text-white/80 text-lg italic max-w-md text-center px-4"
           >
-            "{interimTranscript || lastTranscript}"
+            &quot;{interimTranscript || lastTranscript}&quot;
           </motion.div>
         )}
       </AnimatePresence>

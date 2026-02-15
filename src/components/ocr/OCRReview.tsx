@@ -365,7 +365,7 @@ export function OCRReview({
                   className="mt-2 p-3 bg-gray-50 rounded-lg"
                 >
                   <p className="text-xs text-gray-500 mb-2">
-                    Hinweise in anderen Sprachen (z.B. English: "similar to house")
+                    Hinweise in anderen Sprachen (z.B. English: &quot;similar to house&quot;)
                   </p>
                   <Input
                     placeholder="z.B. English: sounds like..."

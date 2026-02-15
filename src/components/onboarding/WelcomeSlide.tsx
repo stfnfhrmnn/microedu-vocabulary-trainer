@@ -68,7 +68,7 @@ export function WelcomeSlide({ onNext }: WelcomeSlideProps) {
         onClick={onNext}
         className="bg-primary-500 text-white font-semibold px-8 py-4 rounded-2xl text-lg shadow-lg shadow-primary-500/30"
       >
-        Los geht's!
+        {"Los geht's!"}
       </motion.button>
     </motion.div>
   )

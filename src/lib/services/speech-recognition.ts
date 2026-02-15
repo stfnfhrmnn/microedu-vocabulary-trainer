@@ -24,6 +24,7 @@ interface SpeechRecognitionOptions {
   continuous?: boolean
   interimResults?: boolean
   maxAlternatives?: number
+  onEnd?: () => void
 }
 
 type SpeechRecognitionCallback = (result: SpeechRecognitionResult) => void
@@ -123,14 +124,16 @@ class SpeechRecognitionService {
     this.recognition.maxAlternatives = options.maxAlternatives ?? 1
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const result = event.results[event.results.length - 1]
-      if (result) {
-        const alternative = result[0]
-        onResult({
-          transcript: alternative.transcript,
-          confidence: alternative.confidence,
-          isFinal: result.isFinal,
-        })
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i]
+        if (result) {
+          const alternative = result[0]
+          onResult({
+            transcript: alternative.transcript,
+            confidence: alternative.confidence,
+            isFinal: result.isFinal,
+          })
+        }
       }
     }
 
@@ -142,6 +145,7 @@ class SpeechRecognitionService {
 
     this.recognition.onend = () => {
       this.isListening = false
+      options.onEnd?.()
     }
 
     try {

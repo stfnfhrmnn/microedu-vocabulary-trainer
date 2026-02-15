@@ -710,7 +710,7 @@ export function VoiceSessionView({ onSessionComplete }: VoiceSessionViewProps) {
             exit={{ opacity: 0, y: -10 }}
             className="text-slate-300 text-lg italic max-w-xs text-center"
           >
-            "{interimTranscript || lastTranscript}"
+            &quot;{interimTranscript || lastTranscript}&quot;
           </motion.div>
         )}
       </AnimatePresence>

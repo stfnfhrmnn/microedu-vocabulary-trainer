@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useRef, useMemo, useCallback } from 'rea
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronRight, Plus, Clock, X, BookOpen, Search } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Clock, X, BookOpen, Search, Mic } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -1030,30 +1030,38 @@ export default function AddVocabularyPage() {
       <Header
         title="Vokabeln hinzufügen"
         action={
-          <Link href="/add/scan">
-            <Button variant="outline" size="sm">
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              Scannen
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/add/dictate">
+              <Button variant="outline" size="sm">
+                <Mic className="w-4 h-4 mr-1.5" />
+                Diktieren
+              </Button>
+            </Link>
+            <Link href="/add/scan">
+              <Button variant="outline" size="sm">
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Scannen
+              </Button>
+            </Link>
+          </div>
         }
       />
 

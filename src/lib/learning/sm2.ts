@@ -36,7 +36,7 @@ export function calculateNextReview(
   progress: Pick<LearningProgress, 'easeFactor' | 'interval' | 'repetitions'>,
   quality: QualityRating
 ): SM2Result {
-  let { easeFactor, interval, repetitions } = progress
+  const { easeFactor, interval, repetitions } = progress
 
   // Calculate new ease factor
   // EF' = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
