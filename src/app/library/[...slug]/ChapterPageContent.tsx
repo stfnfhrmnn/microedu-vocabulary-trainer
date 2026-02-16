@@ -4,7 +4,17 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronRight, MoreHorizontal, Plus, Trash2, Edit2, Camera, Languages } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+  Edit2,
+  Camera,
+  ArrowUpDown,
+} from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { Header } from '@/components/layout/Header'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -13,6 +23,7 @@ import { Input } from '@/components/ui/Input'
 import { Toggle } from '@/components/ui/Toggle'
 import { Modal, useModal } from '@/components/ui/Modal'
 import { EditNameModal } from '@/components/ui/EditNameModal'
+import { VocabularyList } from '@/components/library/VocabularyList'
 import { useBook, useChapter, useSections } from '@/lib/db/hooks/useBooks'
 import { useVocabulary, useSectionVocabularyCount } from '@/lib/db/hooks/useVocabulary'
 import {
@@ -23,11 +34,10 @@ import {
   updateChapter,
   updateSection,
   createVocabularyItem,
-  swapVocabularyLanguages,
+  reorderItems,
 } from '@/lib/db/db'
 import { useSettings } from '@/stores/settings'
 import { useCurrentProfile } from '@/stores/user-session'
-import { PronunciationButton } from '@/components/vocabulary/PronunciationButton'
 import type { Language, Section } from '@/lib/db/schema'
 
 // Expandable section with inline vocabulary
@@ -51,107 +61,17 @@ function ExpandableSection({
   onEdit: () => void
 }) {
   const vocabCount = useSectionVocabularyCount(section.id)
-  const { vocabulary, deleteVocabularyItem } = useVocabulary(isExpanded ? section.id : undefined)
+  const { vocabulary } = useVocabulary(isExpanded ? section.id : undefined)
   const [showMenu, setShowMenu] = useState(false)
-  const [deletingVocabId, setDeletingVocabId] = useState<string | null>(null)
-  const [isSelectMode, setIsSelectMode] = useState(false)
-  const [selectedVocabularyIds, setSelectedVocabularyIds] = useState<Set<string>>(new Set())
-  const [swapScope, setSwapScope] = useState<'all' | 'selected' | null>(null)
-  const [isSwapping, setIsSwapping] = useState(false)
 
-  // Inline add form state
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [sourceText, setSourceText] = useState('')
-  const [targetText, setTargetText] = useState('')
-  const [isAdding, setIsAdding] = useState(false)
-
-  useEffect(() => {
-    if (!isExpanded) {
-      setIsSelectMode(false)
-      setSelectedVocabularyIds(new Set())
-      return
-    }
-
-    setSelectedVocabularyIds((prev) => {
-      const validIds = new Set(vocabulary.map((item) => item.id))
-      return new Set([...prev].filter((id) => validIds.has(id)))
+  const handleAddVocabulary = async (source: string, target: string) => {
+    await createVocabularyItem({
+      sourceText: source,
+      targetText: target,
+      sectionId: section.id,
+      chapterId: section.chapterId,
+      bookId,
     })
-  }, [isExpanded, vocabulary])
-
-  const handleAddVocabulary = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!sourceText.trim() || !targetText.trim()) return
-
-    setIsAdding(true)
-    try {
-      await createVocabularyItem({
-        sourceText: sourceText.trim(),
-        targetText: targetText.trim(),
-        sectionId: section.id,
-        chapterId: section.chapterId,
-        bookId: bookId,
-      })
-      setSourceText('')
-      setTargetText('')
-      // Keep form open for adding more
-    } finally {
-      setIsAdding(false)
-    }
-  }
-
-  const handleDeleteVocabulary = async (vocabId: string) => {
-    setDeletingVocabId(vocabId)
-  }
-
-  const confirmDeleteVocabulary = async () => {
-    if (!deletingVocabId) return
-    await deleteVocabularyItem(deletingVocabId)
-    setDeletingVocabId(null)
-  }
-
-  const toggleSelectVocabulary = (id: string) => {
-    setSelectedVocabularyIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
-
-  const selectedCount = selectedVocabularyIds.size
-  const allSelected = vocabulary.length > 0 && selectedCount === vocabulary.length
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedVocabularyIds(new Set())
-      return
-    }
-    setSelectedVocabularyIds(new Set(vocabulary.map((item) => item.id)))
-  }
-
-  const handleSwap = async () => {
-    if (!swapScope) return
-
-    const idsToSwap =
-      swapScope === 'all' ? vocabulary.map((item) => item.id) : [...selectedVocabularyIds]
-
-    if (idsToSwap.length === 0) {
-      setSwapScope(null)
-      return
-    }
-
-    setIsSwapping(true)
-    try {
-      await swapVocabularyLanguages(idsToSwap)
-      setSelectedVocabularyIds(new Set())
-      setIsSelectMode(false)
-      setSwapScope(null)
-    } finally {
-      setIsSwapping(false)
-    }
   }
 
   return (
@@ -230,236 +150,70 @@ function ExpandableSection({
               className="overflow-hidden"
             >
               <div className="border-t border-gray-100">
-                {vocabulary.length > 0 && (
-                  <div className="px-4 py-2 border-b border-gray-100 bg-gray-50 flex items-center justify-between gap-2">
-                    <div className="text-xs text-gray-600">
-                      {isSelectMode
-                        ? `${selectedCount} ausgewählt`
-                        : 'Bulk-Bearbeitung'}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {isSelectMode ? (
-                        <>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={toggleSelectAll}
-                          >
-                            {allSelected ? 'Keine' : 'Alle'}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            disabled={selectedCount === 0 || isSwapping}
-                            onClick={() => setSwapScope('selected')}
-                          >
-                            <Languages className="w-3.5 h-3.5 mr-1" />
-                            Tauschen
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setIsSelectMode(false)
-                              setSelectedVocabularyIds(new Set())
-                            }}
-                          >
-                            Fertig
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsSelectMode(true)}
-                          >
-                            Auswählen
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            disabled={isSwapping}
-                            onClick={() => setSwapScope('all')}
-                          >
-                            <Languages className="w-3.5 h-3.5 mr-1" />
-                            Alle tauschen
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Vocabulary Items */}
-                {vocabulary.length > 0 ? (
-                  <div className="divide-y divide-gray-100">
-                    {vocabulary.map((item) => (
-                      <div
-                        key={item.id}
-                        className={`flex items-center justify-between px-4 py-3 ${
-                          isSelectMode ? 'cursor-pointer' : ''
-                        } ${
-                          selectedVocabularyIds.has(item.id) ? 'bg-primary-50' : 'hover:bg-gray-50'
-                        }`}
-                        onClick={() => {
-                          if (isSelectMode) {
-                            toggleSelectVocabulary(item.id)
-                          }
-                        }}
-                      >
-                        {isSelectMode && (
-                          <div className="pr-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedVocabularyIds.has(item.id)}
-                              onChange={() => toggleSelectVocabulary(item.id)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0 mr-3">
-                          <p className="font-medium text-gray-900">{item.sourceText}</p>
-                          <p className="text-sm text-gray-500">{item.targetText}</p>
-                          {item.notes && (
-                            <p className="text-xs text-gray-400 mt-0.5">{item.notes}</p>
-                          )}
-                        </div>
-                        {bookLanguage && !isSelectMode && (
-                          <PronunciationButton
-                            text={item.targetText}
-                            language={bookLanguage}
-                            size="sm"
-                            variant="ghost"
-                          />
-                        )}
-                        {!isSelectMode && (
-                          <button
-                            onClick={() => handleDeleteVocabulary(item.id)}
-                            className="p-2 text-gray-400 hover:text-error-500 hover:bg-error-50 rounded-lg"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="px-4 py-6 text-center text-gray-500 text-sm">
-                    Noch keine Vokabeln in diesem Abschnitt.
-                  </div>
-                )}
-
-                {/* Inline Add Form */}
-                <div className="border-t border-gray-100 p-4">
-                  {showAddForm ? (
-                    <form onSubmit={handleAddVocabulary} className="space-y-3">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Deutsch"
-                          value={sourceText}
-                          onChange={(e) => setSourceText(e.target.value)}
-                          className="flex-1"
-                          autoFocus
-                        />
-                        <Input
-                          placeholder="Fremdsprache"
-                          value={targetText}
-                          onChange={(e) => setTargetText(e.target.value)}
-                          className="flex-1"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setShowAddForm(false)
-                            setSourceText('')
-                            setTargetText('')
-                          }}
-                        >
-                          Abbrechen
-                        </Button>
-                        <Button
-                          type="submit"
-                          variant="primary"
-                          size="sm"
-                          loading={isAdding}
-                          disabled={!sourceText.trim() || !targetText.trim()}
-                        >
-                          Hinzufügen
-                        </Button>
-                      </div>
-                    </form>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      fullWidth
-                      onClick={() => setShowAddForm(true)}
-                      className="text-primary-600"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Vokabel hinzufügen
-                    </Button>
-                  )}
-                </div>
+                <VocabularyList
+                  vocabulary={vocabulary}
+                  bookId={bookId}
+                  bookLanguage={bookLanguage}
+                  currentSectionId={section.id}
+                  currentChapterId={section.chapterId}
+                  showInlineAdd
+                  onAddVocabulary={handleAddVocabulary}
+                />
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </CardContent>
+    </Card>
+  )
+}
 
-      {/* Delete Vocabulary Confirmation */}
-      <Modal
-        isOpen={!!deletingVocabId}
-        onClose={() => setDeletingVocabId(null)}
-        title="Vokabel löschen?"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            Möchtest du diese Vokabel wirklich löschen?
-          </p>
-          <div className="flex gap-3">
-            <Button variant="secondary" fullWidth onClick={() => setDeletingVocabId(null)}>
-              Abbrechen
-            </Button>
-            <Button variant="danger" fullWidth onClick={confirmDeleteVocabulary}>
-              Löschen
-            </Button>
+function ReorderableSectionCard({
+  section,
+  index,
+  total,
+  onMoveUp,
+  onMoveDown,
+}: {
+  section: Section
+  index: number
+  total: number
+  onMoveUp: () => void
+  onMoveDown: () => void
+}) {
+  const vocabCount = useSectionVocabularyCount(section.id)
+
+  return (
+    <Card>
+      <CardContent className="flex items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900">{section.name}</h3>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-gray-500">{vocabCount} Vokabeln</p>
+            {section.coveredInClass && (
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                Im Unterricht
+              </span>
+            )}
           </div>
         </div>
-      </Modal>
-
-      <Modal
-        isOpen={!!swapScope}
-        onClose={() => setSwapScope(null)}
-        title="Sprache tauschen?"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            {swapScope === 'all'
-              ? `Deutsch/Fremdsprache für alle ${vocabulary.length} Vokabeln in diesem Abschnitt tauschen?`
-              : `Deutsch/Fremdsprache für ${selectedCount} ausgewählte Vokabeln tauschen?`}
-          </p>
-          <div className="flex gap-3">
-            <Button variant="secondary" fullWidth onClick={() => setSwapScope(null)}>
-              Abbrechen
-            </Button>
-            <Button variant="primary" fullWidth loading={isSwapping} onClick={handleSwap}>
-              Tauschen
-            </Button>
-          </div>
+        <div className="flex items-center gap-1 ml-3">
+          <button
+            onClick={onMoveUp}
+            disabled={index === 0}
+            className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronUp className="w-5 h-5 text-gray-600" />
+          </button>
+          <button
+            onClick={onMoveDown}
+            disabled={index === total - 1}
+            className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronDown className="w-5 h-5 text-gray-600" />
+          </button>
         </div>
-      </Modal>
+      </CardContent>
     </Card>
   )
 }
@@ -516,6 +270,7 @@ export default function ChapterPageContent({
   const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null)
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
   const [deletingSectionId, setDeletingSectionId] = useState<string | null>(null)
+  const [isReorderMode, setIsReorderMode] = useState(false)
 
   const isLoading = chapterLoading || sectionsLoading
 
@@ -606,6 +361,13 @@ export default function ChapterPageContent({
     await toggleSectionCovered(sectionId, covered)
   }
 
+  const handleReorderSection = async (fromIndex: number, toIndex: number) => {
+    const ids = sections.map((s) => s.id)
+    const [moved] = ids.splice(fromIndex, 1)
+    ids.splice(toIndex, 0, moved)
+    await reorderItems('sections', ids)
+  }
+
   if (!chapter && !isLoading) {
     return (
       <PageContainer>
@@ -631,15 +393,21 @@ export default function ChapterPageContent({
         showBack
         onBack={() => router.push(`/library/${bookId}`)}
         action={
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" onClick={menuModal.open}>
-              <MoreHorizontal className="w-5 h-5 text-gray-500" />
+          isReorderMode ? (
+            <Button variant="primary" size="sm" onClick={() => setIsReorderMode(false)}>
+              Fertig
             </Button>
-            <Button variant="primary" size="sm" onClick={addModal.open}>
-              <Plus className="w-4 h-4 mr-1" />
-              Abschnitt
-            </Button>
-          </div>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon" onClick={menuModal.open}>
+                <MoreHorizontal className="w-5 h-5 text-gray-500" />
+              </Button>
+              <Button variant="primary" size="sm" onClick={addModal.open}>
+                <Plus className="w-4 h-4 mr-1" />
+                Abschnitt
+              </Button>
+            </div>
+          )
         }
       />
 
@@ -698,16 +466,26 @@ export default function ChapterPageContent({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <ExpandableSection
-                section={section}
-                bookId={bookId}
-                bookLanguage={book?.language}
-                isExpanded={expandedSectionId === section.id}
-                onToggleExpand={() => handleToggleSection(section.id)}
-                onToggleCovered={(covered) => handleToggleCovered(section.id, covered)}
-                onDelete={() => handleOpenDeleteSection(section.id)}
-                onEdit={() => handleOpenEditSection(section.id)}
-              />
+              {isReorderMode ? (
+                <ReorderableSectionCard
+                  section={section}
+                  index={index}
+                  total={sections.length}
+                  onMoveUp={() => handleReorderSection(index, index - 1)}
+                  onMoveDown={() => handleReorderSection(index, index + 1)}
+                />
+              ) : (
+                <ExpandableSection
+                  section={section}
+                  bookId={bookId}
+                  bookLanguage={book?.language}
+                  isExpanded={expandedSectionId === section.id}
+                  onToggleExpand={() => handleToggleSection(section.id)}
+                  onToggleCovered={(covered) => handleToggleCovered(section.id, covered)}
+                  onDelete={() => handleOpenDeleteSection(section.id)}
+                  onEdit={() => handleOpenEditSection(section.id)}
+                />
+              )}
             </motion.div>
           ))}
         </div>
@@ -749,6 +527,20 @@ export default function ChapterPageContent({
               Vokabeln scannen
             </Button>
           </Link>
+          {sections.length > 1 && (
+            <Button
+              variant="secondary"
+              fullWidth
+              className="justify-start"
+              onClick={() => {
+                menuModal.close()
+                setIsReorderMode(true)
+              }}
+            >
+              <ArrowUpDown className="w-4 h-4 mr-2" />
+              Abschnitte sortieren
+            </Button>
+          )}
           <Button
             variant="secondary"
             fullWidth

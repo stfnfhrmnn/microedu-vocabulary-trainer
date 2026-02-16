@@ -458,6 +458,77 @@ export async function deleteVocabularyItem(id: string): Promise<void> {
   await safeQueueChange('learningProgress', 'delete', id, null)
 }
 
+export async function moveVocabularyItems(
+  ids: string[],
+  target: { sectionId: string | null; chapterId: string | null }
+): Promise<number> {
+  const uniqueIds = [...new Set(ids)].filter(Boolean)
+  if (uniqueIds.length === 0) return 0
+
+  const now = new Date()
+
+  const movedItems = await db.transaction('rw', [db.vocabularyItems], async () => {
+    const items = await db.vocabularyItems.where('id').anyOf(uniqueIds).toArray()
+
+    for (const item of items) {
+      await db.vocabularyItems.update(item.id, {
+        sectionId: target.sectionId,
+        chapterId: target.chapterId,
+        updatedAt: now,
+      })
+    }
+
+    return db.vocabularyItems.where('id').anyOf(uniqueIds).toArray()
+  })
+
+  for (const item of movedItems) {
+    await safeQueueChange(
+      'vocabularyItems',
+      'update',
+      item.id,
+      item as unknown as Record<string, unknown>
+    )
+  }
+
+  return movedItems.length
+}
+
+export async function deleteVocabularyItems(ids: string[]): Promise<number> {
+  const uniqueIds = [...new Set(ids)].filter(Boolean)
+  if (uniqueIds.length === 0) return 0
+
+  await db.transaction('rw', [db.vocabularyItems, db.learningProgress], async () => {
+    await db.learningProgress.where('vocabularyId').anyOf(uniqueIds).delete()
+    await db.vocabularyItems.where('id').anyOf(uniqueIds).delete()
+  })
+
+  for (const id of uniqueIds) {
+    await safeQueueChange('vocabularyItems', 'delete', id, null)
+    await safeQueueChange('learningProgress', 'delete', id, null)
+  }
+
+  return uniqueIds.length
+}
+
+export async function reorderItems(
+  table: 'chapters' | 'sections',
+  orderedIds: string[]
+): Promise<void> {
+  const dbTable = table === 'chapters' ? db.chapters : db.sections
+
+  await db.transaction('rw', [dbTable], async () => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await dbTable.update(orderedIds[i], { order: i })
+    }
+  })
+
+  const items = await dbTable.where('id').anyOf(orderedIds).toArray()
+  const changeTable = table as ChangeTable
+  for (const item of items) {
+    await safeQueueChange(changeTable, 'update', item.id, item as unknown as Record<string, unknown>)
+  }
+}
+
 export async function createVocabularyItems(items: CreateVocabularyItem[]): Promise<VocabularyItem[]> {
   const vocabItems: VocabularyItem[] = items.map((data) => ({
     id: generateId(),
